@@ -51,7 +51,7 @@ While developing, never touch real system services: use throwaway **user** units
 
 ## Bilingual documentation
 
-`README`, `CHANGELOG` and `CONTRIBUTING` exist in English (`*.md`, the reference version) and Italian (`*.it.md`), each with a language switcher at the top. Any change to one language must be mirrored in the other **in the same commit**. If you are not comfortable with Italian, say so in the PR and the maintainer will translate.
+`README`, `CHANGELOG` and `CONTRIBUTING` exist in English (`*.md`, the reference version) and Italian (`*.it.md`), each with a language switcher at the top. Any change to one language must be mirrored in the other **in the same commit**. Interface strings are written in English in the code, wrapped in `tr()`, and translated in the Italian catalogue in `src/unitdeck/i18n.py`; a test fails when a string is missing from the catalogue. If you are not comfortable with Italian, say so in the PR and the maintainer will translate.
 
 ## Versioning
 

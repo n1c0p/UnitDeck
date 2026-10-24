@@ -72,6 +72,8 @@ La tab **Servizi utente** elenca tutte le unit `.service` della sessione utente,
 
 La tabella segue i segnali D-Bus di systemd, quindi gli stati si aggiornano da soli. "Ricarica configurazione" esegue un `daemon-reload` dopo che hai modificato i file unit su disco.
 
+L'interfaccia è disponibile in inglese e in italiano: segue la lingua del desktop per impostazione predefinita e il selettore accanto alle tab la cambia in qualsiasi momento.
+
 ## Dipendenze e licenze
 
 Tutte le dipendenze sono compatibili con la licenza GPL-3.0-or-later del progetto.

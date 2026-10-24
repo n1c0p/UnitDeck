@@ -72,6 +72,8 @@ The **User services** tab lists every `.service` unit of your user session, incl
 
 The table follows systemd's D-Bus signals, so states update by themselves. "Reload configuration" runs a `daemon-reload` after you edit unit files on disk.
 
+The interface is available in English and Italian: it follows the desktop language by default, and the selector next to the tabs switches it at any time.
+
 ## Dependencies and licenses
 
 All dependencies are compatible with the GPL-3.0-or-later license of the project.
