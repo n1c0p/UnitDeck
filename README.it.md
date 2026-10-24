@@ -94,6 +94,17 @@ L'interfaccia è disponibile in inglese e in italiano: segue la lingua del deskt
 
 All'avvio UnitDeck chiede all'API delle GitHub Releases (`api.github.com`) se esiste una versione più recente; non viene inviato nient'altro. Si disattiva da *Impostazioni → Controlla aggiornamenti all'avvio*, oppure si controlla a mano da *Informazioni → Controlla aggiornamenti…*. Quando c'è un aggiornamento puoi leggere le note di rilascio, scaricare il `.deb` (il suo SHA256 viene verificato con il checksum pubblicato nella release) e installarlo: l'installazione esegue `apt-get` tramite `pkexec`, quindi il desktop chiede la password. Il controllo è saltato quando si esegue una versione di sviluppo dai sorgenti.
 
+### Compilare il pacchetto
+
+`packaging/build-deb.sh` impacchetta l'applicazione con PyInstaller (`unitdeck.spec`, modalità onedir) in `/opt/unitdeck`, aggiunge helper, policy polkit, file desktop, icona e pagina man, e produce `dist/unitdeck_<versione>_amd64.deb` con `dpkg-deb`, controllato da `lintian` (i pochi tag accettati per scelta sono in `packaging/lintian-suppress`). `packaging/test-install.sh` installa il risultato in un container Ubuntu 24.04 pulito ed esegue `unitdeck --check`. Compila su Ubuntu 24.04, la versione più vecchia supportata, così il bundle funziona anche con glibc più recenti:
+
+```bash
+pip install . pyinstaller
+packaging/build-deb.sh
+```
+
+Ogni push su `develop` compila un pacchetto di anteprima, conservato 14 giorni come artifact del workflow; ogni merge su `main` pubblica una release (vedi CONTRIBUTING).
+
 ## Dipendenze e licenze
 
 Tutte le dipendenze sono compatibili con la licenza GPL-3.0-or-later del progetto.
@@ -105,6 +116,7 @@ Tutte le dipendenze sono compatibili con la licenza GPL-3.0-or-later del progett
 | [pytest](https://pytest.org/) | Test (solo sviluppo) | MIT |
 | [ruff](https://docs.astral.sh/ruff/) | Lint e formattazione (solo sviluppo) | MIT |
 | [reuse](https://reuse.software/) | Controllo di conformità delle licenze (solo sviluppo) | Apache-2.0 / GPL-3.0-or-later |
+| [PyInstaller](https://pyinstaller.org/) | Impacchetta l'applicazione per il `.deb` (solo build) | GPL-2.0-or-later con eccezione per il bootloader |
 
 ## Contribuire
 

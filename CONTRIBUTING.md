@@ -73,7 +73,9 @@ Versions follow [Semantic Versioning](https://semver.org/). The installed versio
 2. In that PR, rename the `## [Unreleased]` section of **both** `CHANGELOG.md` and `CHANGELOG.it.md` to `## [X.Y.Z] - YYYY-MM-DD`, with the same version and date in both files, and add a fresh empty `## [Unreleased]` section above it.
 3. The `release-check` job fails if the version is missing or invalid, if the tag `vX.Y.Z` already exists, if the version is not greater than the latest release, or if the Italian changelog does not contain the same version and date. The `branch-origin` job fails if the PR does not come from `develop` or a `hotfix/*` branch.
 4. Merge with a **merge commit** (not squash). The `release.yml` workflow then tags the merge commit, builds the `.deb`, publishes the GitHub Release with the changelog section as notes, and opens a PR `main` → `develop` titled `chore: sync main into develop after vX.Y.Z`.
-5. Merge the sync PR into `develop` with a merge commit.
+5. Merge the sync PR into `develop` with a merge commit. Pull requests opened by `GITHUB_TOKEN` do not trigger workflows: if the `ci` check does not start, close and reopen the PR.
+
+The release assets are `unitdeck_X.Y.Z_amd64.deb` and `unitdeck_X.Y.Z_amd64.deb.sha256`; the in-app update check relies on these names. The package is built on `ubuntu-24.04` runners (see "Building the package" in the README); every push to `develop` builds a preview artifact kept 14 days.
 
 If the release workflow fails, fix the cause and re-run it manually from the Actions tab (`workflow_dispatch`): it is idempotent and exits cleanly when the tag already exists.
 

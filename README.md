@@ -94,6 +94,17 @@ The interface is available in English and Italian: it follows the desktop langua
 
 At startup UnitDeck asks the GitHub Releases API (`api.github.com`) whether a newer version exists; nothing else is sent. Turn this off with *Settings → Check for updates at startup*, or check by hand from *Info → Check for updates…*. When an update is available you can read the release notes, download the `.deb` (its SHA256 is verified against the checksum published with the release) and install it: the installation runs `apt-get` through `pkexec`, so the desktop asks for your password. Checks are skipped when running a development version from source.
 
+### Building the package
+
+`packaging/build-deb.sh` bundles the application with PyInstaller (`unitdeck.spec`, one-directory mode) into `/opt/unitdeck`, adds the helper, the polkit policy, the desktop file, the icon and a man page, and produces `dist/unitdeck_<version>_amd64.deb` with `dpkg-deb`, checked by `lintian` (a few tags accepted by design are listed in `packaging/lintian-suppress`). `packaging/test-install.sh` installs the result in a clean Ubuntu 24.04 container and runs `unitdeck --check`. Build on Ubuntu 24.04, the oldest supported release, so the bundle runs on newer glibc too:
+
+```bash
+pip install . pyinstaller
+packaging/build-deb.sh
+```
+
+Every push to `develop` builds a preview package, kept 14 days as a workflow artifact; every merge into `main` publishes a release (see CONTRIBUTING).
+
 ## Dependencies and licenses
 
 All dependencies are compatible with the GPL-3.0-or-later license of the project.
@@ -105,6 +116,7 @@ All dependencies are compatible with the GPL-3.0-or-later license of the project
 | [pytest](https://pytest.org/) | Tests (development only) | MIT |
 | [ruff](https://docs.astral.sh/ruff/) | Lint and format (development only) | MIT |
 | [reuse](https://reuse.software/) | License compliance check (development only) | Apache-2.0 / GPL-3.0-or-later |
+| [PyInstaller](https://pyinstaller.org/) | Bundles the application for the `.deb` (build only) | GPL-2.0-or-later with bootloader exception |
 
 ## Contributing
 

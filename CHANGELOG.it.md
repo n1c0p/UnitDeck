@@ -10,6 +10,8 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ### Aggiunto
 
+- Pacchetto Debian: bundle PyInstaller onedir in `/opt/unitdeck` con `/usr/bin/unitdeck`, helper in `/usr/libexec/unitdeck`, policy polkit, file desktop, icona e pagina man; compilato da `packaging/build-deb.sh`, controllato con `lintian` e con un test di installazione pulita. `unitdeck --version` e `unitdeck --check`.
+- CI: pacchetto di anteprima a ogni push su `develop` (artifact, 14 giorni); `release.yml` tagga il merge su `main`, compila il pacchetto, pubblica la GitHub Release con il checksum SHA256 e la sezione del changelog come note, e apre la PR di sincronizzazione `main` → `develop`.
 - Wizard Nuovo servizio: nome e template, campi guidati (con `User=`/`Group=` e avviso root per i servizi di sistema, `WantedBy` precompilato per scope), anteprima modificabile controllata con `systemd-analyze verify`, opzioni abilita/avvia; la nuova unit viene selezionata nella tabella. I template sono file in `src/unitdeck/templates/`: vuoto, oneshot, long-running, mount SMB con gio (solo utente).
 - Interruttore Linger nella tab utente, tramite `SetUserLinger` di logind con autorizzazione interattiva.
 - Elimina ora ferma e disabilita la unit prima di rimuoverne i file; i colori dell'editor si adattano ai temi scuri; dimensione e posizione della finestra vengono ricordate.
