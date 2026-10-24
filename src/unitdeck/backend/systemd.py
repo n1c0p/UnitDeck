@@ -139,7 +139,9 @@ class QtDBusBackend(SystemdBackend):
             name = os.path.basename(path)
             if name.endswith(".service"):
                 file_state[name] = state
-                file_path[name] = path
+                # Aliases and masks in /etc are symlinks: keep the real file so that they do not
+                # count as units created by the user.
+                file_path[name] = os.path.realpath(path) if os.path.islink(path) else path
         units: dict[str, Unit] = {}
         for name, description, load, active, sub, _following, path, *_ in rows:
             if not name.endswith(".service"):

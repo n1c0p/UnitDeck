@@ -94,10 +94,10 @@ class LogViewer(QDialog):
         self._text.verticalScrollBar().setValue(self._text.verticalScrollBar().maximum())
 
     def _on_finished(self, code: int, stderr: str) -> None:
-        if code != 0 and stderr:
-            self._text.appendHtml(f"<i>journalctl: {html.escape(stderr)}</i>")
-        elif self._text.blockCount() <= 1 and not self._text.toPlainText():
+        if self._text.blockCount() <= 1 and not self._text.toPlainText():
             self._text.appendHtml(f"<i>{tr('No journal entries for this unit.')}</i>")
+        if stderr:  # e.g. the hint that only members of adm/systemd-journal see the system journal
+            self._text.appendHtml(f"<i>journalctl: {html.escape(stderr)}</i>")
 
     def closeEvent(self, event) -> None:
         self._reader.stop()

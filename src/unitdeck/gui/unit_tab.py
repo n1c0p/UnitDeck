@@ -59,9 +59,13 @@ JOB_RESULTS = {  # systemd job results other than "done"
     "assert": "unit assertion not met",
     "unsupported": "operation not supported",
 }
+AUTH_ERRORS = (  # polkit dialog cancelled or password refused: status bar only, no popup
+    "org.freedesktop.DBus.Error.AccessDenied",
+    "org.freedesktop.DBus.Error.InteractiveAuthorizationRequired",
+)
 ERROR_LABELS = {  # D-Bus error names
-    "org.freedesktop.DBus.Error.AccessDenied": "authorization denied",
-    "org.freedesktop.DBus.Error.InteractiveAuthorizationRequired": "authorization required",
+    AUTH_ERRORS[0]: "authorization denied",
+    AUTH_ERRORS[1]: "authorization required",
     "org.freedesktop.DBus.Error.NoReply": "systemd did not answer in time",
     "org.freedesktop.systemd1.NoSuchUnit": "unit not found",
     "org.freedesktop.systemd1.UnitMasked": "the unit is masked",
@@ -232,7 +236,7 @@ class UnitTab(QWidget):
             return
         words["reason"] = readable(detail)
         self.message.emit(tr("{action} {unit}: {reason}").format(**words).replace("  ", " "))
-        if action in ("refresh", "details"):
+        if action in ("refresh", "details") or detail.partition(": ")[0] in AUTH_ERRORS:
             return
         box = QMessageBox(
             QMessageBox.Icon.Warning,

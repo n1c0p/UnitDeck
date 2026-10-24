@@ -39,6 +39,7 @@ def resolve(code: str) -> str:
 
 IT = {
     # main window
+    "System services": "Servizi di sistema",
     "User services": "Servizi utente",
     "Ready": "Pronto",
     "System": "Sistema",

@@ -3,7 +3,7 @@
 import pytest
 from fake_transport import DBusError, FakeTransport
 
-from unitdeck.backend.base import Scope, Unit
+from unitdeck.backend.base import Scope, Unit, own_unit_dir
 from unitdeck.backend.systemd import UNIT_IFACE, QtDBusBackend, template_of
 
 UNIT_PATH = "/org/freedesktop/systemd1/unit/web_2eservice"
@@ -26,6 +26,21 @@ def make_backend(replies=None):
     backend = QtDBusBackend(Scope.USER, transport)
     backend.own_dir = "/home/me/.config/systemd/user"
     return backend, transport
+
+
+def test_own_unit_dir(monkeypatch):
+    assert own_unit_dir(Scope.SYSTEM) == "/etc/systemd/system"
+    monkeypatch.setenv("XDG_CONFIG_HOME", "/tmp/cfg")
+    assert own_unit_dir(Scope.USER) == "/tmp/cfg/systemd/user"
+
+
+def test_system_scope_backend_marks_etc_units_as_mine():
+    transport = FakeTransport(
+        {"ListUnits": [[]], "ListUnitFiles": [[("/etc/systemd/system/mine.service", "enabled")]]}
+    )
+    backend = QtDBusBackend(Scope.SYSTEM, transport)
+    backend.refresh()
+    assert backend.units["mine.service"].fragment_path.startswith(backend.own_dir)
 
 
 def test_template_of():

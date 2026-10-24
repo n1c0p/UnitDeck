@@ -8,7 +8,7 @@ import pytest
 
 from unitdeck import i18n
 from unitdeck.gui.actions_delegate import BUTTONS
-from unitdeck.gui.unit_tab import ACTION_LABELS, ERROR_LABELS, JOB_RESULTS
+from unitdeck.gui.unit_tab import ACTION_LABELS, ERROR_LABELS, JOB_RESULTS, readable
 from unitdeck.model import COLUMNS, FILTER_LABELS
 
 SRC = Path(i18n.__file__).parent
@@ -32,6 +32,7 @@ def source_strings() -> set[str]:
         ):
             found.add(ast.literal_eval(match.group(1)))
     found.update(COLUMNS)
+    found.update(("System services", "User services"))  # tab titles, translated in a loop
     found.update(FILTER_LABELS.values())
     found.update(ACTION_LABELS.values())
     found.update(JOB_RESULTS.values())
@@ -48,6 +49,16 @@ def test_italian_catalogue_is_complete():
 def test_catalogue_has_no_stale_entries():
     stale = i18n.IT.keys() - source_strings()
     assert not stale, f"unused in IT: {sorted(stale)}"
+
+
+def test_readable_reasons():
+    assert readable("failed") == "the service failed, check its logs"
+    assert readable(
+        "org.freedesktop.DBus.Error.AccessDenied: Interactive authentication required."
+    ) == ("authorization denied")
+    assert readable("org.example.Unknown: something odd") == "something odd"
+    i18n.set_language("it")
+    assert readable("timeout") == "tempo scaduto"
 
 
 def test_tr_and_language_switch():
