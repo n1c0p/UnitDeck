@@ -20,7 +20,18 @@ def ensure_not_root() -> None:
 
 
 def main() -> None:
+    if "--version" in sys.argv[1:]:
+        print(f"UnitDeck {__version__}")
+        return
     ensure_not_root()
+    if "--check" in sys.argv[1:]:  # packaging smoke test: Qt and its plugins load, nothing shown
+        import PyQt6.QtDBus  # noqa: F401
+        import PyQt6.QtNetwork  # noqa: F401
+        from PyQt6.QtWidgets import QApplication
+
+        QApplication(sys.argv)
+        print(f"UnitDeck {__version__}: Qt ok")
+        return
     # Qt is imported only after the root check, so the check runs even if Qt is broken.
     from PyQt6.QtWidgets import QApplication
 

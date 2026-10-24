@@ -1,0 +1,27 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: UnitDeck
+Upstream-Contact: Nicola Palmieri (https://github.com/n1c0p)
+Source: https://github.com/n1c0p/UnitDeck
+
+Files: *
+Copyright: 2026 Nicola Palmieri (n1c0p)
+License: GPL-3+
+
+Files: opt/unitdeck/_internal/PyQt6/*
+Copyright: Riverbank Computing Limited; The Qt Company Ltd.
+License: GPL-3
+ PyQt6 and the bundled Qt libraries are distributed under the GNU General
+ Public License version 3. See /usr/share/common-licenses/GPL-3.
+
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ On Debian systems, the complete text of the GNU General Public License
+ version 3 can be found in /usr/share/common-licenses/GPL-3.
+
+License: GPL-3
+ On Debian systems, the complete text of the GNU General Public License
+ version 3 can be found in /usr/share/common-licenses/GPL-3.

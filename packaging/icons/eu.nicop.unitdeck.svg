@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+SPDX-License-Identifier: GPL-3.0-or-later
+SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <rect x="4" y="4" width="56" height="56" rx="12" fill="#2b5797"/>
+  <rect x="14" y="16" width="36" height="8" rx="3" fill="#ffffff" opacity="0.95"/>
+  <rect x="14" y="28" width="36" height="8" rx="3" fill="#ffffff" opacity="0.75"/>
+  <rect x="14" y="40" width="22" height="8" rx="3" fill="#ffffff" opacity="0.55"/>
+  <path d="M40 38 L52 44 L40 50 Z" fill="#4ade80"/>
+</svg>
