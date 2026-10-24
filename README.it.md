@@ -127,6 +127,8 @@ I contributi sono benvenuti. Il repository usa due branch permanenti:
 
 Parti da `develop` creando un branch `feature/*` o `fix/*` e apri una pull request verso `develop`. [CONTRIBUTING.it.md](CONTRIBUTING.it.md) descrive il flusso completo: branch, pull request, intestazioni SPDX, come si prepara una release e quali ruleset GitHub proteggono `main`, `develop` e i tag `v*`.
 
+Leggi [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md); i problemi di sicurezza passano da [SECURITY.it.md](SECURITY.it.md), non da issue pubbliche.
+
 La documentazione è mantenuta in inglese e in italiano: quando modifichi `README.md` o `CHANGELOG.md`, aggiorna anche `README.it.md` e `CHANGELOG.it.md`. Se non ti trovi a tuo agio con una delle due lingue, segnalalo nella pull request e la traduzione verrà completata dal maintainer.
 
 Le release sono automatiche: una pull request da `develop` a `main` imposta la versione in entrambi i changelog e, al merge, il commit viene taggato, il `.deb` compilato e la GitHub Release pubblicata.

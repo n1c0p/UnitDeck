@@ -8,6 +8,10 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+### Aggiunto
+
+- Codice di condotta (Contributor Covenant 2.1), politica di sicurezza, template per issue e pull request.
+
 ### Modificato
 
 - La CI gira su ogni pull request, comprese quelle di sola documentazione o senza differenze, così il controllo obbligatorio `ci` riporta sempre.

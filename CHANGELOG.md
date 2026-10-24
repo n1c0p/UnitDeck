@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Code of conduct (Contributor Covenant 2.1), security policy, issue and pull request templates.
+
 ### Changed
 
 - CI runs on every pull request, documentation-only and empty diffs included, so the required `ci` check always reports.
