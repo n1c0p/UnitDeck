@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2026 Nicola (n1c0p)
+# SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
 #
 # Lint, REUSE compliance and tests. Documentation-only changes are skipped
 # here and satisfied by ci-docs.yml, which provides a no-op `ci` job with the

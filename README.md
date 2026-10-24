@@ -111,7 +111,7 @@ All notable changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
-Copyright (C) 2026 Nicola ([n1c0p](https://github.com/n1c0p))
+Copyright (C) 2026 Nicola Palmieri ([n1c0p](https://github.com/n1c0p))
 
 UnitDeck is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 

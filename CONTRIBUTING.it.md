@@ -41,7 +41,7 @@ Durante lo sviluppo non toccare mai i servizi di sistema reali: usa unit **utent
 
    ```python
    # SPDX-License-Identifier: GPL-3.0-or-later
-   # SPDX-FileCopyrightText: 2026 Nicola (n1c0p)
+   # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
    ```
 
    I file che non possono contenere un'intestazione sono elencati in `REUSE.toml`. `reuse lint` deve passare.

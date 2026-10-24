@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2026 Nicola (n1c0p)
+# SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
 """Tiny translation layer: English source strings, Italian catalogue, no build step.
 
 Call ``tr("text")`` at use time (not at import time) so a language change takes effect when

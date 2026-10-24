@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2026 Nicola (n1c0p)
+# SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
 """Journal reader: ``journalctl -o json`` through QProcess, one entry per line."""
 
 from __future__ import annotations

@@ -41,7 +41,7 @@ While developing, never touch real system services: use throwaway **user** units
 
    ```python
    # SPDX-License-Identifier: GPL-3.0-or-later
-   # SPDX-FileCopyrightText: 2026 Nicola (n1c0p)
+   # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
    ```
 
    Files that cannot carry a header are listed in `REUSE.toml`. `reuse lint` must pass.

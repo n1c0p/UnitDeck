@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2026 Nicola (n1c0p)
+# SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
 """Backend interface. Depends on QtCore only, never on the GUI."""
 
 from __future__ import annotations

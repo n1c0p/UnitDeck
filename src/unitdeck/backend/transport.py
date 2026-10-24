@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2026 Nicola (n1c0p)
+# SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
 """Asynchronous D-Bus transport over QtDBus. Tests replace it with a fake of the same shape."""
 
 from __future__ import annotations
