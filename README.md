@@ -34,7 +34,7 @@ UnitDeck is designed to **never run as root**, and refuses to start if launched 
 
 ## Requirements
 
-- A Linux distribution with **systemd** and **polkit** (primary target: recent Ubuntu releases with GNOME, on X11 or Wayland).
+- A Linux distribution with **systemd** and **polkit** (primary target: recent Ubuntu releases with GNOME, on X11 or Wayland). The `.deb` package is built on **Ubuntu 24.04 LTS**, the oldest supported release.
 - A polkit authentication agent (included in all major desktop environments).
 
 ## Installation
@@ -47,7 +47,29 @@ sudo apt install ./unitdeck_<version>_amd64.deb
 
 ### From source
 
-Instructions for running from source will be added as development progresses. UnitDeck is written in **Python 3.12+** with **PyQt6**.
+UnitDeck is written in **Python 3.12+** with **PyQt6**.
+
+```bash
+git clone https://github.com/n1c0p/UnitDeck.git
+cd UnitDeck
+python3 -m venv .venv
+.venv/bin/pip install -e .
+.venv/bin/python -m unitdeck
+```
+
+The version number comes from git tags via `setuptools-scm`: a checkout between releases reports a development version.
+
+## Dependencies and licenses
+
+All dependencies are compatible with the GPL-3.0-or-later license of the project.
+
+| Package | Role | License |
+|---------|------|---------|
+| [PyQt6](https://www.riverbankcomputing.com/software/pyqt/) | GUI toolkit and D-Bus bindings (QtDBus) | GPL-3.0-only |
+| [setuptools-scm](https://github.com/pypa/setuptools-scm) | Version from git tags (build time only) | MIT |
+| [pytest](https://pytest.org/) | Tests (development only) | MIT |
+| [ruff](https://docs.astral.sh/ruff/) | Lint and format (development only) | MIT |
+| [reuse](https://reuse.software/) | License compliance check (development only) | Apache-2.0 / GPL-3.0-or-later |
 
 ## Contributing
 
@@ -56,9 +78,11 @@ Contributions are welcome. The repository uses two long-lived branches:
 - `main`: always matches the latest release;
 - `develop`: ongoing development, the target for all pull requests.
 
-Start your work from `develop` in a `feature/*` or `fix/*` branch and open a pull request against `develop`. More details will be available in `CONTRIBUTING.md`.
+Start your work from `develop` in a `feature/*` or `fix/*` branch and open a pull request against `develop`. [CONTRIBUTING.md](CONTRIBUTING.md) describes the full workflow: branches, pull requests, SPDX headers, how a release is prepared and which GitHub rulesets protect `main`, `develop` and the `v*` tags.
 
 Documentation is kept in English and Italian: when you change `README.md` or `CHANGELOG.md`, please update `README.it.md` and `CHANGELOG.it.md` as well. If you are not comfortable with Italian, just mention it in the pull request and the maintainer will take care of the translation.
+
+Releases are automatic: a pull request from `develop` to `main` sets the version in both changelogs, and merging it tags the commit, builds the `.deb` and publishes the GitHub Release.
 
 Service templates are plain files in the repository: adding a new one through a pull request is a great first contribution.
 

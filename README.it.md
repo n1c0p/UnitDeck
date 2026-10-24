@@ -34,7 +34,7 @@ UnitDeck è progettato per **non girare mai come root** e si rifiuta di partire 
 
 ## Requisiti
 
-- Una distribuzione Linux con **systemd** e **polkit** (obiettivo principale: versioni recenti di Ubuntu con GNOME, su X11 o Wayland).
+- Una distribuzione Linux con **systemd** e **polkit** (obiettivo principale: versioni recenti di Ubuntu con GNOME, su X11 o Wayland). Il pacchetto `.deb` è compilato su **Ubuntu 24.04 LTS**, la versione più vecchia supportata.
 - Un agente di autenticazione polkit (incluso in tutti i principali ambienti desktop).
 
 ## Installazione
@@ -47,7 +47,29 @@ sudo apt install ./unitdeck_<versione>_amd64.deb
 
 ### Dai sorgenti
 
-Le istruzioni per eseguire UnitDeck dai sorgenti verranno aggiunte con l'avanzare dello sviluppo. UnitDeck è scritto in **Python 3.12+** con **PyQt6**.
+UnitDeck è scritto in **Python 3.12+** con **PyQt6**.
+
+```bash
+git clone https://github.com/n1c0p/UnitDeck.git
+cd UnitDeck
+python3 -m venv .venv
+.venv/bin/pip install -e .
+.venv/bin/python -m unitdeck
+```
+
+Il numero di versione deriva dai tag git tramite `setuptools-scm`: un checkout tra una release e l'altra riporta una versione di sviluppo.
+
+## Dipendenze e licenze
+
+Tutte le dipendenze sono compatibili con la licenza GPL-3.0-or-later del progetto.
+
+| Pacchetto | Ruolo | Licenza |
+|-----------|-------|---------|
+| [PyQt6](https://www.riverbankcomputing.com/software/pyqt/) | Toolkit grafico e binding D-Bus (QtDBus) | GPL-3.0-only |
+| [setuptools-scm](https://github.com/pypa/setuptools-scm) | Versione dai tag git (solo in fase di build) | MIT |
+| [pytest](https://pytest.org/) | Test (solo sviluppo) | MIT |
+| [ruff](https://docs.astral.sh/ruff/) | Lint e formattazione (solo sviluppo) | MIT |
+| [reuse](https://reuse.software/) | Controllo di conformità delle licenze (solo sviluppo) | Apache-2.0 / GPL-3.0-or-later |
 
 ## Contribuire
 
@@ -56,9 +78,11 @@ I contributi sono benvenuti. Il repository usa due branch permanenti:
 - `main`: corrisponde sempre all'ultima release;
 - `develop`: sviluppo in corso, destinazione di tutte le pull request.
 
-Parti da `develop` creando un branch `feature/*` o `fix/*` e apri una pull request verso `develop`. Maggiori dettagli saranno disponibili in `CONTRIBUTING.md`.
+Parti da `develop` creando un branch `feature/*` o `fix/*` e apri una pull request verso `develop`. [CONTRIBUTING.it.md](CONTRIBUTING.it.md) descrive il flusso completo: branch, pull request, intestazioni SPDX, come si prepara una release e quali ruleset GitHub proteggono `main`, `develop` e i tag `v*`.
 
 La documentazione è mantenuta in inglese e in italiano: quando modifichi `README.md` o `CHANGELOG.md`, aggiorna anche `README.it.md` e `CHANGELOG.it.md`. Se non ti trovi a tuo agio con una delle due lingue, segnalalo nella pull request e la traduzione verrà completata dal maintainer.
+
+Le release sono automatiche: una pull request da `develop` a `main` imposta la versione in entrambi i changelog e, al merge, il commit viene taggato, il `.deb` compilato e la GitHub Release pubblicata.
 
 I template dei servizi sono semplici file nel repository: aggiungerne uno nuovo con una pull request è un ottimo primo contributo.
 

@@ -217,3 +217,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# setuptools-scm
+src/unitdeck/_version.py
+
+# IDE
+.idea/
