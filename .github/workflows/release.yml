@@ -37,10 +37,10 @@ jobs:
         id: version
         run: |
           set -eu
-          heading="$(grep -m1 -E '^## \[' CHANGELOG.md)"
+          heading="$(grep -m1 -E '^## \[[0-9]' CHANGELOG.md)"  # first numbered section
           version="$(printf '%s' "$heading" | grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' | tr -d '#[] ')"
           if [ -z "$version" ]; then
-            echo "::error::CHANGELOG.md does not start with a released version: $heading"
+            echo "::error::CHANGELOG.md has no released version below Unreleased: $heading"
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
