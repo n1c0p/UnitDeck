@@ -61,7 +61,7 @@ The version number comes from git tags via `setuptools-scm`: a checkout between 
 
 ## Usage
 
-The **User services** tab lists every `.service` unit of your user session, including installed units that are not loaded. Each row has start, stop and restart buttons plus a "⋯" menu with reload, enable/disable at boot, mask/unmask and logs. The same actions are available from the right-click menu and, on the selected row, from the keyboard:
+The **System services** and **User services** tabs list every `.service` unit of the system manager and of your user session, including installed units that are not loaded. Browsing, states and logs never ask for a password; the first privileged action on a system service (start, stop, enable, …) opens the desktop's polkit dialog, and cancelling it simply leaves the service as it was. Each row has start, stop and restart buttons plus a "⋯" menu with reload, enable/disable at boot, mask/unmask and logs. The same actions are available from the right-click menu and, on the selected row, from the keyboard:
 
 | Shortcut | Action |
 |----------|--------|
@@ -69,6 +69,8 @@ The **User services** tab lists every `.service` unit of your user session, incl
 | `Ctrl+T` | Stop |
 | `Ctrl+R` | Restart |
 | `Ctrl+L` | Show logs (also double-click) |
+
+System logs are readable without a password only if your user belongs to the `adm` or `systemd-journal` group (the default for the first user on Ubuntu); otherwise the log window shows journalctl's hint.
 
 The table follows systemd's D-Bus signals, so states update by themselves. "Reload configuration" runs a `daemon-reload` after you edit unit files on disk.
 
