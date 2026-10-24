@@ -16,6 +16,7 @@ from unitdeck.backend.transport import QtDBusTransport
 MANAGER_PATH = "/org/freedesktop/systemd1"
 MANAGER_IFACE = "org.freedesktop.systemd1.Manager"
 UNIT_IFACE = "org.freedesktop.systemd1.Unit"
+SERVICE_IFACE = "org.freedesktop.systemd1.Service"
 PROPERTIES_IFACE = "org.freedesktop.DBus.Properties"
 
 JOB_METHODS = {
@@ -30,6 +31,7 @@ FILE_METHODS = {  # action -> (method, arguments after the unit name list)
     "mask": ("MaskUnitFiles", [False, False]),
     "unmask": ("UnmaskUnitFiles", [False]),
 }
+SIMPLE_METHODS = {"reset-failed": "ResetFailedUnit"}  # no job, no reload
 PROPERTY_FIELDS = {
     "ActiveState": "active_state",
     "SubState": "sub_state",
@@ -119,6 +121,16 @@ class QtDBusBackend(SystemdBackend):
                 lambda _args: self._reload(name, action),
                 self._error_handler(name, action),
             )
+        elif action in SIMPLE_METHODS:
+            self._set_busy(name, True)
+            self._t.call(
+                MANAGER_PATH,
+                MANAGER_IFACE,
+                SIMPLE_METHODS[action],
+                [name],
+                lambda _args: self._finish(name, action, True, ""),
+                self._error_handler(name, action),
+            )
         else:
             raise ValueError(f"unknown action {action!r}")
 
@@ -193,8 +205,22 @@ class QtDBusBackend(SystemdBackend):
     def _on_job_removed(self, _path: str, args: list) -> None:
         _job_id, job_path, _unit, result = args
         pending = self._jobs.pop(job_path, None)
-        if pending is not None:
-            self._finish(pending[0], pending[1], result == "done", result)
+        if pending is None:
+            return
+        name, action = pending
+        unit = self.units.get(name)
+        if result != "failed" or unit is None or not unit.loaded:
+            self._finish(name, action, result == "done", result)
+            return
+        # "failed" alone says little: ask the service why (exit-code, start-limit-hit, ...).
+        self._t.call(
+            unit.object_path,
+            PROPERTIES_IFACE,
+            "Get",
+            [SERVICE_IFACE, "Result"],
+            lambda args: self._finish(name, action, False, f"failed ({args[0]})"),
+            lambda _error, _message: self._finish(name, action, False, result),
+        )
 
     def _on_properties_changed(self, path: str, args: list) -> None:
         interface, changed, _invalidated = args

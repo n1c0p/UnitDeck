@@ -114,6 +114,7 @@ IT = {
     "Disable at boot": "Disabilita all'avvio",
     "Mask": "Maschera",
     "Unmask": "Smaschera",
+    "Reset failed state": "Azzera lo stato fallito",
     "Show logs": "Mostra log",
     "More actions": "Altre azioni",
     "Refresh unit list": "Aggiornamento elenco",
@@ -131,6 +132,29 @@ IT = {
     "operation not valid in the current state": "operazione non valida per lo stato attuale",
     "unit assertion not met": "asserzione della unit non soddisfatta",
     "operation not supported": "operazione non supportata",
+    "start requests repeated too quickly, wait ten seconds and start it again": (
+        "richieste di avvio troppo ravvicinate, aspetta dieci secondi e riavvialo"
+    ),
+    "the process exited with an error code, check its logs": (
+        "il processo è terminato con un codice di errore, controlla i log"
+    ),
+    "the process was killed by a signal, check its logs": (
+        "il processo è stato terminato da un segnale, controlla i log"
+    ),
+    "the process crashed (core dump), check its logs": (
+        "il processo è andato in crash (core dump), controlla i log"
+    ),
+    "the process did not start or stop within the timeout": (
+        "il processo non è partito o non si è fermato entro il timeout"
+    ),
+    "the watchdog timeout was hit": "è scattato il timeout del watchdog",
+    "the process was killed for lack of memory": (
+        "il processo è stato terminato per mancanza di memoria"
+    ),
+    "a resource limit could not be applied": "non è stato possibile applicare un limite di risorse",
+    "the service did not follow the notification protocol": (
+        "il servizio non ha rispettato il protocollo di notifica"
+    ),
     "authorization denied": "autorizzazione negata",
     "authorization required": "autorizzazione richiesta",
     "systemd did not answer in time": "systemd non ha risposto in tempo",

@@ -3,7 +3,7 @@
 import pytest
 from fake_transport import DBusError, FakeTransport
 
-from unitdeck.backend.base import Scope, Unit, own_unit_dir
+from unitdeck.backend.base import ACTIONS, Scope, Unit, own_unit_dir
 from unitdeck.backend.systemd import UNIT_IFACE, QtDBusBackend, template_of
 
 UNIT_PATH = "/org/freedesktop/systemd1/unit/web_2eservice"
@@ -116,6 +116,7 @@ def test_failed_job_and_dbus_error_are_reported():
     backend, transport = make_backend(
         {
             "RestartUnit": ["/j/1"],
+            "Get": ["start-limit-hit"],
             "StopUnit": DBusError("org.freedesktop.systemd1.NoSuchUnit", "Unit x not found."),
         }
     )
@@ -126,7 +127,7 @@ def test_failed_job_and_dbus_error_are_reported():
     transport.emit("JobRemoved", "/org/freedesktop/systemd1", [1, "/j/1", "web.service", "failed"])
     backend.run("stop", "x.service")
     assert results == [
-        ("web.service", "restart", False, "failed"),
+        ("web.service", "restart", False, "failed (start-limit-hit)"),
         ("x.service", "stop", False, "org.freedesktop.systemd1.NoSuchUnit: Unit x not found."),
     ]
     assert backend.busy == set()
@@ -163,6 +164,15 @@ def test_fetch_details_reads_can_reload_and_drop_ins():
     assert backend.units["web.service"].can_reload is True
 
 
+def test_reset_failed_is_a_plain_call():
+    backend, transport = make_backend()
+    results = []
+    backend.operation_finished.connect(lambda *args: results.append(args))
+    backend.run("reset-failed", "web.service")
+    assert transport.calls[-1][2:] == ("ResetFailedUnit", ["web.service"])
+    assert results == [("web.service", "reset-failed", True, "")] and backend.busy == set()
+
+
 def test_unknown_action_is_rejected():
     backend, _ = make_backend()
     with pytest.raises(ValueError):
@@ -178,9 +188,12 @@ def test_unknown_action_is_rejected():
         ),
         (Unit("b.service", unit_file_state="disabled"), {"start", "enable", "mask"}),
         (Unit("c.service", load_state="masked", unit_file_state="masked"), {"unmask"}),
+        (
+            Unit("e.service", active_state="failed", unit_file_state="enabled"),
+            {"start", "disable", "mask", "reset-failed"},
+        ),
         (Unit("d.service", active_state="active", can_reload=True), {"stop", "restart", "reload"}),
     ],
 )
 def test_unit_can(unit, allowed):
-    actions = {"start", "stop", "restart", "reload", "enable", "disable", "mask", "unmask"}
-    assert {a for a in actions if unit.can(a)} == allowed
+    assert {a for a in ACTIONS if unit.can(a)} == allowed

@@ -67,7 +67,7 @@ def test_model_rows_and_state_text():
 
 
 def test_text_and_state_filters():
-    _, _, proxy = make()
+    backend, _, proxy = make()
     proxy.set_text("FIRST")
     assert names(proxy) == ["alpha.service"]
     proxy.set_text("")
@@ -75,6 +75,9 @@ def test_text_and_state_filters():
     assert names(proxy) == ["alpha.service"]
     proxy.set_state(StateFilter.ACTIVE)
     assert names(proxy) == ["beta.service"]
+    backend.units["mine.service"].active_state = "activating"
+    backend.units_changed.emit()
+    assert names(proxy) == ["beta.service", "mine.service"]  # transitions stay visible
     proxy.set_state(StateFilter.MINE)
     assert names(proxy) == ["mine.service"]
 

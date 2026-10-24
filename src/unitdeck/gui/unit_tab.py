@@ -43,6 +43,7 @@ ACTION_LABELS = {  # source strings, translate with tr() at use time
     "disable": "Disable at boot",
     "mask": "Mask",
     "unmask": "Unmask",
+    "reset-failed": "Reset failed state",
     "logs": "Show logs",
     "daemon-reload": "Reload configuration",
     "refresh": "Refresh unit list",
@@ -58,6 +59,17 @@ JOB_RESULTS = {  # systemd job results other than "done"
     "invalid": "operation not valid in the current state",
     "assert": "unit assertion not met",
     "unsupported": "operation not supported",
+}
+SERVICE_RESULTS = {  # Result property of a failed service
+    "start-limit-hit": "start requests repeated too quickly, wait ten seconds and start it again",
+    "exit-code": "the process exited with an error code, check its logs",
+    "signal": "the process was killed by a signal, check its logs",
+    "core-dump": "the process crashed (core dump), check its logs",
+    "timeout": "the process did not start or stop within the timeout",
+    "watchdog": "the watchdog timeout was hit",
+    "oom-kill": "the process was killed for lack of memory",
+    "resources": "a resource limit could not be applied",
+    "protocol": "the service did not follow the notification protocol",
 }
 AUTH_ERRORS = (  # polkit dialog cancelled or password refused: status bar only, no popup
     "org.freedesktop.DBus.Error.AccessDenied",
@@ -77,6 +89,13 @@ def readable(detail: str) -> str:
     """Human-readable, translated reason for a failed operation."""
     if detail in JOB_RESULTS:
         return tr(JOB_RESULTS[detail])
+    if detail.startswith("failed (") and detail.endswith(")"):
+        result = detail[8:-1]
+        return (
+            tr(SERVICE_RESULTS[result])
+            if result in SERVICE_RESULTS
+            else f"{tr(JOB_RESULTS['failed'])} ({result})"
+        )
     name, _, message = detail.partition(": ")
     if name in ERROR_LABELS:
         return tr(ERROR_LABELS[name])
@@ -142,6 +161,7 @@ class UnitTab(QWidget):
         for action, keys in SHORTCUTS.items():
             shortcut = QShortcut(QKeySequence(keys), self._table)
             shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+            shortcut.setAutoRepeat(False)  # a held key must not queue one action per repeat
             shortcut.activated.connect(lambda a=action: self._run_selected(a))
 
         layout = QVBoxLayout(self)
@@ -210,6 +230,8 @@ class UnitTab(QWidget):
         add("stop")
         add("restart")
         reload = add("reload")
+        if unit.can("reset-failed"):
+            add("reset-failed")
         menu.addSeparator()
         add("disable" if unit.can("disable") else "enable")
         add("unmask" if unit.masked else "mask")

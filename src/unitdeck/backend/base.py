@@ -27,7 +27,17 @@ def own_unit_dir(scope: Scope) -> str:
 RUNNING_STATES = frozenset({"active", "reloading", "activating", "refreshing"})
 
 # Actions a unit can be asked for; "logs" and "more" are GUI-only and always available.
-ACTIONS = ("start", "stop", "restart", "reload", "enable", "disable", "mask", "unmask")
+ACTIONS = (
+    "start",
+    "stop",
+    "restart",
+    "reload",
+    "enable",
+    "disable",
+    "mask",
+    "unmask",
+    "reset-failed",
+)
 
 
 @dataclass(slots=True)
@@ -71,6 +81,8 @@ class Unit:
                 return not self.masked and self.unit_file_state != ""
             case "unmask":
                 return self.masked
+            case "reset-failed":
+                return self.active_state == "failed"
             case "logs" | "more":
                 return True
         return False
