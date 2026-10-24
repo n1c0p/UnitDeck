@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-24
+
 ### Added
 
 - Debian package: PyInstaller one-directory bundle in `/opt/unitdeck` with `/usr/bin/unitdeck`, helper in `/usr/libexec/unitdeck`, polkit policy, desktop file, icon and man page; built by `packaging/build-deb.sh`, checked with `lintian` and a clean-install test. `unitdeck --version` and `unitdeck --check`.
@@ -30,4 +32,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - GPL-3.0-or-later license.
 - This changelog, in English and Italian.
 
-[Unreleased]: https://github.com/n1c0p/UnitDeck/commits/develop
+[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.1.0...develop
+[0.1.0]: https://github.com/n1c0p/UnitDeck/releases/tag/v0.1.0
