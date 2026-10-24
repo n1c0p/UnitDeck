@@ -105,8 +105,8 @@ jobs:
         run: |
           if gh pr list --base develop --head main --state open --json number -q '.[0].number' | grep -q .; then
             echo "A sync PR is already open."
-          elif git diff --quiet origin/develop..HEAD; then
-            echo "develop already contains main."
+          elif git merge-base --is-ancestor HEAD origin/develop; then
+            echo "develop already contains main."  # history, not content: the merge commit counts
           else
             gh pr create --base develop --head main \
               --title "chore: sync main into develop after v${{ steps.version.outputs.version }}" \
