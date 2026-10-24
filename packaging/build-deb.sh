@@ -13,7 +13,7 @@ VERSION="$("$PYTHON" -c 'import unitdeck; print(unitdeck.__version__)')"
 ARCH="$(dpkg --print-architecture)"
 STAGE=build/deb
 DEB="dist/unitdeck_${VERSION}_${ARCH}.deb"
-MAINTAINER="${DEB_MAINTAINER:-Nicola Palmieri <n1c0p@users.noreply.github.com>}"
+MAINTAINER="${DEB_MAINTAINER:-Nicola Palmieri <npalmieri@hotmail.com>}"
 
 echo "==> PyInstaller bundle (version $VERSION)"
 "$PYTHON" -m PyInstaller --noconfirm --clean --log-level WARN unitdeck.spec
