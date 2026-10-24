@@ -43,6 +43,47 @@ IT = {
     "Ready": "Pronto",
     "System": "Sistema",
     "Language": "Lingua",
+    "Settings": "Impostazioni",
+    "Check for updates at startup": "Controlla aggiornamenti all'avvio",
+    "Info": "Informazioni",
+    "Check for updates…": "Controlla aggiornamenti…",
+    "About UnitDeck…": "Informazioni su UnitDeck…",
+    "About Qt…": "Informazioni su Qt…",
+    "About UnitDeck": "Informazioni su UnitDeck",
+    "Version {version}": "Versione {version}",
+    "A desktop application to manage systemd system and user services.": (
+        "Un'applicazione desktop per gestire i servizi systemd di sistema e utente."
+    ),
+    "Licensed under the GNU GPL, version 3 or later.": (
+        "Rilasciato sotto licenza GNU GPL, versione 3 o successiva."
+    ),
+    # updates
+    "Checking for updates…": "Controllo aggiornamenti…",
+    "Update available": "Aggiornamento disponibile",
+    "UnitDeck is up to date ({version}).": "UnitDeck è aggiornato ({version}).",
+    "Update check failed: {error}": "Controllo aggiornamenti non riuscito: {error}",
+    "UnitDeck {new} is available (installed: {old}).": (
+        "È disponibile UnitDeck {new} (installata: {old})."
+    ),
+    "No release notes.": "Nessuna nota di rilascio.",
+    "No package for this system in the release.": (
+        "Nessun pacchetto per questo sistema nella release."
+    ),
+    "Download and install": "Scarica e installa",
+    "Open release page": "Apri la pagina della release",
+    "Later": "Più tardi",
+    "Downloading…": "Download in corso…",
+    "Download failed: {error}": "Download non riuscito: {error}",
+    "Checksum mismatch, the downloaded file was discarded.": (
+        "Checksum non corrispondente, il file scaricato è stato eliminato."
+    ),
+    "Installing… the system will ask for your password.": (
+        "Installazione in corso… il sistema chiederà la password."
+    ),
+    "Installed. Restart UnitDeck to use the new version.": (
+        "Installato. Riavvia UnitDeck per usare la nuova versione."
+    ),
+    "Installation failed.": "Installazione non riuscita.",
     # table
     "Name": "Nome",
     "Description": "Descrizione",
