@@ -72,7 +72,11 @@ The **User services** tab lists every `.service` unit of your user session, incl
 
 The table follows systemd's D-Bus signals, so states update by themselves. "Reload configuration" runs a `daemon-reload` after you edit unit files on disk.
 
-The interface is available in English and Italian: it follows the desktop language by default, and the selector next to the tabs switches it at any time.
+The interface is available in English and Italian: it follows the desktop language by default and can be changed from *Settings → Language*.
+
+### Updates
+
+At startup UnitDeck asks the GitHub Releases API (`api.github.com`) whether a newer version exists; nothing else is sent. Turn this off with *Settings → Check for updates at startup*, or check by hand from *Info → Check for updates…*. When an update is available you can read the release notes, download the `.deb` (its SHA256 is verified against the checksum published with the release) and install it: the installation runs `apt-get` through `pkexec`, so the desktop asks for your password. Checks are skipped when running a development version from source.
 
 ## Dependencies and licenses
 

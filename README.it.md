@@ -72,7 +72,11 @@ La tab **Servizi utente** elenca tutte le unit `.service` della sessione utente,
 
 La tabella segue i segnali D-Bus di systemd, quindi gli stati si aggiornano da soli. "Ricarica configurazione" esegue un `daemon-reload` dopo che hai modificato i file unit su disco.
 
-L'interfaccia è disponibile in inglese e in italiano: segue la lingua del desktop per impostazione predefinita e il selettore accanto alle tab la cambia in qualsiasi momento.
+L'interfaccia è disponibile in inglese e in italiano: segue la lingua del desktop per impostazione predefinita e si cambia da *Impostazioni → Lingua*.
+
+### Aggiornamenti
+
+All'avvio UnitDeck chiede all'API delle GitHub Releases (`api.github.com`) se esiste una versione più recente; non viene inviato nient'altro. Si disattiva da *Impostazioni → Controlla aggiornamenti all'avvio*, oppure si controlla a mano da *Informazioni → Controlla aggiornamenti…*. Quando c'è un aggiornamento puoi leggere le note di rilascio, scaricare il `.deb` (il suo SHA256 viene verificato con il checksum pubblicato nella release) e installarlo: l'installazione esegue `apt-get` tramite `pkexec`, quindi il desktop chiede la password. Il controllo è saltato quando si esegue una versione di sviluppo dai sorgenti.
 
 ## Dipendenze e licenze
 

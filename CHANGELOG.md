@@ -11,7 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - User services tab: searchable and filterable table of the session's `.service` units (including installed but not loaded ones), start/stop/restart/reload, enable/disable at boot, mask/unmask, journal viewer with live follow and priority filter, live updates from systemd's D-Bus signals, context menu and keyboard shortcuts.
-- Interface in English and Italian: follows the desktop language, with a selector next to the tabs.
+- Interface in English and Italian: follows the desktop language, selectable from the Settings menu.
+- Menu bar with Settings and Info menus, About dialogs, and an update mechanism: check against GitHub Releases (at startup, optional, and on demand), download of the `.deb` with SHA256 verification, installation through `pkexec apt-get`.
 - Project skeleton: `pyproject.toml` with `setuptools-scm` versioning, `unitdeck` package runnable with `python -m unitdeck`, refusing to start as root.
 - REUSE compliance: `LICENSES/`, `REUSE.toml` and SPDX headers in every source file.
 - `CONTRIBUTING.md` and `CONTRIBUTING.it.md` with branch model, release process and GitHub rulesets.
