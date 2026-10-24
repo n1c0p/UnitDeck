@@ -10,6 +10,10 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ### Aggiunto
 
+- Scheletro del progetto: `pyproject.toml` con versione da `setuptools-scm`, pacchetto `unitdeck` avviabile con `python -m unitdeck`, che rifiuta di partire come root.
+- Conformità REUSE: `LICENSES/`, `REUSE.toml` e intestazioni SPDX in ogni file sorgente.
+- `CONTRIBUTING.md` e `CONTRIBUTING.it.md` con modello dei branch, processo di rilascio e ruleset GitHub.
+- Workflow GitHub Actions: `ci` (ruff, `reuse lint`, pytest) e i controlli `branch-origin` e `release-check` per le pull request verso `main`.
 - README del progetto, in inglese e in italiano.
 - Licenza GPL-3.0-or-later.
 - Questo changelog, in inglese e in italiano.
