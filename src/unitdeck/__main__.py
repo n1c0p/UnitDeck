@@ -30,7 +30,7 @@ def main() -> None:
         from PyQt6.QtWidgets import QApplication
 
         QApplication(sys.argv)
-        print(f"UnitDeck {__version__}: Qt platform {QApplication.platformName()} ok")
+        print(f"UnitDeck {__version__}: Qt ok")
         return
     # Qt is imported only after the root check, so the check runs even if Qt is broken.
     from PyQt6.QtWidgets import QApplication
