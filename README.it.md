@@ -72,7 +72,17 @@ Le tab **Servizi di sistema** e **Servizi utente** elencano tutte le unit `.serv
 
 ### Modificare un servizio
 
-*Modifica* (`Ctrl+E`) apre un editor con evidenziazione sintattica e numeri di riga accanto alla configurazione effettiva (file unit più tutti i drop-in, con i rispettivi percorsi). Per una unit fornita da un pacchetto l'editor scrive un drop-in `override.conf` in `/etc/systemd/system/<unit>.d/` (o `~/.config/systemd/user/<unit>.d/` per i servizi utente): lì vanno solo le direttive che cambi, e gli aggiornamenti del pacchetto continuano a funzionare. Una casella permette invece di creare una copia completa della unit, che nasconde il file del pacchetto. Le unit create da te si modificano direttamente. Prima del salvataggio il file viene controllato con `systemd-analyze verify` e gli avvisi vengono mostrati; il file precedente resta come `.bak`; dopo il salvataggio UnitDeck esegue `daemon-reload` e propone di riavviare il servizio. *Ripristina originale* rimuove drop-in e copie locali di una unit di pacchetto (come `systemctl revert`), *Elimina* rimuove una unit creata da te.
+*Modifica* (`Ctrl+E`) apre un editor con evidenziazione sintattica e numeri di riga accanto alla configurazione effettiva (file unit più tutti i drop-in, con i rispettivi percorsi). Per una unit fornita da un pacchetto l'editor scrive un drop-in `override.conf` in `/etc/systemd/system/<unit>.d/` (o `~/.config/systemd/user/<unit>.d/` per i servizi utente): lì vanno solo le direttive che cambi, e gli aggiornamenti del pacchetto continuano a funzionare. Una casella permette invece di creare una copia completa della unit, che nasconde il file del pacchetto. Le unit create da te si modificano direttamente. Prima del salvataggio il file viene controllato con `systemd-analyze verify` e gli avvisi vengono mostrati; il file precedente resta come `.bak`; dopo il salvataggio UnitDeck esegue `daemon-reload` e propone di riavviare il servizio. *Ripristina originale* rimuove drop-in e copie locali di una unit di pacchetto (come `systemctl revert`), *Elimina* ferma, disabilita e rimuove una unit creata da te.
+
+### Creare un servizio
+
+*Nuovo servizio* apre un wizard in quattro passi: nome e template, campi guidati (descrizione, comando, tipo, politica di riavvio, dipendenze e, per i servizi di sistema, gli opzionali `User=`/`Group=`, senza i quali il servizio gira come root), un'anteprima modificabile controllata con `systemd-analyze verify`, e le opzioni finali "abilita all'avvio" / "avvia subito". La unit viene scritta in `~/.config/systemd/user/` dalla tab utente o in `/etc/systemd/system/` dalla tab di sistema (tramite l'helper, quindi polkit chiede la password). I nomi già usati da una unit in qualunque percorso di ricerca di systemd vengono rifiutati.
+
+I template sono semplici file in `src/unitdeck/templates/`: un servizio vuoto, un'attività oneshot con `RemainAfterExit`, un servizio long-running con `Restart=on-failure` e, solo per i servizi utente, una condivisione SMB montata con `gio` (richiede una sessione utente con D-Bus). Aggiungerne uno è una piccola pull request, vedi CONTRIBUTING.
+
+### Linger
+
+La tab utente ha un interruttore *Linger*: quando è attivo, i tuoi servizi utente restano in esecuzione anche senza una sessione aperta (quello che fa `loginctl enable-linger`). Il cambio passa da logind e chiede l'autorizzazione.
 
 I log di sistema sono leggibili senza password solo se il tuo utente appartiene al gruppo `adm` o `systemd-journal` (impostazione predefinita per il primo utente su Ubuntu); altrimenti la finestra dei log mostra il suggerimento di journalctl.
 

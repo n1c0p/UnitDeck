@@ -10,6 +10,9 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ### Aggiunto
 
+- Wizard Nuovo servizio: nome e template, campi guidati (con `User=`/`Group=` e avviso root per i servizi di sistema, `WantedBy` precompilato per scope), anteprima modificabile controllata con `systemd-analyze verify`, opzioni abilita/avvia; la nuova unit viene selezionata nella tabella. I template sono file in `src/unitdeck/templates/`: vuoto, oneshot, long-running, mount SMB con gio (solo utente).
+- Interruttore Linger nella tab utente, tramite `SetUserLinger` di logind con autorizzazione interattiva.
+- Elimina ora ferma e disabilita la unit prima di rimuoverne i file; i colori dell'editor si adattano ai temi scuri; dimensione e posizione della finestra vengono ricordate.
 - Editor dei servizi: editor con evidenziazione sintattica e numeri di riga accanto alla configurazione effettiva; drop-in `override.conf` per le unit di pacchetto (copia completa come opzione), modifica diretta per le unit create dall'utente; `systemd-analyze verify` prima del salvataggio, backup `.bak`, `daemon-reload` automatico e proposta di riavvio. "Ripristina originale" (`RevertUnitFiles`) ed "Elimina" per le unit create dall'utente.
 - Helper privilegiato `unitdeck-helper` (solo libreria standard) con la sua policy polkit `eu.nicop.unitdeck.manage-unit-files` (`auth_admin_keep`): scrive drop-in e unit solo sotto `/etc/systemd/system`, con validazione rigorosa di nomi e percorsi.
 - Tab Servizi di sistema: stesse funzioni della tab utente sul bus di sistema; le azioni privilegiate usano l'autorizzazione interattiva D-Bus, così polkit mostra il dialogo di autenticazione del desktop solo quando serve, e un'autenticazione annullata o rifiutata viene riportata nella barra di stato senza alcun crash.
