@@ -88,7 +88,7 @@ class MainWindow(QMainWindow):
             f"<p>{tr('A desktop application to manage systemd system and user services.')}</p>"
             f"<p>{tr('Licensed under the GNU GPL, version 3 or later.')}</p>"
             f'<p><a href="{url}">{url}</a></p>'
-            "<p>Copyright © 2026 Nicola (n1c0p)</p>",
+            "<p>Copyright © 2026 Nicola Palmieri (n1c0p)</p>",
         )
 
     def _check_updates(self) -> None:
