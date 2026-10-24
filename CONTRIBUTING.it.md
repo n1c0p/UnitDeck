@@ -31,6 +31,12 @@ Prima di ogni commit esegui gli stessi controlli della CI:
 .venv/bin/pytest
 ```
 
+La scrittura dei file unit di **sistema** passa dall'helper privilegiato, che pkexec esegue solo dal suo percorso di installazione. Per provarlo da un checkout, installa una volta l'helper e la sua policy polkit (e rimuovili con `uninstall`):
+
+```bash
+packaging/install-dev-helper.sh
+```
+
 Durante lo sviluppo non toccare mai i servizi di sistema reali: usa unit **utente** usa e getta chiamate `test-unitdeck-*.service` e rimuovile alla fine.
 
 ## Flusso delle pull request

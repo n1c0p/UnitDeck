@@ -29,7 +29,7 @@ UnitDeck is designed to **never run as root**, and refuses to start if launched 
 
 - **User services** are managed over the session bus: no password is ever requested.
 - **System services** are managed over the system bus with polkit interactive authorization: your desktop's native authentication dialog appears **only** when you perform a privileged action (start, stop, edit, …). Browsing services, status and logs never asks for a password.
-- **Writing system unit files** goes through a small, auditable helper launched via `pkexec`, which accepts only a fixed set of operations and only paths under `/etc/systemd/system`.
+- **Writing system unit files** goes through a small, auditable helper launched via `pkexec`, which accepts only a fixed set of operations and only paths under `/etc/systemd/system`. Its polkit action uses `auth_admin_keep`, so saving a file and the `daemon-reload` that follows ask for the password once; to be asked every time, change `auth_admin_keep` to `auth_admin` in `/usr/share/polkit-1/actions/eu.nicop.unitdeck.policy`.
 - UnitDeck never reads, stores or handles your password: authentication is entirely delegated to polkit.
 
 ## Requirements
@@ -69,6 +69,10 @@ The **System services** and **User services** tabs list every `.service` unit of
 | `Ctrl+T` | Stop |
 | `Ctrl+R` | Restart |
 | `Ctrl+L` | Show logs (also double-click) |
+
+### Editing a service
+
+*Edit* (`Ctrl+E`) opens an editor with syntax highlighting and line numbers next to the effective configuration (unit file plus every drop-in, with their paths). For a unit shipped by a package the editor writes a drop-in `override.conf` under `/etc/systemd/system/<unit>.d/` (or `~/.config/systemd/user/<unit>.d/` for user services): only the directives you change go there, and package upgrades keep working. A checkbox switches to a full copy of the unit instead, which shadows the package file. Units created by you are edited in place. Before saving, the file is checked with `systemd-analyze verify` and warnings are shown; the previous file is kept as `.bak`; after saving UnitDeck runs `daemon-reload` and offers to restart the service. *Restore original* removes drop-ins and local copies of a package unit (like `systemctl revert`), *Delete* removes a unit you created.
 
 System logs are readable without a password only if your user belongs to the `adm` or `systemd-journal` group (the default for the first user on Ubuntu); otherwise the log window shows journalctl's hint.
 

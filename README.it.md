@@ -29,7 +29,7 @@ UnitDeck è progettato per **non girare mai come root** e si rifiuta di partire 
 
 - I **servizi utente** sono gestiti tramite il bus di sessione: non viene mai chiesta nessuna password.
 - I **servizi di sistema** sono gestiti tramite il bus di sistema con l'autorizzazione interattiva di polkit: la finestra di autenticazione nativa del desktop compare **solo** quando esegui un'azione privilegiata (avvio, arresto, modifica, …). Consultare servizi, stato e log non richiede mai la password.
-- La **scrittura dei file di sistema** passa da un piccolo helper verificabile, avviato tramite `pkexec`, che accetta solo un insieme fisso di operazioni e solo percorsi sotto `/etc/systemd/system`.
+- La **scrittura dei file di sistema** passa da un piccolo helper verificabile, avviato tramite `pkexec`, che accetta solo un insieme fisso di operazioni e solo percorsi sotto `/etc/systemd/system`. La sua action polkit usa `auth_admin_keep`, così il salvataggio di un file e il `daemon-reload` successivo chiedono la password una volta sola; per farsela chiedere ogni volta, sostituisci `auth_admin_keep` con `auth_admin` in `/usr/share/polkit-1/actions/eu.nicop.unitdeck.policy`.
 - UnitDeck non legge, non salva e non gestisce mai la tua password: l'autenticazione è interamente delegata a polkit.
 
 ## Requisiti
@@ -69,6 +69,10 @@ Le tab **Servizi di sistema** e **Servizi utente** elencano tutte le unit `.serv
 | `Ctrl+T` | Ferma |
 | `Ctrl+R` | Riavvia |
 | `Ctrl+L` | Mostra log (anche doppio clic) |
+
+### Modificare un servizio
+
+*Modifica* (`Ctrl+E`) apre un editor con evidenziazione sintattica e numeri di riga accanto alla configurazione effettiva (file unit più tutti i drop-in, con i rispettivi percorsi). Per una unit fornita da un pacchetto l'editor scrive un drop-in `override.conf` in `/etc/systemd/system/<unit>.d/` (o `~/.config/systemd/user/<unit>.d/` per i servizi utente): lì vanno solo le direttive che cambi, e gli aggiornamenti del pacchetto continuano a funzionare. Una casella permette invece di creare una copia completa della unit, che nasconde il file del pacchetto. Le unit create da te si modificano direttamente. Prima del salvataggio il file viene controllato con `systemd-analyze verify` e gli avvisi vengono mostrati; il file precedente resta come `.bak`; dopo il salvataggio UnitDeck esegue `daemon-reload` e propone di riavviare il servizio. *Ripristina originale* rimuove drop-in e copie locali di una unit di pacchetto (come `systemctl revert`), *Elimina* rimuove una unit creata da te.
 
 I log di sistema sono leggibili senza password solo se il tuo utente appartiene al gruppo `adm` o `systemd-journal` (impostazione predefinita per il primo utente su Ubuntu); altrimenti la finestra dei log mostra il suggerimento di journalctl.
 

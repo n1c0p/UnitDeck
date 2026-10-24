@@ -31,6 +31,12 @@ Before every commit run the same checks as the CI:
 .venv/bin/pytest
 ```
 
+Writing **system** unit files goes through the privileged helper, which pkexec only runs from its installed path. To try it from a checkout, install the helper and its polkit policy once (and remove them with `uninstall`):
+
+```bash
+packaging/install-dev-helper.sh
+```
+
 While developing, never touch real system services: use throwaway **user** units named `test-unitdeck-*.service` and remove them when you are done.
 
 ## Pull request flow
