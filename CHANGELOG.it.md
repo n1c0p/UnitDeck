@@ -8,6 +8,8 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-24
+
 ### Aggiunto
 
 - Pacchetto Debian: bundle PyInstaller onedir in `/opt/unitdeck` con `/usr/bin/unitdeck`, helper in `/usr/libexec/unitdeck`, policy polkit, file desktop, icona e pagina man; compilato da `packaging/build-deb.sh`, controllato con `lintian` e con un test di installazione pulita. `unitdeck --version` e `unitdeck --check`.
@@ -30,4 +32,5 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 - Licenza GPL-3.0-or-later.
 - Questo changelog, in inglese e in italiano.
 
-[Unreleased]: https://github.com/n1c0p/UnitDeck/commits/develop
+[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.1.0...develop
+[0.1.0]: https://github.com/n1c0p/UnitDeck/releases/tag/v0.1.0
