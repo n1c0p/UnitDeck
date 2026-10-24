@@ -220,6 +220,6 @@ __marimo__/
 
 # setuptools-scm
 src/unitdeck/_version.py
-.id
+
 # IDE
 .idea/
