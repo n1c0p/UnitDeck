@@ -28,6 +28,7 @@ def main() -> None:
 
     app = QApplication(sys.argv)
     app.setApplicationName("UnitDeck")
+    app.setOrganizationName("UnitDeck")  # QSettings -> ~/.config/UnitDeck/UnitDeck.conf
     app.setApplicationVersion(__version__)
     app.setDesktopFileName(APP_ID)
     window = MainWindow()

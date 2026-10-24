@@ -11,8 +11,9 @@ from PyQt6.QtCore import QAbstractTableModel, QModelIndex, QObject, QSortFilterP
 from PyQt6.QtGui import QColor
 
 from unitdeck.backend.base import SystemdBackend, Unit
+from unitdeck.i18n import tr
 
-COLUMNS = ("Nome", "Descrizione", "Caricamento", "Stato", "Avvio automatico", "Azioni")
+COLUMNS = ("Name", "Description", "Load", "State", "Startup", "Actions")  # source strings
 NAME, DESCRIPTION, LOAD, ACTIVE, STARTUP, ACTIONS = range(len(COLUMNS))
 
 UnitRole = Qt.ItemDataRole.UserRole + 1
@@ -39,7 +40,7 @@ class UnitModel(QAbstractTableModel):
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = 0) -> Any:
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
-            return COLUMNS[section]
+            return tr(COLUMNS[section])
         return None
 
     def data(self, index: QModelIndex, role: int = 0) -> Any:
@@ -56,7 +57,7 @@ class UnitModel(QAbstractTableModel):
                 case 1:
                     return unit.description
                 case 2:
-                    return unit.load_state or "non caricata"
+                    return unit.load_state or tr("not loaded")
                 case 3:
                     return f"{unit.active_state} ({unit.sub_state})" if unit.loaded else "inactive"
                 case 4:
@@ -94,12 +95,12 @@ class StateFilter(StrEnum):
     MINE = "mine"
 
 
-FILTER_LABELS = {
-    StateFilter.ALL: "Tutti",
-    StateFilter.ACTIVE: "Attivi",
-    StateFilter.INACTIVE: "Inattivi",
-    StateFilter.FAILED: "Falliti",
-    StateFilter.MINE: "Creati da me",
+FILTER_LABELS = {  # source strings, translate with tr() at use time
+    StateFilter.ALL: "All",
+    StateFilter.ACTIVE: "Active",
+    StateFilter.INACTIVE: "Inactive",
+    StateFilter.FAILED: "Failed",
+    StateFilter.MINE: "Created by me",
 }
 
 

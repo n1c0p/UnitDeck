@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
 
 from unitdeck.backend.base import Scope
 from unitdeck.backend.journal import PRIORITIES, JournalReader
+from unitdeck.i18n import tr
 
 PRIORITY_COLORS = {0: "#d1242f", 1: "#d1242f", 2: "#d1242f", 3: "#d1242f", 4: "#bf8700"}
 
@@ -32,7 +33,7 @@ class LogViewer(QDialog):
         super().__init__(parent)
         self._unit = unit
         self._scope = scope
-        self.setWindowTitle(f"Log – {unit}")
+        self.setWindowTitle(tr("Logs – {unit}").format(unit=unit))
         self.setWindowFlag(Qt.WindowType.Window)  # independent window, not a modal child
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.resize(900, 500)
@@ -41,18 +42,18 @@ class LogViewer(QDialog):
         for i, name in enumerate(PRIORITIES):
             self._priority.addItem(f"{i} {name}", i)
         self._priority.setCurrentIndex(len(PRIORITIES) - 1)
-        self._priority.setToolTip("Mostra i messaggi con questa priorità o più grave")
+        self._priority.setToolTip(tr("Show messages with this priority or more severe"))
         self._lines = QSpinBox()
         self._lines.setRange(50, 20000)
         self._lines.setSingleStep(100)
         self._lines.setValue(500)
-        self._follow = QCheckBox("Segui (live)")
-        reload = QPushButton("Ricarica")
+        self._follow = QCheckBox(tr("Follow (live)"))
+        reload = QPushButton(tr("Reload"))
 
         bar = QHBoxLayout()
-        bar.addWidget(QLabel("Priorità:"))
+        bar.addWidget(QLabel(tr("Priority:")))
         bar.addWidget(self._priority)
-        bar.addWidget(QLabel("Righe:"))
+        bar.addWidget(QLabel(tr("Lines:")))
         bar.addWidget(self._lines)
         bar.addWidget(self._follow)
         bar.addStretch(1)
@@ -96,7 +97,7 @@ class LogViewer(QDialog):
         if code != 0 and stderr:
             self._text.appendHtml(f"<i>journalctl: {html.escape(stderr)}</i>")
         elif self._text.blockCount() <= 1 and not self._text.toPlainText():
-            self._text.appendHtml("<i>Nessuna voce nel journal per questa unit.</i>")
+            self._text.appendHtml(f"<i>{tr('No journal entries for this unit.')}</i>")
 
     def closeEvent(self, event) -> None:
         self._reader.stop()

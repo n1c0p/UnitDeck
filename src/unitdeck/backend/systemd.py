@@ -51,6 +51,8 @@ class QtDBusBackend(SystemdBackend):
     def __init__(self, scope: Scope, transport: Any, parent: QObject | None = None) -> None:
         super().__init__(scope, parent)
         self._t = transport
+        if isinstance(transport, QObject):  # die together: no signal reaches a dead backend
+            transport.setParent(self)
         self._path_to_name: dict[str, str] = {}
         self._jobs: dict[str, tuple[str, str]] = {}  # job object path -> (unit, action)
         self._lists: dict[str, list] = {}  # ListUnits / ListUnitFiles replies of one refresh

@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
 from unitdeck.backend.base import SystemdBackend, Unit
 from unitdeck.gui.actions_delegate import ActionsDelegate
 from unitdeck.gui.log_viewer import LogViewer
+from unitdeck.i18n import tr
 from unitdeck.model import (
     ACTIONS,
     DESCRIPTION,
@@ -33,46 +34,49 @@ from unitdeck.model import (
     UnitRole,
 )
 
-ACTION_LABELS = {
-    "start": "Avvia",
-    "stop": "Ferma",
-    "restart": "Riavvia",
-    "reload": "Ricarica",
-    "enable": "Abilita all'avvio",
-    "disable": "Disabilita all'avvio",
-    "mask": "Maschera",
-    "unmask": "Smaschera",
-    "logs": "Mostra log",
-    "daemon-reload": "Ricarica configurazione",
-    "refresh": "Aggiornamento elenco",
-    "details": "Lettura dettagli",
+ACTION_LABELS = {  # source strings, translate with tr() at use time
+    "start": "Start",
+    "stop": "Stop",
+    "restart": "Restart",
+    "reload": "Reload",
+    "enable": "Enable at boot",
+    "disable": "Disable at boot",
+    "mask": "Mask",
+    "unmask": "Unmask",
+    "logs": "Show logs",
+    "daemon-reload": "Reload configuration",
+    "refresh": "Refresh unit list",
+    "details": "Read details",
 }
 SHORTCUTS = {"start": "Ctrl+S", "stop": "Ctrl+T", "restart": "Ctrl+R", "logs": "Ctrl+L"}
 JOB_RESULTS = {  # systemd job results other than "done"
-    "failed": "il servizio ha fallito, controlla i log",
-    "timeout": "tempo scaduto",
-    "canceled": "operazione annullata",
-    "dependency": "una dipendenza ha fallito",
-    "skipped": "operazione saltata (condizione non soddisfatta)",
-    "invalid": "operazione non valida per lo stato attuale",
-    "assert": "asserzione della unit non soddisfatta",
-    "unsupported": "operazione non supportata",
+    "failed": "the service failed, check its logs",
+    "timeout": "timed out",
+    "canceled": "operation cancelled",
+    "dependency": "a dependency failed",
+    "skipped": "operation skipped (condition not met)",
+    "invalid": "operation not valid in the current state",
+    "assert": "unit assertion not met",
+    "unsupported": "operation not supported",
 }
 ERROR_LABELS = {  # D-Bus error names
-    "org.freedesktop.DBus.Error.AccessDenied": "autorizzazione negata",
-    "org.freedesktop.DBus.Error.InteractiveAuthorizationRequired": "autorizzazione richiesta",
-    "org.freedesktop.DBus.Error.NoReply": "systemd non ha risposto in tempo",
-    "org.freedesktop.systemd1.NoSuchUnit": "unit non trovata",
-    "org.freedesktop.systemd1.UnitMasked": "la unit è mascherata",
-    "org.freedesktop.systemd1.JobTypeNotApplicable": "operazione non applicabile a questa unit",
+    "org.freedesktop.DBus.Error.AccessDenied": "authorization denied",
+    "org.freedesktop.DBus.Error.InteractiveAuthorizationRequired": "authorization required",
+    "org.freedesktop.DBus.Error.NoReply": "systemd did not answer in time",
+    "org.freedesktop.systemd1.NoSuchUnit": "unit not found",
+    "org.freedesktop.systemd1.UnitMasked": "the unit is masked",
+    "org.freedesktop.systemd1.JobTypeNotApplicable": "operation not applicable to this unit",
 }
 
 
 def readable(detail: str) -> str:
+    """Human-readable, translated reason for a failed operation."""
     if detail in JOB_RESULTS:
-        return JOB_RESULTS[detail]
+        return tr(JOB_RESULTS[detail])
     name, _, message = detail.partition(": ")
-    return ERROR_LABELS.get(name, message or detail)
+    if name in ERROR_LABELS:
+        return tr(ERROR_LABELS[name])
+    return message or detail
 
 
 class UnitTab(QWidget):
@@ -87,18 +91,18 @@ class UnitTab(QWidget):
         self._logs: dict[str, LogViewer] = {}
 
         search = QLineEdit()
-        search.setPlaceholderText("Cerca per nome o descrizione…")
+        search.setPlaceholderText(tr("Search by name or description…"))
         search.setClearButtonEnabled(True)
         search.textChanged.connect(self._proxy.set_text)
         state = QComboBox()
         for value, label in FILTER_LABELS.items():
-            state.addItem(label, value)
+            state.addItem(tr(label), value)
         state.currentIndexChanged.connect(lambda _i: self._proxy.set_state(state.currentData()))
-        reload = QPushButton(QIcon.fromTheme("view-refresh-symbolic"), "Ricarica configurazione")
-        reload.setToolTip("daemon-reload: rilegge i file unit modificati su disco")
+        reload = QPushButton(QIcon.fromTheme("view-refresh-symbolic"), tr("Reload configuration"))
+        reload.setToolTip(tr("daemon-reload: re-read unit files changed on disk"))
         reload.clicked.connect(backend.daemon_reload)
-        refresh = QPushButton("Aggiorna")
-        refresh.setToolTip("Rilegge l'elenco delle unit")
+        refresh = QPushButton(tr("Refresh"))
+        refresh.setToolTip(tr("Re-read the unit list"))
         refresh.clicked.connect(backend.refresh)
         top = QHBoxLayout()
         top.addWidget(search, 1)
@@ -167,7 +171,9 @@ class UnitTab(QWidget):
         if action == "logs":
             self._show_logs(unit)
             return
-        self.message.emit(f"{ACTION_LABELS[action]} {unit.name}…")
+        self.message.emit(
+            tr("{action} {unit}…").format(action=tr(ACTION_LABELS[action]), unit=unit.name)
+        )
         self._backend.run(action, unit.name)
 
     def _show_logs(self, unit: Unit) -> None:
@@ -191,7 +197,7 @@ class UnitTab(QWidget):
         busy = unit.name in self._backend.busy
 
         def add(action: str):
-            entry = menu.addAction(ACTION_LABELS[action])
+            entry = menu.addAction(tr(ACTION_LABELS[action]))
             entry.setEnabled(not busy and unit.can(action))
             entry.triggered.connect(lambda _checked=False, a=action: self._run(a, unit))
             return entry
@@ -220,19 +226,18 @@ class UnitTab(QWidget):
     # ---- results ----------------------------------------------------------------------------
 
     def _on_finished(self, name: str, action: str, ok: bool, detail: str) -> None:
-        label = ACTION_LABELS.get(action, action)
-        target = f" {name}" if name else ""
+        words = {"action": tr(ACTION_LABELS.get(action, action)), "unit": name}
         if ok:
-            self.message.emit(f"{label}{target}: completato")
+            self.message.emit(tr("{action} {unit}: done").format(**words).replace("  ", " "))
             return
-        reason = readable(detail)
-        self.message.emit(f"{label}{target}: {reason}")
+        words["reason"] = readable(detail)
+        self.message.emit(tr("{action} {unit}: {reason}").format(**words).replace("  ", " "))
         if action in ("refresh", "details"):
             return
         box = QMessageBox(
             QMessageBox.Icon.Warning,
             "UnitDeck",
-            f"{label}{target} non riuscito:\n{reason}",
+            tr("{action} {unit} failed:\n{reason}").format(**words).replace("  ", " "),
             QMessageBox.StandardButton.Ok,
             self,
         )

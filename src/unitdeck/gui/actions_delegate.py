@@ -15,13 +15,14 @@ from PyQt6.QtWidgets import (
     QToolTip,
 )
 
+from unitdeck.i18n import tr
 from unitdeck.model import BusyRole, UnitRole
 
-BUTTONS = (  # action, theme icon, fallback glyph, tooltip
-    ("start", "media-playback-start-symbolic", "▶", "Avvia"),
-    ("stop", "media-playback-stop-symbolic", "■", "Ferma"),
-    ("restart", "view-refresh-symbolic", "↻", "Riavvia"),
-    ("more", "view-more-symbolic", "⋯", "Altre azioni"),
+BUTTONS = (  # action, theme icon, fallback glyph, tooltip (source string)
+    ("start", "media-playback-start-symbolic", "▶", "Start"),
+    ("stop", "media-playback-stop-symbolic", "■", "Stop"),
+    ("restart", "view-refresh-symbolic", "↻", "Restart"),
+    ("more", "view-more-symbolic", "⋯", "More actions"),
 )
 SIZE = 22
 GAP = 4
@@ -139,7 +140,7 @@ class ActionsDelegate(QStyledItemDelegate):
         if event.type() == QEvent.Type.ToolTip:
             i = self._hit(option.rect, event.pos())
             if i >= 0:
-                QToolTip.showText(event.globalPos(), BUTTONS[i][3], view)
+                QToolTip.showText(event.globalPos(), tr(BUTTONS[i][3]), view)
                 return True
             QToolTip.hideText()
         return super().helpEvent(event, view, option, index)
