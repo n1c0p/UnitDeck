@@ -7,13 +7,13 @@
 
 **UnitDeck** è un'applicazione desktop per Linux che permette di gestire i **servizi systemd**, sia **di sistema** sia **utente**, da un'interfaccia grafica semplice e ordinata.
 
-> 🚧 **Stato: sviluppo iniziale.** Non è ancora disponibile nessuna release. Le funzionalità elencate di seguito descrivono gli obiettivi delle prime versioni.
+> **Stato: prime release (0.x).** La prima versione è pubblicata e utilizzabile; aspettati qualche spigolo e segnalalo nelle [issue](https://github.com/n1c0p/UnitDeck/issues).
 
 ## Perché UnitDeck
 
 Gestire i servizi di solito significa destreggiarsi tra `systemctl`, `systemctl --user`, `journalctl` e un editor aperto con `sudo`. UnitDeck riunisce tutto in un'unica finestra, senza mai eseguire l'interfaccia come root.
 
-## Funzionalità previste
+## Funzionalità
 
 - **Due schede:** servizi di sistema e servizi utente, ciascuna con una tabella ricercabile e filtrabile che mostra stato di caricamento, stato di esecuzione e avvio automatico.
 - **Azioni rapide su ogni riga:** avvia, ferma, riavvia, modifica, più ricarica, abilita/disabilita all'avvio, log, maschera/smaschera, ripristina originale ed elimina.
@@ -39,7 +39,7 @@ UnitDeck è progettato per **non girare mai come root** e si rifiuta di partire 
 
 ## Installazione
 
-Quando sarà pubblicata la prima release, scarica il pacchetto `.deb` dalla [pagina Releases](https://github.com/n1c0p/UnitDeck/releases) e installalo:
+Scarica il pacchetto `.deb` dalla [pagina Releases](https://github.com/n1c0p/UnitDeck/releases) e installalo:
 
 ```bash
 sudo apt install ./unitdeck_<versione>_amd64.deb
