@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- System services tab: same features as the user tab on the system bus; privileged actions use D-Bus interactive authorization, so polkit shows the desktop's authentication dialog only when needed, and a cancelled or refused authentication is reported in the status bar without any crash.
+- "Reset failed state" action and, when a job fails, systemd's own result (e.g. `start-limit-hit`) in the error message.
 - User services tab: searchable and filterable table of the session's `.service` units (including installed but not loaded ones), start/stop/restart/reload, enable/disable at boot, mask/unmask, journal viewer with live follow and priority filter, live updates from systemd's D-Bus signals, context menu and keyboard shortcuts.
 - Interface in English and Italian: follows the desktop language, selectable from the Settings menu.
 - Menu bar with Settings and Info menus, About dialogs, and an update mechanism: check against GitHub Releases (at startup, optional, and on demand), download of the `.deb` with SHA256 verification, installation through `pkexec apt-get`.

@@ -61,7 +61,7 @@ Il numero di versione deriva dai tag git tramite `setuptools-scm`: un checkout t
 
 ## Uso
 
-La tab **Servizi utente** elenca tutte le unit `.service` della sessione utente, comprese quelle installate ma non caricate. Ogni riga ha i pulsanti avvia, ferma e riavvia più un menu "⋯" con ricarica, abilita/disabilita all'avvio, maschera/smaschera e log. Le stesse azioni sono disponibili dal menu del tasto destro e, sulla riga selezionata, da tastiera:
+Le tab **Servizi di sistema** e **Servizi utente** elencano tutte le unit `.service` del manager di sistema e della sessione utente, comprese quelle installate ma non caricate. Elenco, stati e log non chiedono mai la password; la prima azione privilegiata su un servizio di sistema (avvio, arresto, abilitazione, …) apre il dialogo polkit del desktop, e annullarlo lascia il servizio com'era. Ogni riga ha i pulsanti avvia, ferma e riavvia più un menu "⋯" con ricarica, abilita/disabilita all'avvio, maschera/smaschera e log. Le stesse azioni sono disponibili dal menu del tasto destro e, sulla riga selezionata, da tastiera:
 
 | Scorciatoia | Azione |
 |-------------|--------|
@@ -69,6 +69,8 @@ La tab **Servizi utente** elenca tutte le unit `.service` della sessione utente,
 | `Ctrl+T` | Ferma |
 | `Ctrl+R` | Riavvia |
 | `Ctrl+L` | Mostra log (anche doppio clic) |
+
+I log di sistema sono leggibili senza password solo se il tuo utente appartiene al gruppo `adm` o `systemd-journal` (impostazione predefinita per il primo utente su Ubuntu); altrimenti la finestra dei log mostra il suggerimento di journalctl.
 
 La tabella segue i segnali D-Bus di systemd, quindi gli stati si aggiornano da soli. "Ricarica configurazione" esegue un `daemon-reload` dopo che hai modificato i file unit su disco.
 

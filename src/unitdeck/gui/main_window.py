@@ -7,7 +7,7 @@ from PyQt6.QtCore import QSettings, QTimer
 from PyQt6.QtGui import QActionGroup
 from PyQt6.QtWidgets import QMainWindow, QMenuBar, QMessageBox, QTabWidget
 
-from unitdeck.backend.systemd import UserBackend
+from unitdeck.backend.systemd import SystemBackend, UserBackend
 from unitdeck.gui.unit_tab import UnitTab
 from unitdeck.gui.update_dialog import UpdateDialog
 from unitdeck.i18n import set_language, tr
@@ -39,12 +39,16 @@ class MainWindow(QMainWindow):
 
     def _build(self) -> None:
         tabs = QTabWidget()
-        user_tab = UnitTab(UserBackend(tabs), tabs)
-        tabs.addTab(user_tab, tr("User services"))
+        for backend_class, title in (
+            (SystemBackend, "System services"),
+            (UserBackend, "User services"),
+        ):
+            tab = UnitTab(backend_class(tabs), tabs)
+            tabs.addTab(tab, tr(title))
+            tab.message.connect(self.statusBar().showMessage)
         self.setCentralWidget(tabs)  # deletes the previous content, backends included
         self.setMenuBar(self._menu_bar())
         self.statusBar().showMessage(tr("Ready"))
-        user_tab.message.connect(self.statusBar().showMessage)
 
     def _menu_bar(self) -> QMenuBar:
         bar = QMenuBar()

@@ -131,8 +131,8 @@ class UnitProxy(QSortFilterProxyModel):
         ):
             return False
         match self.state:
-            case StateFilter.ACTIVE:
-                return unit.active_state == "active"
+            case StateFilter.ACTIVE:  # transitions included: a restarting row must not vanish
+                return unit.active_state not in ("inactive", "failed")
             case StateFilter.INACTIVE:
                 return unit.active_state == "inactive"
             case StateFilter.FAILED:
