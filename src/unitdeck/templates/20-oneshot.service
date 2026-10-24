@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
+# unitdeck: name=One-shot task (RemainAfterExit); scope=both
+[Unit]
+Description={DESCRIPTION}
+After={AFTER}
+Wants={WANTS}
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart={EXEC_START}
+ExecStop={EXEC_STOP}
+User={USER}
+Group={GROUP}
+
+[Install]
+WantedBy={WANTED_BY}

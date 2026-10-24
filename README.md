@@ -1,5 +1,7 @@
 # UnitDeck
 
+**English** | [Italiano](README.it.md)
+
 [![License: GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/n1c0p/UnitDeck?include_prereleases&sort=semver)](https://github.com/n1c0p/UnitDeck/releases)
 
@@ -27,12 +29,12 @@ UnitDeck is designed to **never run as root**, and refuses to start if launched 
 
 - **User services** are managed over the session bus: no password is ever requested.
 - **System services** are managed over the system bus with polkit interactive authorization: your desktop's native authentication dialog appears **only** when you perform a privileged action (start, stop, edit, …). Browsing services, status and logs never asks for a password.
-- **Writing system unit files** goes through a small, auditable helper launched via `pkexec`, which accepts only a fixed set of operations and only paths under `/etc/systemd/system`.
+- **Writing system unit files** goes through a small, auditable helper launched via `pkexec`, which accepts only a fixed set of operations and only paths under `/etc/systemd/system`. Its polkit action uses `auth_admin_keep`, so saving a file and the `daemon-reload` that follows ask for the password once; to be asked every time, change `auth_admin_keep` to `auth_admin` in `/usr/share/polkit-1/actions/eu.nicop.unitdeck.policy`.
 - UnitDeck never reads, stores or handles your password: authentication is entirely delegated to polkit.
 
 ## Requirements
 
-- A Linux distribution with **systemd** and **polkit** (primary target: recent Ubuntu releases with GNOME, on X11 or Wayland).
+- A Linux distribution with **systemd** and **polkit** (primary target: recent Ubuntu releases with GNOME, on X11 or Wayland). The `.deb` package is built on **Ubuntu 24.04 LTS**, the oldest supported release.
 - A polkit authentication agent (included in all major desktop environments).
 
 ## Installation
@@ -45,7 +47,76 @@ sudo apt install ./unitdeck_<version>_amd64.deb
 
 ### From source
 
-Instructions for running from source will be added as development progresses. UnitDeck is written in **Python 3.12+** with **PyQt6**.
+UnitDeck is written in **Python 3.12+** with **PyQt6**.
+
+```bash
+git clone https://github.com/n1c0p/UnitDeck.git
+cd UnitDeck
+python3 -m venv .venv
+.venv/bin/pip install -e .
+.venv/bin/python -m unitdeck
+```
+
+The version number comes from git tags via `setuptools-scm`: a checkout between releases reports a development version.
+
+## Usage
+
+The **System services** and **User services** tabs list every `.service` unit of the system manager and of your user session, including installed units that are not loaded. Browsing, states and logs never ask for a password; the first privileged action on a system service (start, stop, enable, …) opens the desktop's polkit dialog, and cancelling it simply leaves the service as it was. Each row has start, stop and restart buttons plus a "⋯" menu with reload, enable/disable at boot, mask/unmask and logs. The same actions are available from the right-click menu and, on the selected row, from the keyboard:
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+S` | Start |
+| `Ctrl+T` | Stop |
+| `Ctrl+R` | Restart |
+| `Ctrl+L` | Show logs (also double-click) |
+
+### Editing a service
+
+*Edit* (`Ctrl+E`) opens an editor with syntax highlighting and line numbers next to the effective configuration (unit file plus every drop-in, with their paths). For a unit shipped by a package the editor writes a drop-in `override.conf` under `/etc/systemd/system/<unit>.d/` (or `~/.config/systemd/user/<unit>.d/` for user services): only the directives you change go there, and package upgrades keep working. A checkbox switches to a full copy of the unit instead, which shadows the package file. Units created by you are edited in place. Before saving, the file is checked with `systemd-analyze verify` and warnings are shown; the previous file is kept as `.bak`; after saving UnitDeck runs `daemon-reload` and offers to restart the service. *Restore original* removes drop-ins and local copies of a package unit (like `systemctl revert`), *Delete* stops, disables and removes a unit you created.
+
+### Creating a service
+
+*New service* opens a four-step wizard: name and template, guided fields (description, command, type, restart policy, dependencies, and for system services the optional `User=`/`Group=`, without which the service runs as root), an editable preview checked with `systemd-analyze verify`, and the final "enable at boot" / "start now" options. The unit is written to `~/.config/systemd/user/` from the user tab or to `/etc/systemd/system/` from the system tab (through the helper, so polkit asks for your password). Names already used by any unit in systemd's search paths are refused.
+
+Templates are plain files in `src/unitdeck/templates/`: an empty service, a one-shot task with `RemainAfterExit`, a long-running service with `Restart=on-failure`, and, for user services only, an SMB share mounted with `gio` (it needs a user session with D-Bus). Adding one is a small pull request, see CONTRIBUTING.
+
+### Lingering
+
+The user tab has a *Linger* switch: when on, your user services keep running without an open session (what `loginctl enable-linger` does). Changing it goes through logind and asks for authorization.
+
+System logs are readable without a password only if your user belongs to the `adm` or `systemd-journal` group (the default for the first user on Ubuntu); otherwise the log window shows journalctl's hint.
+
+The table follows systemd's D-Bus signals, so states update by themselves. "Reload configuration" runs a `daemon-reload` after you edit unit files on disk.
+
+The interface is available in English and Italian: it follows the desktop language by default and can be changed from *Settings → Language*.
+
+### Updates
+
+At startup UnitDeck asks the GitHub Releases API (`api.github.com`) whether a newer version exists; nothing else is sent. Turn this off with *Settings → Check for updates at startup*, or check by hand from *Info → Check for updates…*. When an update is available you can read the release notes, download the `.deb` (its SHA256 is verified against the checksum published with the release) and install it: the installation runs `apt-get` through `pkexec`, so the desktop asks for your password. Checks are skipped when running a development version from source.
+
+### Building the package
+
+`packaging/build-deb.sh` bundles the application with PyInstaller (`unitdeck.spec`, one-directory mode) into `/opt/unitdeck`, adds the helper, the polkit policy, the desktop file, the icon and a man page, and produces `dist/unitdeck_<version>_amd64.deb` with `dpkg-deb`, checked by `lintian` (a few tags accepted by design are listed in `packaging/lintian-suppress`). `packaging/test-install.sh` installs the result in a clean Ubuntu 24.04 container and runs `unitdeck --check`. Build on Ubuntu 24.04, the oldest supported release, so the bundle runs on newer glibc too:
+
+```bash
+pip install . pyinstaller
+packaging/build-deb.sh
+```
+
+Every push to `develop` builds a preview package, kept 14 days as a workflow artifact; every merge into `main` publishes a release (see CONTRIBUTING).
+
+## Dependencies and licenses
+
+All dependencies are compatible with the GPL-3.0-or-later license of the project.
+
+| Package | Role | License |
+|---------|------|---------|
+| [PyQt6](https://www.riverbankcomputing.com/software/pyqt/) | GUI toolkit and D-Bus bindings (QtDBus) | GPL-3.0-only |
+| [setuptools-scm](https://github.com/pypa/setuptools-scm) | Version from git tags (build time only) | MIT |
+| [pytest](https://pytest.org/) | Tests (development only) | MIT |
+| [ruff](https://docs.astral.sh/ruff/) | Lint and format (development only) | MIT |
+| [reuse](https://reuse.software/) | License compliance check (development only) | Apache-2.0 / GPL-3.0-or-later |
+| [PyInstaller](https://pyinstaller.org/) | Bundles the application for the `.deb` (build only) | GPL-2.0-or-later with bootloader exception |
 
 ## Contributing
 
@@ -54,13 +125,21 @@ Contributions are welcome. The repository uses two long-lived branches:
 - `main`: always matches the latest release;
 - `develop`: ongoing development, the target for all pull requests.
 
-Start your work from `develop` in a `feature/*` or `fix/*` branch and open a pull request against `develop`. More details will be available in `CONTRIBUTING.md`.
+Start your work from `develop` in a `feature/*` or `fix/*` branch and open a pull request against `develop`. [CONTRIBUTING.md](CONTRIBUTING.md) describes the full workflow: branches, pull requests, SPDX headers, how a release is prepared and which GitHub rulesets protect `main`, `develop` and the `v*` tags.
+
+Documentation is kept in English and Italian: when you change `README.md` or `CHANGELOG.md`, please update `README.it.md` and `CHANGELOG.it.md` as well. If you are not comfortable with Italian, just mention it in the pull request and the maintainer will take care of the translation.
+
+Releases are automatic: a pull request from `develop` to `main` sets the version in both changelogs, and merging it tags the commit, builds the `.deb` and publishes the GitHub Release.
 
 Service templates are plain files in the repository: adding a new one through a pull request is a great first contribution.
 
+## Changelog
+
+All notable changes are listed in [CHANGELOG.md](CHANGELOG.md).
+
 ## License
 
-Copyright (C) 2026 Nicola ([n1c0p](https://github.com/n1c0p))
+Copyright (C) 2026 Nicola Palmieri ([n1c0p](https://github.com/n1c0p))
 
 UnitDeck is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 

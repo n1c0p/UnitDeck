@@ -1,0 +1,172 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
+"""UnitDeck privileged helper.
+
+Launched through pkexec (polkit action eu.nicop.unitdeck.manage-unit-files) to perform a
+fixed set of operations on /etc/systemd/system and nothing else. Standard library only; the
+only inputs are a unit name, the --reload flag and the file content on standard input.
+
+    unitdeck-helper write-dropin  UNIT [--reload]   stdin -> /etc/systemd/system/UNIT.d/override.conf
+    unitdeck-helper write-unit    UNIT [--reload]   stdin -> /etc/systemd/system/UNIT
+    unitdeck-helper remove-dropin UNIT [--reload]
+    unitdeck-helper delete-unit   UNIT [--reload]   only a regular file in /etc/systemd/system
+    unitdeck-helper daemon-reload
+
+Exit status: 0 done, 1 refused or failed (reason on stderr), 2 usage error.
+"""
+
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+
+ROOT = "/etc/systemd/system"
+DROPIN = "override.conf"
+MAX_CONTENT = 1 << 20
+UNIT_NAME = re.compile(r"^[A-Za-z0-9_:@\\-][A-Za-z0-9_:@.\\-]{0,254}\.service$")
+OPERATIONS = ("write-dropin", "write-unit", "remove-dropin", "delete-unit", "daemon-reload")
+
+
+class HelperError(Exception):
+    """Refused or failed operation; the message goes to stderr."""
+
+
+class UsageError(HelperError):
+    pass
+
+
+def check_unit_name(unit):
+    if not UNIT_NAME.match(unit) or "/" in unit or ".." in unit:
+        raise HelperError(f"invalid unit name: {unit!r}")
+    return unit
+
+
+def unit_path(unit, root=ROOT):
+    return os.path.join(root, check_unit_name(unit))
+
+
+def dropin_path(unit, root=ROOT):
+    return os.path.join(root, check_unit_name(unit) + ".d", DROPIN)
+
+
+def ensure_inside(path, root=ROOT):
+    """The parent directory, symlinks resolved, must be root itself or a directory below it."""
+    real_root = os.path.realpath(root)
+    real_dir = os.path.realpath(os.path.dirname(path))
+    if real_dir != real_root and not real_dir.startswith(real_root + os.sep):
+        raise HelperError(f"refusing to touch {path}: outside {root}")
+
+
+def write_file(path, content, root=ROOT):
+    ensure_inside(path, root)
+    if os.path.islink(path):
+        raise HelperError(f"{path} is a symlink (mask or alias), refusing to overwrite it")
+    directory = os.path.dirname(path)
+    os.makedirs(directory, mode=0o755, exist_ok=True)
+    ensure_inside(path, root)  # again: the directory may have been a symlink
+    if os.path.exists(path):
+        shutil.copy2(path, path + ".bak")
+    fd, tmp = tempfile.mkstemp(prefix=".unitdeck-", dir=directory)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(content)
+        os.chmod(tmp, 0o644)
+        os.replace(tmp, path)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+
+
+def remove_dropin(unit, root=ROOT):
+    path = dropin_path(unit, root)
+    ensure_inside(path, root)
+    removed = False
+    for candidate in (path, path + ".bak"):
+        if os.path.islink(candidate) or os.path.isfile(candidate):
+            os.unlink(candidate)
+            removed = True
+    directory = os.path.dirname(path)
+    if os.path.isdir(directory) and not os.listdir(directory):
+        os.rmdir(directory)
+    return removed
+
+
+def delete_unit(unit, root=ROOT):
+    path = unit_path(unit, root)
+    ensure_inside(path, root)
+    if os.path.islink(path):
+        raise HelperError(f"{path} is a symlink (mask or alias): unmask or disable it instead")
+    if not os.path.isfile(path):
+        raise HelperError(f"{path} does not exist")
+    os.unlink(path)
+    if os.path.isfile(path + ".bak"):
+        os.unlink(path + ".bak")
+    remove_dropin(unit, root)
+
+
+def daemon_reload():
+    subprocess.run(["systemctl", "daemon-reload"], check=True)
+
+
+def read_content():
+    data = sys.stdin.read(MAX_CONTENT + 1)
+    if len(data) > MAX_CONTENT:
+        raise HelperError("content larger than 1 MiB refused")
+    if "\0" in data:
+        raise HelperError("binary content refused")
+    return data
+
+
+def run(argv, root=ROOT, content=None):
+    """Execute one operation; returns a short message. ``content`` replaces stdin in tests."""
+    args = [arg for arg in argv if arg != "--reload"]
+    reload = len(args) != len(argv)
+    if not args or args[0] not in OPERATIONS:
+        raise UsageError(__doc__)
+    operation = args[0]
+    if operation == "daemon-reload":
+        if len(args) != 1 or reload:
+            raise UsageError(__doc__)
+        daemon_reload()
+        return "daemon-reload done"
+    if len(args) != 2:
+        raise UsageError(__doc__)
+    unit = args[1]
+    if operation == "write-dropin":
+        path = dropin_path(unit, root)
+        write_file(path, read_content() if content is None else content, root)
+        message = f"written {path}"
+    elif operation == "write-unit":
+        path = unit_path(unit, root)
+        write_file(path, read_content() if content is None else content, root)
+        message = f"written {path}"
+    elif operation == "remove-dropin":
+        message = f"removed {dropin_path(unit, root)}" if remove_dropin(unit, root) else "nothing to remove"
+    else:
+        delete_unit(unit, root)
+        message = f"deleted {unit_path(unit, root)}"
+    if reload:
+        daemon_reload()
+        message += ", daemon-reload done"
+    return message
+
+
+def main():
+    os.umask(0o022)
+    try:
+        print(run(sys.argv[1:]))
+        return 0
+    except UsageError as exc:
+        print(exc, file=sys.stderr)
+        return 2
+    except (HelperError, OSError, subprocess.CalledProcessError) as exc:
+        print(f"unitdeck-helper: {exc}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

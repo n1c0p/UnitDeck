@@ -1,0 +1,114 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
+#
+# Automatic release on every merge into main. The version comes from the first
+# "## [X.Y.Z] - YYYY-MM-DD" heading of CHANGELOG.md (checked by release-check.yml on the PR).
+# Idempotent: when the tag already exists the workflow ends without doing anything, so a
+# failed run can be re-launched by hand (workflow_dispatch). Tag and release are created with
+# GITHUB_TOKEN, which does not trigger other workflows.
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04  # oldest supported Ubuntu, for glibc compatibility of the bundle
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Read the version from CHANGELOG.md
+        id: version
+        run: |
+          set -eu
+          heading="$(grep -m1 -E '^## \[[0-9]' CHANGELOG.md)"  # first numbered section
+          version="$(printf '%s' "$heading" | grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' | tr -d '#[] ')"
+          if [ -z "$version" ]; then
+            echo "::error::CHANGELOG.md has no released version below Unreleased: $heading"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            echo "Tag v$version already exists: nothing to do."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # The distribution's Python, not setup-python: see the build-preview job in ci.yml.
+      - name: Install and test
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          sudo apt-get install -y --no-install-recommends python3-venv libpython3.12 lintian binutils libegl1 libgl1 libxkbcommon0 libdbus-1-3
+          python3 -m venv .venv
+          .venv/bin/pip install -e ".[dev]" pyinstaller
+          .venv/bin/ruff check . && .venv/bin/ruff format --check .
+          .venv/bin/reuse lint
+          .venv/bin/pytest
+        env:
+          QT_QPA_PLATFORM: offscreen
+
+      - name: Tag the merge commit
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ steps.version.outputs.version }}" -m "UnitDeck ${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+          .venv/bin/pip install --force-reinstall --no-deps .  # setuptools-scm now reads the tag
+
+      - name: Build the .deb
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          PYTHON=.venv/bin/python packaging/build-deb.sh
+          packaging/test-install.sh dist/*.deb
+          cd dist && sha256sum unitdeck_*.deb > "unitdeck_${{ steps.version.outputs.version }}_amd64.deb.sha256"
+          cat "unitdeck_${{ steps.version.outputs.version }}_amd64.deb.sha256"
+
+      - name: Release notes from CHANGELOG.md
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          awk -v v="${{ steps.version.outputs.version }}" '
+            /^## \[/ { if (found) exit; if (index($0, "## [" v "]") == 1) { found = 1; next } }
+            found { print }
+          ' CHANGELOG.md | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' > dist/notes.md
+          test -s dist/notes.md || echo "See CHANGELOG.md." > dist/notes.md
+
+      - name: Publish the GitHub Release
+        if: steps.version.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" \
+            --title "UnitDeck ${{ steps.version.outputs.version }}" \
+            --notes-file dist/notes.md \
+            dist/unitdeck_*.deb dist/unitdeck_*.deb.sha256
+
+      - name: Open the sync PR main -> develop
+        if: steps.version.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh pr list --base develop --head main --state open --json number -q '.[0].number' | grep -q .; then
+            echo "A sync PR is already open."
+          elif git diff --quiet origin/develop..HEAD; then
+            echo "develop already contains main."
+          else
+            gh pr create --base develop --head main \
+              --title "chore: sync main into develop after v${{ steps.version.outputs.version }}" \
+              --body "Merge with a merge commit, not squash. If the checks do not start (the PR was opened by GITHUB_TOKEN), close and reopen it."
+          fi

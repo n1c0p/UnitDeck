@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
+[Desktop Entry]
+Type=Application
+Name=UnitDeck
+Comment=Manage systemd system and user services
+Comment[it]=Gestisci i servizi systemd di sistema e utente
+Exec=unitdeck
+Icon=eu.nicop.unitdeck
+Terminal=false
+Categories=System;
+Keywords=systemd;service;unit;daemon;
+Keywords[it]=systemd;servizio;unit;demone;
+StartupNotify=true
+StartupWMClass=unitdeck
