@@ -7,6 +7,8 @@
 
 **UnitDeck** is a desktop application for Linux to manage **systemd services**, both **system-wide** and **per-user**, from a clean graphical interface.
 
+![UnitDeck main window: the system services tab](docs/screenshot.png)
+
 > **Status: early releases (0.x).** The first version is out and usable; expect rough edges and report them in the [issues](https://github.com/n1c0p/UnitDeck/issues).
 
 ## Why UnitDeck
