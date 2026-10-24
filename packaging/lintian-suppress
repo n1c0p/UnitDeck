@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
+# Lintian tags accepted by design, see packaging/build-deb.sh:
+# the application lives in /opt as a self-contained PyInstaller bundle.
+dir-or-file-in-opt
+embedded-library
+shared-library-lacks-prerequisites
+hardening-no-pie

@@ -1,0 +1,39 @@
+.\" SPDX-License-Identifier: GPL-3.0-or-later
+.\" SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
+.TH UNITDECK 1 "2026" "UnitDeck" "User Commands"
+.SH NAME
+unitdeck \- manage systemd system and user services from a graphical interface
+.SH SYNOPSIS
+.B unitdeck
+.RI [ \-\-version ]
+.RI [ \-\-check ]
+.SH DESCRIPTION
+UnitDeck lists the .service units of the system manager and of the user session,
+starts, stops, restarts, enables, masks and edits them (with drop-ins), creates new
+services from templates and shows their journal, with live updates over D-Bus.
+.PP
+It always runs as a normal user and refuses to start as root. Privileged actions are
+authorized through polkit; system unit files are written by the helper
+.I /usr/libexec/unitdeck/unitdeck-helper
+launched with pkexec.
+.SH OPTIONS
+.TP
+.B \-\-version
+Print the version and exit.
+.TP
+.B \-\-check
+Load Qt and exit; used to verify an installation without opening a window.
+.SH FILES
+.TP
+.I /etc/systemd/system, ~/.config/systemd/user
+Where system and user units created or overridden by UnitDeck are written.
+.TP
+.I /usr/share/polkit-1/actions/eu.nicop.unitdeck.policy
+Polkit policy of the helper (auth_admin_keep by default).
+.SH SEE ALSO
+.BR systemctl (1),
+.BR systemd.service (5),
+.BR journalctl (1),
+.BR pkexec (1)
+.SH AUTHOR
+Nicola Palmieri (n1c0p), https://github.com/n1c0p/UnitDeck
