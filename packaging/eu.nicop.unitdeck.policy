@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<!--
+SPDX-License-Identifier: GPL-3.0-or-later
+SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
+
+auth_admin_keep lets polkit remember the authentication for a few minutes, so saving a unit
+file and the daemon-reload that follows ask for the password once. Replace it with auth_admin
+to be asked every time.
+-->
+<policyconfig>
+  <vendor>UnitDeck</vendor>
+  <vendor_url>https://github.com/n1c0p/UnitDeck</vendor_url>
+  <action id="eu.nicop.unitdeck.manage-unit-files">
+    <description>Write system service files</description>
+    <description xml:lang="it">Scrivere i file dei servizi di sistema</description>
+    <message>Authentication is required to change system service files</message>
+    <message xml:lang="it">È richiesta l'autenticazione per modificare i file dei servizi di sistema</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/unitdeck/unitdeck-helper</annotate>
+  </action>
+</policyconfig>

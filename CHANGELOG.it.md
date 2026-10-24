@@ -10,6 +10,8 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ### Aggiunto
 
+- Editor dei servizi: editor con evidenziazione sintattica e numeri di riga accanto alla configurazione effettiva; drop-in `override.conf` per le unit di pacchetto (copia completa come opzione), modifica diretta per le unit create dall'utente; `systemd-analyze verify` prima del salvataggio, backup `.bak`, `daemon-reload` automatico e proposta di riavvio. "Ripristina originale" (`RevertUnitFiles`) ed "Elimina" per le unit create dall'utente.
+- Helper privilegiato `unitdeck-helper` (solo libreria standard) con la sua policy polkit `eu.nicop.unitdeck.manage-unit-files` (`auth_admin_keep`): scrive drop-in e unit solo sotto `/etc/systemd/system`, con validazione rigorosa di nomi e percorsi.
 - Tab Servizi di sistema: stesse funzioni della tab utente sul bus di sistema; le azioni privilegiate usano l'autorizzazione interattiva D-Bus, così polkit mostra il dialogo di autenticazione del desktop solo quando serve, e un'autenticazione annullata o rifiutata viene riportata nella barra di stato senza alcun crash.
 - Azione "Azzera lo stato fallito" e, quando un job fallisce, il risultato di systemd (es. `start-limit-hit`) nel messaggio di errore.
 - Tab Servizi utente: tabella ricercabile e filtrabile delle unit `.service` della sessione (comprese quelle installate ma non caricate), avvia/ferma/riavvia/ricarica, abilita/disabilita all'avvio, maschera/smaschera, visualizzatore del journal con follow live e filtro per priorità, aggiornamento live dai segnali D-Bus di systemd, menu contestuale e scorciatoie da tastiera.

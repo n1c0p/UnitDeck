@@ -12,6 +12,7 @@ from PyQt6.QtDBus import QDBusConnection
 
 from unitdeck.backend.base import Scope, SystemdBackend, Unit
 from unitdeck.backend.transport import QtDBusTransport
+from unitdeck.backend.unitfiles import HelperWriter, UserWriter, is_own, vendor_copy
 
 MANAGER_PATH = "/org/freedesktop/systemd1"
 MANAGER_IFACE = "org.freedesktop.systemd1.Manager"
@@ -30,6 +31,7 @@ FILE_METHODS = {  # action -> (method, arguments after the unit name list)
     "disable": ("DisableUnitFiles", [False]),
     "mask": ("MaskUnitFiles", [False, False]),
     "unmask": ("UnmaskUnitFiles", [False]),
+    "revert": ("RevertUnitFiles", []),  # drops drop-ins and /etc copies, like systemctl revert
 }
 SIMPLE_METHODS = {"reset-failed": "ResetFailedUnit"}  # no job, no reload
 PROPERTY_FIELDS = {
@@ -87,10 +89,23 @@ class QtDBusBackend(SystemdBackend):
 
     def fetch_details(self, name: str) -> None:
         unit = self.units.get(name)
-        if unit is None or not unit.loaded:
+        if unit is None:
             return
+        if unit.loaded:
+            self._get_all(name, unit.object_path)
+        else:  # LoadUnit needs no privilege and gives the object path to read from
+            self._t.call(
+                MANAGER_PATH,
+                MANAGER_IFACE,
+                "LoadUnit",
+                [name],
+                lambda args: self._get_all(name, args[0]),
+                self._error_handler(name, "details"),
+            )
+
+    def _get_all(self, name: str, object_path: str) -> None:
         self._t.call(
-            unit.object_path,
+            object_path,
             PROPERTIES_IFACE,
             "GetAll",
             [UNIT_IFACE],
@@ -173,6 +188,7 @@ class QtDBusBackend(SystemdBackend):
             if name not in units and not name.endswith("@.service"):
                 units[name] = Unit(name, unit_file_state=state, fragment_path=file_path[name])
         for name, unit in units.items():
+            self._locate(unit)
             old = self.units.get(name)
             if old is not None and old.object_path == unit.object_path:
                 unit.can_reload = old.can_reload
@@ -188,7 +204,12 @@ class QtDBusBackend(SystemdBackend):
         unit.can_reload = bool(props.get("CanReload", False))
         unit.drop_in_paths = list(props.get("DropInPaths", []))
         _apply(unit, props)
+        self._locate(unit)
         self.unit_updated.emit(name)
+
+    def _locate(self, unit: Unit) -> None:
+        unit.own = is_own(unit.fragment_path, self.own_dir)
+        unit.vendor_path = vendor_copy(unit.name, self.scope) if unit.own else ""
 
     def _reload(self, name: str, action: str) -> None:
         self._t.call(
@@ -268,6 +289,7 @@ class UserBackend(QtDBusBackend):
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(Scope.USER, QtDBusTransport(QDBusConnection.sessionBus()), parent)
+        self.writer = UserWriter(self)
 
 
 class SystemBackend(QtDBusBackend):
@@ -278,3 +300,4 @@ class SystemBackend(QtDBusBackend):
             QDBusConnection.systemBus(), interactive=True, timeout_ms=10 * 60 * 1000
         )
         super().__init__(Scope.SYSTEM, transport, parent)
+        self.writer = HelperWriter(self)

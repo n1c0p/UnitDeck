@@ -21,7 +21,9 @@ from PyQt6.QtWidgets import (
 )
 
 from unitdeck.backend.base import SystemdBackend, Unit
+from unitdeck.backend.unitfiles import HELPER_MISSING
 from unitdeck.gui.actions_delegate import ActionsDelegate
+from unitdeck.gui.edit_dialog import EditDialog
 from unitdeck.gui.log_viewer import LogViewer
 from unitdeck.i18n import tr
 from unitdeck.model import (
@@ -44,12 +46,22 @@ ACTION_LABELS = {  # source strings, translate with tr() at use time
     "mask": "Mask",
     "unmask": "Unmask",
     "reset-failed": "Reset failed state",
+    "edit": "Edit",
+    "revert": "Restore original",
+    "delete": "Delete",
+    "save": "Save",
     "logs": "Show logs",
     "daemon-reload": "Reload configuration",
     "refresh": "Refresh unit list",
     "details": "Read details",
 }
-SHORTCUTS = {"start": "Ctrl+S", "stop": "Ctrl+T", "restart": "Ctrl+R", "logs": "Ctrl+L"}
+SHORTCUTS = {
+    "start": "Ctrl+S",
+    "stop": "Ctrl+T",
+    "restart": "Ctrl+R",
+    "edit": "Ctrl+E",
+    "logs": "Ctrl+L",
+}
 JOB_RESULTS = {  # systemd job results other than "done"
     "failed": "the service failed, check its logs",
     "timeout": "timed out",
@@ -82,6 +94,7 @@ ERROR_LABELS = {  # D-Bus error names
     "org.freedesktop.systemd1.NoSuchUnit": "unit not found",
     "org.freedesktop.systemd1.UnitMasked": "the unit is masked",
     "org.freedesktop.systemd1.JobTypeNotApplicable": "operation not applicable to this unit",
+    HELPER_MISSING: "the privileged helper is not installed (see CONTRIBUTING)",
 }
 
 
@@ -169,6 +182,10 @@ class UnitTab(QWidget):
         layout.addWidget(self._table)
 
         backend.operation_finished.connect(self._on_finished)
+        if backend.writer is not None:
+            backend.writer.finished.connect(
+                lambda op, ok, detail: self._on_finished("", op, ok, detail)
+            )
         backend.busy_changed.connect(lambda *_: self._delegate.set_spinning(bool(backend.busy)))
         backend.refresh()
 
@@ -195,10 +212,62 @@ class UnitTab(QWidget):
         if action == "logs":
             self._show_logs(unit)
             return
+        if action == "edit":
+            self._edit(unit)
+            return
+        if action == "revert" and not self._confirm(
+            tr(
+                "Remove every drop-in and local copy of {unit} and go back to the package version?"
+            ).format(unit=unit.name)
+        ):
+            return
+        if action == "delete":
+            if self._confirm(
+                tr("Delete the unit file of {unit}? This cannot be undone.").format(unit=unit.name)
+            ):
+                self._delete(unit)
+            return
         self.message.emit(
             tr("{action} {unit}…").format(action=tr(ACTION_LABELS[action]), unit=unit.name)
         )
         self._backend.run(action, unit.name)
+
+    def _confirm(self, question: str) -> bool:
+        answer = QMessageBox.question(
+            self,
+            "UnitDeck",
+            question,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        return answer == QMessageBox.StandardButton.Yes
+
+    def _edit(self, unit: Unit) -> None:
+        dialog = EditDialog(self._backend, unit, self)
+        if dialog.exec() != EditDialog.DialogCode.Accepted:
+            return
+        self.message.emit(tr("{action} {unit}: done").format(action=tr("Save"), unit=unit.name))
+        current = self._backend.units.get(unit.name, unit)
+        if current.running and self._confirm(
+            tr("{unit} is running. Restart it now to apply the new configuration?").format(
+                unit=unit.name
+            )
+        ):
+            self._run("restart", current)
+
+    def _delete(self, unit: Unit) -> None:
+        """Disable first (so no .wants symlink is left behind), then remove the files."""
+        if not unit.can("disable"):
+            self._backend.writer.delete_unit(unit.name)
+            return
+
+        def after_disable(name: str, action: str, _ok: bool, _detail: str) -> None:
+            if name == unit.name and action == "disable":
+                self._backend.operation_finished.disconnect(after_disable)
+                self._backend.writer.delete_unit(unit.name)
+
+        self._backend.operation_finished.connect(after_disable)
+        self._backend.run("disable", unit.name)
 
     def _show_logs(self, unit: Unit) -> None:
         viewer = self._logs.get(unit.name)
@@ -226,27 +295,31 @@ class UnitTab(QWidget):
             entry.triggered.connect(lambda _checked=False, a=action: self._run(a, unit))
             return entry
 
-        add("start")
-        add("stop")
-        add("restart")
-        reload = add("reload")
+        entries = {}
+        for action in ("start", "stop", "restart", "reload"):
+            entries[action] = add(action)
         if unit.can("reset-failed"):
             add("reset-failed")
         menu.addSeparator()
+        add("edit")
         add("disable" if unit.can("disable") else "enable")
         add("unmask" if unit.masked else "mask")
         menu.addSeparator()
         add("logs")
-        if unit.loaded and unit.can_reload is None:
-            # CanReload is fetched lazily; the entry turns on when the answer arrives.
-            def update(name: str) -> None:
-                current = self._backend.units.get(name)
-                if name == unit.name and current is not None:
-                    reload.setEnabled(not busy and current.can("reload"))
+        menu.addSeparator()
+        entries["revert"] = add("revert")
+        entries["delete"] = add("delete")
 
-            self._backend.unit_updated.connect(update)
-            menu.aboutToHide.connect(lambda: self._backend.unit_updated.disconnect(update))
-            self._backend.fetch_details(unit.name)
+        # CanReload and the drop-in list arrive asynchronously: entries turn on when they do.
+        def update(name: str) -> None:
+            current = self._backend.units.get(name)
+            if name == unit.name and current is not None:
+                for action, entry in entries.items():
+                    entry.setEnabled(not busy and current.can(action))
+
+        self._backend.unit_updated.connect(update)
+        menu.aboutToHide.connect(lambda: self._backend.unit_updated.disconnect(update))
+        self._backend.fetch_details(unit.name)
         menu.exec(global_pos)
 
     # ---- results ----------------------------------------------------------------------------
