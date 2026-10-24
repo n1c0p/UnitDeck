@@ -16,26 +16,30 @@ from PyQt6.QtGui import (
     QTextCharFormat,
     QTextDocument,
 )
-from PyQt6.QtWidgets import QPlainTextEdit, QWidget
+from PyQt6.QtWidgets import QApplication, QPlainTextEdit, QWidget
 
 SECTION = re.compile(r"^\s*\[[^\]]*\]?\s*$")
 KEY = re.compile(r"^\s*([A-Za-z0-9_.-]+)\s*(=)(.*)$")
 COMMENT = re.compile(r"^\s*[#;]")
+LIGHT_COLORS = {"section": "#8250df", "key": "#0969da", "comment": "#6e7781", "path": "#1a7f37"}
+DARK_COLORS = {"section": "#c297ff", "key": "#79c0ff", "comment": "#8b949e", "path": "#56d364"}
 
 
 class IniHighlighter(QSyntaxHighlighter):
     def __init__(self, document: QTextDocument) -> None:
         super().__init__(document)
+        dark = QApplication.palette().window().color().lightness() < 128
+        colors = DARK_COLORS if dark else LIGHT_COLORS
         self._section = QTextCharFormat()
         self._section.setFontWeight(QFont.Weight.Bold)
-        self._section.setForeground(QColor("#8250df"))
+        self._section.setForeground(QColor(colors["section"]))
         self._key = QTextCharFormat()
-        self._key.setForeground(QColor("#0969da"))
+        self._key.setForeground(QColor(colors["key"]))
         self._comment = QTextCharFormat()
-        self._comment.setForeground(QColor("#6e7781"))
+        self._comment.setForeground(QColor(colors["comment"]))
         self._comment.setFontItalic(True)
         self._path = QTextCharFormat()
-        self._path.setForeground(QColor("#1a7f37"))
+        self._path.setForeground(QColor(colors["path"]))
         self._path.setFontWeight(QFont.Weight.Bold)
 
     def highlightBlock(self, text: str) -> None:

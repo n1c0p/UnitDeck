@@ -8,6 +8,7 @@ import pytest
 
 from unitdeck import i18n
 from unitdeck.gui.actions_delegate import BUTTONS
+from unitdeck.gui.new_service_wizard import LABELS
 from unitdeck.gui.unit_tab import (
     ACTION_LABELS,
     ERROR_LABELS,
@@ -16,6 +17,7 @@ from unitdeck.gui.unit_tab import (
     readable,
 )
 from unitdeck.model import COLUMNS, FILTER_LABELS
+from unitdeck.templates import load_templates
 
 SRC = Path(i18n.__file__).parent
 
@@ -45,6 +47,8 @@ def source_strings() -> set[str]:
     found.update(ERROR_LABELS.values())
     found.update(SERVICE_RESULTS.values())
     found.update(button[3] for button in BUTTONS)
+    found.update(LABELS.values())
+    found.update(t.name for t in load_templates())
     return found
 
 

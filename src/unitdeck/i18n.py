@@ -100,6 +100,48 @@ IT = {
     "Created by me": "Creati da me",
     "Search by name or description…": "Cerca per nome o descrizione…",
     "Reload configuration": "Ricarica configurazione",
+    "New service": "Nuovo servizio",
+    "Linger": "Linger",
+    "Keep user services running without an open session (loginctl enable-linger)": (
+        "Mantiene i servizi utente in esecuzione senza una sessione aperta (loginctl enable-linger)"
+    ),
+    "{action}: {reason}": "{action}: {reason}",
+    # new service wizard
+    "Name and template": "Nome e template",
+    "Service name:": "Nome del servizio:",
+    "my-service": "mio-servizio",
+    "Template:": "Template:",
+    "Use letters, digits, '-', '_', '.' and ':' only.": (
+        "Usa solo lettere, cifre, '-', '_', '.' e ':'."
+    ),
+    "A unit with this name already exists.": "Esiste già una unit con questo nome.",
+    "Guided fields": "Campi guidati",
+    "Type": "Tipo",
+    "Command (ExecStart)": "Comando (ExecStart)",
+    "Stop command (ExecStop)": "Comando di arresto (ExecStop)",
+    "Restart policy (Restart)": "Politica di riavvio (Restart)",
+    "Start after (After)": "Avvia dopo (After)",
+    "Wants": "Richiede (Wants)",
+    "User": "Utente",
+    "Group": "Gruppo",
+    "Wanted by (WantedBy)": "Richiesto da (WantedBy)",
+    "Server": "Server",
+    "Share": "Condivisione",
+    "Credentials file (relative to home)": "File delle credenziali (relativo alla home)",
+    "Without User= and Group= the service runs as root.": (
+        "Senza User= e Group= il servizio gira come root."
+    ),
+    "Preview": "Anteprima",
+    "Generated unit file, editable by hand:": "File unit generato, modificabile a mano:",
+    "Final options": "Opzioni finali",
+    "Start now": "Avvia subito",
+    "The unit will be written to {path}.": "La unit verrà scritta in {path}.",
+    "The system will ask for your password.": "Il sistema chiederà la password.",
+    # template names
+    "Empty service": "Servizio vuoto",
+    "One-shot task (RemainAfterExit)": "Attività oneshot (RemainAfterExit)",
+    "Long-running service (Restart=on-failure)": "Servizio long-running (Restart=on-failure)",
+    "SMB share mounted with gio": "Condivisione SMB montata con gio",
     "daemon-reload: re-read unit files changed on disk": (
         "daemon-reload: rilegge i file unit modificati su disco"
     ),

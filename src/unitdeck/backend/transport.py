@@ -17,6 +17,11 @@ from PyQt6.QtDBus import (
 
 SERVICE = "org.freedesktop.systemd1"
 
+
+class UInt(int):
+    """An int that must be sent as D-Bus uint32 (QtDBus would send a plain int as int32)."""
+
+
 ReplyHandler = Callable[[list], None]
 ErrorHandler = Callable[[str, str], None]  # (D-Bus error name, message)
 SignalHandler = Callable[[str, list], None]  # (object path, arguments)
@@ -57,8 +62,9 @@ class QtDBusTransport(QObject):
         args: list,
         on_reply: ReplyHandler,
         on_error: ErrorHandler,
+        service: str = SERVICE,
     ) -> None:
-        message = QDBusMessage.createMethodCall(SERVICE, path, interface, member)
+        message = QDBusMessage.createMethodCall(service, path, interface, member)
         message.setArguments([_marshal(arg) for arg in args])
         message.setInteractiveAuthorizationAllowed(self._interactive)
         watcher = QDBusPendingCallWatcher(self._bus.asyncCall(message, self._timeout), self)
@@ -75,14 +81,18 @@ class QtDBusTransport(QObject):
 
         watcher.finished.connect(finished)
 
-    def subscribe(self, path: str, interface: str, member: str, handler: SignalHandler) -> None:
+    def subscribe(
+        self, path: str, interface: str, member: str, handler: SignalHandler, service: str = SERVICE
+    ) -> None:
         receiver = _Receiver(handler, self)
-        if not self._bus.connect(SERVICE, path, interface, member, receiver.on_message):
+        if not self._bus.connect(service, path, interface, member, receiver.on_message):
             raise RuntimeError(f"cannot subscribe to {interface}.{member}")
 
 
 def _marshal(value: object) -> object:
-    """A Python list of str would be sent as 'av'; systemd wants 'as'."""
+    """A Python list of str would be sent as 'av' (systemd wants 'as'); UInt becomes uint32."""
+    if isinstance(value, UInt):
+        return QDBusArgument(int(value), QMetaType.Type.UInt.value)
     if isinstance(value, list) and all(isinstance(item, str) for item in value):
         return QDBusArgument(value, QMetaType.Type.QStringList.value)
     return value
