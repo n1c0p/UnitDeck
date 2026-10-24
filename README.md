@@ -127,6 +127,8 @@ Contributions are welcome. The repository uses two long-lived branches:
 
 Start your work from `develop` in a `feature/*` or `fix/*` branch and open a pull request against `develop`. [CONTRIBUTING.md](CONTRIBUTING.md) describes the full workflow: branches, pull requests, SPDX headers, how a release is prepared and which GitHub rulesets protect `main`, `develop` and the `v*` tags.
 
+Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md); security problems go through [SECURITY.md](SECURITY.md), not public issues.
+
 Documentation is kept in English and Italian: when you change `README.md` or `CHANGELOG.md`, please update `README.it.md` and `CHANGELOG.it.md` as well. If you are not comfortable with Italian, just mention it in the pull request and the maintainer will take care of the translation.
 
 Releases are automatic: a pull request from `develop` to `main` sets the version in both changelogs, and merging it tags the commit, builds the `.deb` and publishes the GitHub Release.

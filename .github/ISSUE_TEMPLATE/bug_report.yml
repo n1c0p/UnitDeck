@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
+name: Bug report
+description: Something does not work as described
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for the report. Italian is fine too. For security problems see SECURITY.md instead."
+  - type: input
+    id: version
+    attributes:
+      label: UnitDeck version
+      description: "Output of `unitdeck --version`, or the commit if running from source"
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Distribution and desktop
+      placeholder: "Ubuntu 24.04, GNOME on Wayland"
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Where
+      options: [System services tab, User services tab, Editor, New service wizard, Log window, Updates, Packaging / installation, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. ...\n2. ...\n3. ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected and what happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Messages and logs
+      description: "Status bar message, the 'Details' of the error dialog, or `journalctl --user -n 50`. Remove anything personal."
+      render: text
