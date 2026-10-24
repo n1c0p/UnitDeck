@@ -22,6 +22,7 @@ BUTTONS = (  # action, theme icon, fallback glyph, tooltip (source string)
     ("start", "media-playback-start-symbolic", "▶", "Start"),
     ("stop", "media-playback-stop-symbolic", "■", "Stop"),
     ("restart", "view-refresh-symbolic", "↻", "Restart"),
+    ("edit", "document-edit-symbolic", "✎", "Edit"),
     ("more", "view-more-symbolic", "⋯", "More actions"),
 )
 SIZE = 22

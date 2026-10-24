@@ -151,10 +151,11 @@ def test_fetch_details_reads_can_reload_and_drop_ins():
         "DropInPaths": ["/etc/x.d/override.conf"],
         "FragmentPath": "/usr/lib/x",
     }
-    backend, transport = make_backend({"GetAll": [props]})
+    backend, transport = make_backend({"GetAll": [props], "LoadUnit": ["/u/mine"]})
     backend.refresh()
-    backend.fetch_details("mine.service")  # not loaded: no call
-    assert transport.members().count("GetAll") == 0
+    backend.fetch_details("mine.service")  # not loaded: LoadUnit gives the object path first
+    assert transport.calls[-2][2:] == ("LoadUnit", ["mine.service"])
+    assert transport.calls[-1][:3] == ("/u/mine", "org.freedesktop.DBus.Properties", "GetAll")
     backend.fetch_details("web.service")
     assert transport.calls[-1][:3] == (UNIT_PATH, "org.freedesktop.DBus.Properties", "GetAll")
     web = backend.units["web.service"]
@@ -162,6 +163,30 @@ def test_fetch_details_reads_can_reload_and_drop_ins():
     assert web.can("reload")
     backend.refresh()  # details survive a refresh of the same loaded unit
     assert backend.units["web.service"].can_reload is True
+
+
+def test_revert_goes_through_revert_unit_files_then_reload():
+    backend, transport = make_backend()
+    backend.run("revert", "web.service")
+    assert transport.calls[-2][2:] == ("RevertUnitFiles", [["web.service"]])
+    assert transport.calls[-1][2] == "Reload"
+
+
+def test_own_and_vendor_flags(monkeypatch, tmp_path):
+    from unitdeck.backend import unitfiles
+
+    vendor = tmp_path / "vendor"
+    vendor.mkdir()
+    (vendor / "mine.service").write_text("")
+    monkeypatch.setitem(unitfiles.OTHER_UNIT_DIRS, Scope.USER, (str(vendor),))
+    backend, _ = make_backend()
+    backend.refresh()
+    mine, web = backend.units["mine.service"], backend.units["web.service"]
+    assert mine.own and mine.vendor_path == str(vendor / "mine.service")
+    assert mine.can("delete") and mine.can("revert") and mine.can("edit")
+    assert not web.own and not web.can("delete") and not web.can("revert") and web.can("edit")
+    web.drop_in_paths = ["/etc/systemd/user/web.service.d/override.conf"]
+    assert web.can("revert")
 
 
 def test_reset_failed_is_a_plain_call():

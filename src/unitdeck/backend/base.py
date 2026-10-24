@@ -37,6 +37,7 @@ ACTIONS = (
     "mask",
     "unmask",
     "reset-failed",
+    "revert",
 )
 
 
@@ -52,6 +53,8 @@ class Unit:
     object_path: str = ""  # "" when not loaded
     can_reload: bool | None = None  # None until fetch_details() has answered
     drop_in_paths: list[str] = field(default_factory=list)
+    own: bool = False  # the unit file lives in own_dir (created by the user / administrator)
+    vendor_path: str = ""  # same unit shipped elsewhere, when own (so a revert restores it)
 
     @property
     def loaded(self) -> bool:
@@ -83,6 +86,12 @@ class Unit:
                 return self.masked
             case "reset-failed":
                 return self.active_state == "failed"
+            case "edit":
+                return bool(self.fragment_path) and not self.masked
+            case "revert":
+                return bool(self.drop_in_paths) or (self.own and bool(self.vendor_path))
+            case "delete":
+                return self.own
             case "logs" | "more":
                 return True
         return False
@@ -105,6 +114,7 @@ class SystemdBackend(QObject):
         self.own_dir = own_unit_dir(scope)
         self.units: dict[str, Unit] = {}
         self.busy: set[str] = set()
+        self.writer: QObject | None = None  # UnitWriter, set by the concrete backends
 
     def refresh(self) -> None:
         """Reload the whole unit list; emits units_changed."""

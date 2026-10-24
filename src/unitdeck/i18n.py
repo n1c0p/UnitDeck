@@ -115,6 +115,58 @@ IT = {
     "Mask": "Maschera",
     "Unmask": "Smaschera",
     "Reset failed state": "Azzera lo stato fallito",
+    "Edit": "Modifica",
+    "Restore original": "Ripristina originale",
+    "Delete": "Elimina",
+    "Save": "Salva",
+    "the privileged helper is not installed (see CONTRIBUTING)": (
+        "l'helper privilegiato non è installato (vedi CONTRIBUTING)"
+    ),
+    "Remove every drop-in and local copy of {unit} and go back to the package version?": (
+        "Rimuovere tutti i drop-in e le copie locali di {unit} "
+        "e tornare alla versione del pacchetto?"
+    ),
+    "Delete the unit file of {unit}? This cannot be undone.": (
+        "Eliminare il file unit di {unit}? L'operazione non si può annullare."
+    ),
+    "{unit} is running. Restart it now to apply the new configuration?": (
+        "{unit} è in esecuzione. Riavviarlo adesso per applicare la nuova configurazione?"
+    ),
+    # editor
+    "Edit – {unit}": "Modifica – {unit}",
+    "Drop-in for {unit}: only the directives to change go here.": (
+        "Drop-in per {unit}: qui vanno solo le direttive da cambiare."
+    ),
+    "To replace a list like ExecStart=, first clear it with an empty ExecStart= line.": (
+        "Per sostituire una lista come ExecStart=, prima svuotala con una riga ExecStart= vuota."
+    ),
+    "Edit a full copy of the unit instead of a drop-in (not recommended)": (
+        "Modifica una copia completa della unit invece di un drop-in (sconsigliato)"
+    ),
+    "Effective configuration (unit file and drop-ins):": (
+        "Configurazione effettiva (file unit e drop-in):"
+    ),
+    "Verify": "Verifica",
+    "Cancel": "Annulla",
+    "Package unit {path}: saved as the drop-in {dropin}, kept across package upgrades.": (
+        "Unit del pacchetto {path}: salvata come drop-in {dropin}, conservato agli aggiornamenti."
+    ),
+    "A full copy in {dropin} shadows {path}: package upgrades no longer reach it.": (
+        "Una copia completa in {dropin} nasconde {path}: "
+        "gli aggiornamenti del pacchetto non la toccano più."
+    ),
+    "Editing {dropin} directly.": "Modifica diretta di {dropin}.",
+    "Discard the changes in the editor?": "Scartare le modifiche nell'editor?",
+    "Verifying…": "Verifica in corso…",
+    "Saving…": "Salvataggio in corso…",
+    "systemd-analyze verify: no problems found.": (
+        "systemd-analyze verify: nessun problema trovato."
+    ),
+    "systemd-analyze verify found errors:": "systemd-analyze verify ha trovato errori:",
+    "systemd-analyze verify warnings:": "avvisi di systemd-analyze verify:",
+    "systemd-analyze verify reported errors. Save anyway?": (
+        "systemd-analyze verify ha segnalato errori. Salvare comunque?"
+    ),
     "Show logs": "Mostra log",
     "More actions": "Altre azioni",
     "Refresh unit list": "Aggiornamento elenco",
