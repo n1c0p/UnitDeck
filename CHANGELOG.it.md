@@ -10,6 +10,7 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ### Aggiunto
 
+- Tab Servizi utente: tabella ricercabile e filtrabile delle unit `.service` della sessione (comprese quelle installate ma non caricate), avvia/ferma/riavvia/ricarica, abilita/disabilita all'avvio, maschera/smaschera, visualizzatore del journal con follow live e filtro per priorità, aggiornamento live dai segnali D-Bus di systemd, menu contestuale e scorciatoie da tastiera.
 - Scheletro del progetto: `pyproject.toml` con versione da `setuptools-scm`, pacchetto `unitdeck` avviabile con `python -m unitdeck`, che rifiuta di partire come root.
 - Conformità REUSE: `LICENSES/`, `REUSE.toml` e intestazioni SPDX in ogni file sorgente.
 - `CONTRIBUTING.md` e `CONTRIBUTING.it.md` con modello dei branch, processo di rilascio e ruleset GitHub.

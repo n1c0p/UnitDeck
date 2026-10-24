@@ -59,6 +59,19 @@ python3 -m venv .venv
 
 Il numero di versione deriva dai tag git tramite `setuptools-scm`: un checkout tra una release e l'altra riporta una versione di sviluppo.
 
+## Uso
+
+La tab **Servizi utente** elenca tutte le unit `.service` della sessione utente, comprese quelle installate ma non caricate. Ogni riga ha i pulsanti avvia, ferma e riavvia più un menu "⋯" con ricarica, abilita/disabilita all'avvio, maschera/smaschera e log. Le stesse azioni sono disponibili dal menu del tasto destro e, sulla riga selezionata, da tastiera:
+
+| Scorciatoia | Azione |
+|-------------|--------|
+| `Ctrl+S` | Avvia |
+| `Ctrl+T` | Ferma |
+| `Ctrl+R` | Riavvia |
+| `Ctrl+L` | Mostra log (anche doppio clic) |
+
+La tabella segue i segnali D-Bus di systemd, quindi gli stati si aggiornano da soli. "Ricarica configurazione" esegue un `daemon-reload` dopo che hai modificato i file unit su disco.
+
 ## Dipendenze e licenze
 
 Tutte le dipendenze sono compatibili con la licenza GPL-3.0-or-later del progetto.

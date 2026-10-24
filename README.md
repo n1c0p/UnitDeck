@@ -59,6 +59,19 @@ python3 -m venv .venv
 
 The version number comes from git tags via `setuptools-scm`: a checkout between releases reports a development version.
 
+## Usage
+
+The **User services** tab lists every `.service` unit of your user session, including installed units that are not loaded. Each row has start, stop and restart buttons plus a "⋯" menu with reload, enable/disable at boot, mask/unmask and logs. The same actions are available from the right-click menu and, on the selected row, from the keyboard:
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+S` | Start |
+| `Ctrl+T` | Stop |
+| `Ctrl+R` | Restart |
+| `Ctrl+L` | Show logs (also double-click) |
+
+The table follows systemd's D-Bus signals, so states update by themselves. "Reload configuration" runs a `daemon-reload` after you edit unit files on disk.
+
 ## Dependencies and licenses
 
 All dependencies are compatible with the GPL-3.0-or-later license of the project.
