@@ -49,7 +49,7 @@ Architecture: $ARCH
 Installed-Size: $SIZE
 Maintainer: $MAINTAINER
 Homepage: https://github.com/n1c0p/UnitDeck
-Depends: python3, pkexec, polkitd | policykit-1, systemd, libc6 (>= 2.39), libxcb-cursor0, libegl1, libgl1, libxkbcommon0, libxkbcommon-x11-0, libdbus-1-3, libfontconfig1, libfreetype6, libglib2.0-0t64 | libglib2.0-0, libgssapi-krb5-2, libx11-6, libxcb1, libxcb-icccm4, libxcb-image0, libxcb-keysyms1, libxcb-randr0, libxcb-render-util0, libxcb-shape0, libxcb-sync1, libxcb-xfixes0, libxcb-xkb1, libxcb-util1, libwayland-client0, libwayland-cursor0, libwayland-egl1
+Depends: python3, pkexec, polkitd | policykit-1, systemd, libc6 (>= 2.39), libxcb-cursor0, libegl1, libgl1, libxkbcommon0, libxkbcommon-x11-0, libdbus-1-3, libfontconfig1, libfreetype6, libglib2.0-0t64 | libglib2.0-0, libgssapi-krb5-2, libssl3t64 | libssl3, zlib1g, libbz2-1.0, liblzma5, libzstd1, libexpat1, libffi8, libx11-6, libx11-xcb1, libxcb1, libxcb-icccm4, libxcb-image0, libxcb-keysyms1, libxcb-randr0, libxcb-render-util0, libxcb-shape0, libxcb-sync1, libxcb-xfixes0, libxcb-xkb1, libxcb-util1, libwayland-client0, libwayland-cursor0, libwayland-egl1
 Recommends: xdg-utils, libgtk-3-0t64 | libgtk-3-0
 Description: Desktop application to manage systemd services
  UnitDeck manages systemd system and user services from a graphical
