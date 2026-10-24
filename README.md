@@ -1,5 +1,7 @@
 # UnitDeck
 
+**English** | [Italiano](README.it.md)
+
 [![License: GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/n1c0p/UnitDeck?include_prereleases&sort=semver)](https://github.com/n1c0p/UnitDeck/releases)
 
@@ -56,7 +58,13 @@ Contributions are welcome. The repository uses two long-lived branches:
 
 Start your work from `develop` in a `feature/*` or `fix/*` branch and open a pull request against `develop`. More details will be available in `CONTRIBUTING.md`.
 
+Documentation is kept in English and Italian: when you change `README.md` or `CHANGELOG.md`, please update `README.it.md` and `CHANGELOG.it.md` as well. If you are not comfortable with Italian, just mention it in the pull request and the maintainer will take care of the translation.
+
 Service templates are plain files in the repository: adding a new one through a pull request is a great first contribution.
+
+## Changelog
+
+All notable changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
