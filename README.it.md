@@ -59,6 +59,25 @@ python3 -m venv .venv
 
 Il numero di versione deriva dai tag git tramite `setuptools-scm`: un checkout tra una release e l'altra riporta una versione di sviluppo.
 
+## Uso
+
+La tab **Servizi utente** elenca tutte le unit `.service` della sessione utente, comprese quelle installate ma non caricate. Ogni riga ha i pulsanti avvia, ferma e riavvia più un menu "⋯" con ricarica, abilita/disabilita all'avvio, maschera/smaschera e log. Le stesse azioni sono disponibili dal menu del tasto destro e, sulla riga selezionata, da tastiera:
+
+| Scorciatoia | Azione |
+|-------------|--------|
+| `Ctrl+S` | Avvia |
+| `Ctrl+T` | Ferma |
+| `Ctrl+R` | Riavvia |
+| `Ctrl+L` | Mostra log (anche doppio clic) |
+
+La tabella segue i segnali D-Bus di systemd, quindi gli stati si aggiornano da soli. "Ricarica configurazione" esegue un `daemon-reload` dopo che hai modificato i file unit su disco.
+
+L'interfaccia è disponibile in inglese e in italiano: segue la lingua del desktop per impostazione predefinita e si cambia da *Impostazioni → Lingua*.
+
+### Aggiornamenti
+
+All'avvio UnitDeck chiede all'API delle GitHub Releases (`api.github.com`) se esiste una versione più recente; non viene inviato nient'altro. Si disattiva da *Impostazioni → Controlla aggiornamenti all'avvio*, oppure si controlla a mano da *Informazioni → Controlla aggiornamenti…*. Quando c'è un aggiornamento puoi leggere le note di rilascio, scaricare il `.deb` (il suo SHA256 viene verificato con il checksum pubblicato nella release) e installarlo: l'installazione esegue `apt-get` tramite `pkexec`, quindi il desktop chiede la password. Il controllo è saltato quando si esegue una versione di sviluppo dai sorgenti.
+
 ## Dipendenze e licenze
 
 Tutte le dipendenze sono compatibili con la licenza GPL-3.0-or-later del progetto.
@@ -92,7 +111,7 @@ Tutte le modifiche rilevanti sono elencate in [CHANGELOG.it.md](CHANGELOG.it.md)
 
 ## Licenza
 
-Copyright (C) 2026 Nicola ([n1c0p](https://github.com/n1c0p))
+Copyright (C) 2026 Nicola Palmieri ([n1c0p](https://github.com/n1c0p))
 
 UnitDeck è software libero: puoi redistribuirlo e/o modificarlo secondo i termini della GNU General Public License, pubblicata dalla Free Software Foundation, nella versione 3 della licenza o (a tua scelta) in una qualsiasi versione successiva.
 

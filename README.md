@@ -59,6 +59,25 @@ python3 -m venv .venv
 
 The version number comes from git tags via `setuptools-scm`: a checkout between releases reports a development version.
 
+## Usage
+
+The **User services** tab lists every `.service` unit of your user session, including installed units that are not loaded. Each row has start, stop and restart buttons plus a "⋯" menu with reload, enable/disable at boot, mask/unmask and logs. The same actions are available from the right-click menu and, on the selected row, from the keyboard:
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+S` | Start |
+| `Ctrl+T` | Stop |
+| `Ctrl+R` | Restart |
+| `Ctrl+L` | Show logs (also double-click) |
+
+The table follows systemd's D-Bus signals, so states update by themselves. "Reload configuration" runs a `daemon-reload` after you edit unit files on disk.
+
+The interface is available in English and Italian: it follows the desktop language by default and can be changed from *Settings → Language*.
+
+### Updates
+
+At startup UnitDeck asks the GitHub Releases API (`api.github.com`) whether a newer version exists; nothing else is sent. Turn this off with *Settings → Check for updates at startup*, or check by hand from *Info → Check for updates…*. When an update is available you can read the release notes, download the `.deb` (its SHA256 is verified against the checksum published with the release) and install it: the installation runs `apt-get` through `pkexec`, so the desktop asks for your password. Checks are skipped when running a development version from source.
+
 ## Dependencies and licenses
 
 All dependencies are compatible with the GPL-3.0-or-later license of the project.
@@ -92,7 +111,7 @@ All notable changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
-Copyright (C) 2026 Nicola ([n1c0p](https://github.com/n1c0p))
+Copyright (C) 2026 Nicola Palmieri ([n1c0p](https://github.com/n1c0p))
 
 UnitDeck is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 

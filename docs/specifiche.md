@@ -1,6 +1,6 @@
 <!--
 SPDX-License-Identifier: GPL-3.0-or-later
-SPDX-FileCopyrightText: 2026 Nicola (n1c0p)
+SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
 -->
 
 # UnitDeck — Specifiche di progetto
@@ -45,7 +45,7 @@ Non ricreare questi file da zero: aggiornali man mano che il progetto avanza. Il
 - In ogni file sorgente (Python, script, helper, file `.policy`, `.desktop`, template, workflow) inserisci un'intestazione SPDX:
 
       # SPDX-License-Identifier: GPL-3.0-or-later
-      # SPDX-FileCopyrightText: 2026 Nicola (n1c0p)
+      # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
 
 - In `pyproject.toml` imposta `license = "GPL-3.0-or-later"` e i classifier corrispondenti.
 - Verifica che ogni dipendenza abbia una licenza compatibile con la GPLv3 ed elencale nel README con la rispettiva licenza.

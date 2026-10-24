@@ -41,7 +41,7 @@ Durante lo sviluppo non toccare mai i servizi di sistema reali: usa unit **utent
 
    ```python
    # SPDX-License-Identifier: GPL-3.0-or-later
-   # SPDX-FileCopyrightText: 2026 Nicola (n1c0p)
+   # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
    ```
 
    I file che non possono contenere un'intestazione sono elencati in `REUSE.toml`. `reuse lint` deve passare.
@@ -51,7 +51,7 @@ Durante lo sviluppo non toccare mai i servizi di sistema reali: usa unit **utent
 
 ## Documentazione bilingue
 
-`README`, `CHANGELOG` e `CONTRIBUTING` esistono in inglese (`*.md`, versione di riferimento) e in italiano (`*.it.md`), ciascuno con il selettore di lingua in cima. Ogni modifica a una lingua va riportata nell'altra **nello stesso commit**. Se non te la senti con l'italiano, dillo nella PR e il maintainer si occuperà della traduzione.
+`README`, `CHANGELOG` e `CONTRIBUTING` esistono in inglese (`*.md`, versione di riferimento) e in italiano (`*.it.md`), ciascuno con il selettore di lingua in cima. Ogni modifica a una lingua va riportata nell'altra **nello stesso commit**. Le stringhe dell'interfaccia sono scritte in inglese nel codice, avvolte in `tr()`, e tradotte nel catalogo italiano in `src/unitdeck/i18n.py`; un test fallisce se una stringa manca dal catalogo. Se non te la senti con l'italiano, dillo nella PR e il maintainer si occuperà della traduzione.
 
 ## Versioning
 
