@@ -8,6 +8,10 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+### Modificato
+
+- La CI gira su ogni pull request, comprese quelle di sola documentazione o senza differenze, così il controllo obbligatorio `ci` riporta sempre.
+
 ## [0.1.0] - 2026-10-24
 
 ### Aggiunto

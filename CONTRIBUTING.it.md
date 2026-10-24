@@ -53,7 +53,7 @@ Durante lo sviluppo non toccare mai i servizi di sistema reali: usa unit **utent
    I file che non possono contenere un'intestazione sono elencati in `REUSE.toml`. `reuse lint` deve passare.
 4. Aggiungi una voce nella sezione **Unreleased** di `CHANGELOG.md` **e** di `CHANGELOG.it.md` per ogni feature o fix completato.
 5. Non committare dati personali o di rete: niente indirizzi IP, nomi utente, hostname o percorsi locali, nemmeno nei test o negli esempi.
-6. Apri la PR verso `develop`. Il controllo `ci` (ruff, `reuse lint`, pytest) deve passare. Le PR vengono unite con squash.
+6. Apri la PR verso `develop`. Il controllo `ci` (ruff, `reuse lint`, pytest) deve passare su ogni PR, anche quelle di sola documentazione: un controllo obbligatorio che non riporta nulla bloccherebbe il merge. Le PR vengono unite con squash.
 
 ## Aggiungere un template di servizio
 

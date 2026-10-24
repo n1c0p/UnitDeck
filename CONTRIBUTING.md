@@ -53,7 +53,7 @@ While developing, never touch real system services: use throwaway **user** units
    Files that cannot carry a header are listed in `REUSE.toml`. `reuse lint` must pass.
 4. Add an entry to the **Unreleased** section of `CHANGELOG.md` **and** `CHANGELOG.it.md` for every completed feature or fix.
 5. Do not commit personal or network data: no IP addresses, usernames, hostnames or local paths, not even in tests or examples.
-6. Open the PR against `develop`. The `ci` check (ruff, `reuse lint`, pytest) must pass. PRs are squash-merged.
+6. Open the PR against `develop`. The `ci` check (ruff, `reuse lint`, pytest) must pass on every PR, documentation-only ones included: a required check that never reports would block the merge. PRs are squash-merged.
 
 ## Adding a service template
 

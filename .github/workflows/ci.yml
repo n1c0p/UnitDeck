@@ -1,19 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
 #
-# Lint, REUSE compliance and tests. Documentation-only changes are skipped
-# here and satisfied by ci-docs.yml, which provides a no-op `ci` job with the
-# same name so the required check still passes.
+# Lint, REUSE compliance and tests, on every pull request: `ci` is a required
+# status check, and a workflow skipped by a path filter never reports it, which
+# blocks pull requests with documentation-only or empty diffs (the sync PR after
+# a release has no content changes at all).
 
 name: CI
 
 on:
   pull_request:
     branches: [develop, main]
-    paths-ignore: ["**.md", "docs/**"]
   push:
     branches: [develop]
-    paths-ignore: ["**.md", "docs/**"]
 
 permissions:
   contents: read

@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- CI runs on every pull request, documentation-only and empty diffs included, so the required `ci` check always reports.
+
 ## [0.1.0] - 2026-10-24
 
 ### Added
