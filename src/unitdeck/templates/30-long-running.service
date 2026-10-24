@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
+# unitdeck: name=Long-running service (Restart=on-failure); scope=both
+[Unit]
+Description={DESCRIPTION}
+After={AFTER}
+Wants={WANTS}
+
+[Service]
+Type=simple
+ExecStart={EXEC_START}
+ExecStop={EXEC_STOP}
+Restart=on-failure
+RestartSec=5
+User={USER}
+Group={GROUP}
+
+[Install]
+WantedBy={WANTED_BY}

@@ -40,6 +40,9 @@ Issues = "https://github.com/n1c0p/UnitDeck/issues"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+unitdeck = ["templates/*.service"]
+
 [tool.setuptools_scm]
 version_file = "src/unitdeck/_version.py"
 version_file_template = """# SPDX-License-Identifier: GPL-3.0-or-later
