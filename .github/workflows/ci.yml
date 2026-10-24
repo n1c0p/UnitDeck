@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Nicola (n1c0p)
+#
+# Lint, REUSE compliance and tests. Documentation-only changes are skipped
+# here and satisfied by ci-docs.yml, which provides a no-op `ci` job with the
+# same name so the required check still passes.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+    paths-ignore: ["**.md", "docs/**"]
+  push:
+    branches: [develop]
+    paths-ignore: ["**.md", "docs/**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check . && ruff format --check .
+      - name: REUSE compliance
+        run: reuse lint
+      - name: Tests
+        run: pytest
