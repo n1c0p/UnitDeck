@@ -55,6 +55,10 @@ While developing, never touch real system services: use throwaway **user** units
 5. Do not commit personal or network data: no IP addresses, usernames, hostnames or local paths, not even in tests or examples.
 6. Open the PR against `develop`. The `ci` check (ruff, `reuse lint`, pytest) must pass. PRs are squash-merged.
 
+## Adding a service template
+
+Templates live in `src/unitdeck/templates/` as `NN-name.service` files (the number sets the order in the wizard). Each starts with the SPDX header and one line `# unitdeck: name=<label shown in the wizard>; scope=user|system|both`. The body is a normal unit file where `{PLACEHOLDERS}` become wizard fields: the standard ones (`DESCRIPTION`, `TYPE`, `EXEC_START`, `EXEC_STOP`, `RESTART`, `AFTER`, `WANTS`, `USER`, `GROUP`, `WANTED_BY`) get dedicated widgets and defaults, any other name becomes a text field (add its label to `LABELS` in `new_service_wizard.py` and to the Italian catalogue). A line `Key={PLACEHOLDER}` is dropped when the value is left empty. Other comment lines are kept in the generated unit, so use them to explain what the user must prepare.
+
 ## Bilingual documentation
 
 `README`, `CHANGELOG` and `CONTRIBUTING` exist in English (`*.md`, the reference version) and Italian (`*.it.md`), each with a language switcher at the top. Any change to one language must be mirrored in the other **in the same commit**. Interface strings are written in English in the code, wrapped in `tr()`, and translated in the Italian catalogue in `src/unitdeck/i18n.py`; a test fails when a string is missing from the catalogue. If you are not comfortable with Italian, say so in the PR and the maintainer will translate.

@@ -72,7 +72,17 @@ The **System services** and **User services** tabs list every `.service` unit of
 
 ### Editing a service
 
-*Edit* (`Ctrl+E`) opens an editor with syntax highlighting and line numbers next to the effective configuration (unit file plus every drop-in, with their paths). For a unit shipped by a package the editor writes a drop-in `override.conf` under `/etc/systemd/system/<unit>.d/` (or `~/.config/systemd/user/<unit>.d/` for user services): only the directives you change go there, and package upgrades keep working. A checkbox switches to a full copy of the unit instead, which shadows the package file. Units created by you are edited in place. Before saving, the file is checked with `systemd-analyze verify` and warnings are shown; the previous file is kept as `.bak`; after saving UnitDeck runs `daemon-reload` and offers to restart the service. *Restore original* removes drop-ins and local copies of a package unit (like `systemctl revert`), *Delete* removes a unit you created.
+*Edit* (`Ctrl+E`) opens an editor with syntax highlighting and line numbers next to the effective configuration (unit file plus every drop-in, with their paths). For a unit shipped by a package the editor writes a drop-in `override.conf` under `/etc/systemd/system/<unit>.d/` (or `~/.config/systemd/user/<unit>.d/` for user services): only the directives you change go there, and package upgrades keep working. A checkbox switches to a full copy of the unit instead, which shadows the package file. Units created by you are edited in place. Before saving, the file is checked with `systemd-analyze verify` and warnings are shown; the previous file is kept as `.bak`; after saving UnitDeck runs `daemon-reload` and offers to restart the service. *Restore original* removes drop-ins and local copies of a package unit (like `systemctl revert`), *Delete* stops, disables and removes a unit you created.
+
+### Creating a service
+
+*New service* opens a four-step wizard: name and template, guided fields (description, command, type, restart policy, dependencies, and for system services the optional `User=`/`Group=`, without which the service runs as root), an editable preview checked with `systemd-analyze verify`, and the final "enable at boot" / "start now" options. The unit is written to `~/.config/systemd/user/` from the user tab or to `/etc/systemd/system/` from the system tab (through the helper, so polkit asks for your password). Names already used by any unit in systemd's search paths are refused.
+
+Templates are plain files in `src/unitdeck/templates/`: an empty service, a one-shot task with `RemainAfterExit`, a long-running service with `Restart=on-failure`, and, for user services only, an SMB share mounted with `gio` (it needs a user session with D-Bus). Adding one is a small pull request, see CONTRIBUTING.
+
+### Lingering
+
+The user tab has a *Linger* switch: when on, your user services keep running without an open session (what `loginctl enable-linger` does). Changing it goes through logind and asks for authorization.
 
 System logs are readable without a password only if your user belongs to the `adm` or `systemd-journal` group (the default for the first user on Ubuntu); otherwise the log window shows journalctl's hint.
 

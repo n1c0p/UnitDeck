@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- New service wizard: name and template, guided fields (with `User=`/`Group=` and root warning for system services, `WantedBy` prefilled per scope), editable preview checked with `systemd-analyze verify`, enable/start options; the new unit is selected in the table. Templates are files in `src/unitdeck/templates/`: empty, one-shot, long-running, SMB mount with gio (user only).
+- Linger switch in the user tab, through logind's `SetUserLinger` with interactive authorization.
+- Delete now stops and disables the unit before removing its files; editor colours adapt to dark themes; window size and position are remembered.
 - Service editor: syntax-highlighted editor with line numbers next to the effective configuration; drop-in `override.conf` for package units (full copy as an option), direct edit for user-created units; `systemd-analyze verify` before saving, `.bak` backup, automatic `daemon-reload` and restart prompt. "Restore original" (`RevertUnitFiles`) and "Delete" for user-created units.
 - Privileged helper `unitdeck-helper` (standard library only) with its polkit policy `eu.nicop.unitdeck.manage-unit-files` (`auth_admin_keep`): writes drop-ins and units only under `/etc/systemd/system`, with strict name and path validation.
 - System services tab: same features as the user tab on the system bus; privileged actions use D-Bus interactive authorization, so polkit shows the desktop's authentication dialog only when needed, and a cancelled or refused authentication is reported in the status bar without any crash.

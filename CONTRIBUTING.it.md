@@ -55,6 +55,10 @@ Durante lo sviluppo non toccare mai i servizi di sistema reali: usa unit **utent
 5. Non committare dati personali o di rete: niente indirizzi IP, nomi utente, hostname o percorsi locali, nemmeno nei test o negli esempi.
 6. Apri la PR verso `develop`. Il controllo `ci` (ruff, `reuse lint`, pytest) deve passare. Le PR vengono unite con squash.
 
+## Aggiungere un template di servizio
+
+I template stanno in `src/unitdeck/templates/` come file `NN-nome.service` (il numero decide l'ordine nel wizard). Ognuno inizia con l'intestazione SPDX e una riga `# unitdeck: name=<etichetta mostrata nel wizard>; scope=user|system|both`. Il corpo è un normale file unit in cui i `{SEGNAPOSTO}` diventano campi del wizard: quelli standard (`DESCRIPTION`, `TYPE`, `EXEC_START`, `EXEC_STOP`, `RESTART`, `AFTER`, `WANTS`, `USER`, `GROUP`, `WANTED_BY`) hanno widget e valori predefiniti dedicati, qualunque altro nome diventa un campo di testo (aggiungi la sua etichetta a `LABELS` in `new_service_wizard.py` e al catalogo italiano). Una riga `Chiave={SEGNAPOSTO}` viene eliminata se il valore resta vuoto. Le altre righe di commento restano nella unit generata: usale per spiegare cosa deve preparare l'utente.
+
 ## Documentazione bilingue
 
 `README`, `CHANGELOG` e `CONTRIBUTING` esistono in inglese (`*.md`, versione di riferimento) e in italiano (`*.it.md`), ciascuno con il selettore di lingua in cima. Ogni modifica a una lingua va riportata nell'altra **nello stesso commit**. Le stringhe dell'interfaccia sono scritte in inglese nel codice, avvolte in `tr()`, e tradotte nel catalogo italiano in `src/unitdeck/i18n.py`; un test fallisce se una stringa manca dal catalogo. Se non te la senti con l'italiano, dillo nella PR e il maintainer si occuperà della traduzione.

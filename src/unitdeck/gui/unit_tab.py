@@ -8,6 +8,7 @@ from PyQt6.QtCore import QModelIndex, QPoint, Qt, pyqtSignal
 from PyQt6.QtGui import QCursor, QIcon, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QCheckBox,
     QComboBox,
     QHBoxLayout,
     QHeaderView,
@@ -20,11 +21,13 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from unitdeck.backend.base import SystemdBackend, Unit
+from unitdeck.backend.base import Scope, SystemdBackend, Unit
+from unitdeck.backend.linger import LingerControl
 from unitdeck.backend.unitfiles import HELPER_MISSING
 from unitdeck.gui.actions_delegate import ActionsDelegate
 from unitdeck.gui.edit_dialog import EditDialog
 from unitdeck.gui.log_viewer import LogViewer
+from unitdeck.gui.new_service_wizard import NewServiceWizard
 from unitdeck.i18n import tr
 from unitdeck.model import (
     ACTIONS,
@@ -134,6 +137,8 @@ class UnitTab(QWidget):
         for value, label in FILTER_LABELS.items():
             state.addItem(tr(label), value)
         state.currentIndexChanged.connect(lambda _i: self._proxy.set_state(state.currentData()))
+        new = QPushButton(QIcon.fromTheme("list-add-symbolic"), tr("New service"))
+        new.clicked.connect(self._new_service)
         reload = QPushButton(QIcon.fromTheme("view-refresh-symbolic"), tr("Reload configuration"))
         reload.setToolTip(tr("daemon-reload: re-read unit files changed on disk"))
         reload.clicked.connect(backend.daemon_reload)
@@ -143,8 +148,21 @@ class UnitTab(QWidget):
         top = QHBoxLayout()
         top.addWidget(search, 1)
         top.addWidget(state)
+        top.addWidget(new)
         top.addWidget(reload)
         top.addWidget(refresh)
+        if backend.scope is Scope.USER:
+            self._linger = QCheckBox(tr("Linger"))
+            self._linger.setToolTip(
+                tr("Keep user services running without an open session (loginctl enable-linger)")
+            )
+            self._linger.setEnabled(False)  # until logind answered
+            self._linger_control = LingerControl(parent=self)
+            self._linger_control.changed.connect(self._on_linger)
+            self._linger_control.failed.connect(self._on_linger_failed)
+            self._linger.clicked.connect(self._linger_control.set_linger)
+            self._linger_control.refresh()
+            top.addWidget(self._linger)
 
         self._table = QTableView()
         self._table.setModel(self._proxy)
@@ -256,18 +274,63 @@ class UnitTab(QWidget):
             self._run("restart", current)
 
     def _delete(self, unit: Unit) -> None:
-        """Disable first (so no .wants symlink is left behind), then remove the files."""
-        if not unit.can("disable"):
-            self._backend.writer.delete_unit(unit.name)
-            return
+        """Stop and disable first (no orphan process, no .wants symlink), then remove the files."""
+        steps = [action for action in ("stop", "disable") if unit.can(action)]
+        current = [""]
 
-        def after_disable(name: str, action: str, _ok: bool, _detail: str) -> None:
-            if name == unit.name and action == "disable":
-                self._backend.operation_finished.disconnect(after_disable)
+        def proceed(name: str = "", action: str = "", _ok: bool = True, _detail: str = "") -> None:
+            if name and (name != unit.name or action != current[0]):
+                return  # someone else's result
+            if steps:
+                current[0] = steps.pop(0)
+                self._backend.run(current[0], unit.name)
+            else:
+                self._backend.operation_finished.disconnect(proceed)
                 self._backend.writer.delete_unit(unit.name)
 
-        self._backend.operation_finished.connect(after_disable)
-        self._backend.run("disable", unit.name)
+        self._backend.operation_finished.connect(proceed)
+        proceed()
+
+    def _new_service(self) -> None:
+        wizard = NewServiceWizard(self._backend, self)
+        if wizard.exec() != NewServiceWizard.DialogCode.Accepted:
+            return
+        name = wizard.unit_name
+        self.message.emit(tr("{action} {unit}: done").format(action=tr("Save"), unit=name))
+        if wizard.enable:
+            self._backend.run("enable", name)
+        if wizard.start:
+            self._backend.run("start", name)
+        self._select_when_listed(name)
+
+    def _select_when_listed(self, name: str) -> None:
+        if self._select(name):
+            return
+
+        def on_changed() -> None:
+            if self._select(name):
+                self._backend.units_changed.disconnect(on_changed)
+
+        self._backend.units_changed.connect(on_changed)
+
+    def _select(self, name: str) -> bool:
+        for row in range(self._proxy.rowCount()):
+            index = self._proxy.index(row, NAME)
+            if index.data(UnitRole).name == name:
+                self._table.setCurrentIndex(index)
+                self._table.scrollTo(index)
+                return True
+        return False
+
+    def _on_linger(self, enabled: bool) -> None:
+        self._linger.setEnabled(True)
+        self._linger.setChecked(enabled)
+
+    def _on_linger_failed(self, detail: str) -> None:
+        self._linger_control.refresh()  # put the checkbox back to the real state
+        self.message.emit(
+            tr("{action}: {reason}").format(action=tr("Linger"), reason=readable(detail))
+        )
 
     def _show_logs(self, unit: Unit) -> None:
         viewer = self._logs.get(unit.name)

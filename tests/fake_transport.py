@@ -15,7 +15,7 @@ class FakeTransport:
         self.calls: list[tuple[str, str, str, list]] = []
         self.handlers: dict[str, object] = {}
 
-    def call(self, path, interface, member, args, on_reply, on_error) -> None:
+    def call(self, path, interface, member, args, on_reply, on_error, service=None) -> None:
         self.calls.append((path, interface, member, args))
         reply = self.replies.get(member, [])
         if isinstance(reply, DBusError):
@@ -23,7 +23,7 @@ class FakeTransport:
         else:
             on_reply(reply)
 
-    def subscribe(self, path, interface, member, handler) -> None:
+    def subscribe(self, path, interface, member, handler, service=None) -> None:
         self.handlers[member] = handler
 
     def emit(self, member: str, path: str, args: list) -> None:

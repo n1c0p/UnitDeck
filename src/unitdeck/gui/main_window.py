@@ -29,6 +29,9 @@ class MainWindow(QMainWindow):
         self._updater.check_failed.connect(self._on_check_failed)
         self._manual_check = False
         self._build()
+        geometry = self._settings.value("geometry")
+        if geometry is not None:
+            self.restoreGeometry(geometry)
         if self.check_at_startup() and not is_dev_version(self._updater.installed):
             QTimer.singleShot(STARTUP_CHECK_DELAY_MS, self._updater.check)
 
@@ -79,6 +82,10 @@ class MainWindow(QMainWindow):
         self._settings.setValue("language", code)
         set_language(code)
         QTimer.singleShot(0, self._build)  # not from inside the menu's own signal
+
+    def closeEvent(self, event) -> None:
+        self._settings.setValue("geometry", self.saveGeometry())
+        super().closeEvent(event)
 
     # ---- info menu --------------------------------------------------------------------------
 
