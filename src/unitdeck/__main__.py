@@ -22,14 +22,15 @@ def ensure_not_root() -> None:
 def main() -> None:
     ensure_not_root()
     # Qt is imported only after the root check, so the check runs even if Qt is broken.
-    from PyQt6.QtWidgets import QApplication, QMainWindow
+    from PyQt6.QtWidgets import QApplication
+
+    from unitdeck.gui.main_window import MainWindow
 
     app = QApplication(sys.argv)
     app.setApplicationName("UnitDeck")
     app.setApplicationVersion(__version__)
     app.setDesktopFileName(APP_ID)
-    window = QMainWindow()
-    window.setWindowTitle("UnitDeck")
+    window = MainWindow()
     window.show()
     sys.exit(app.exec())
 
