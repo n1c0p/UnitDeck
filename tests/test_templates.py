@@ -15,7 +15,7 @@ def test_shipped_templates_load_and_are_well_formed():
         assert "[Unit]" in template.body and "[Install]" in template.body
     smb = next(t for t in templates if "gio" in t.id)
     assert smb.scope == "user" and not smb.fits("system") and smb.fits("user")
-    assert smb.placeholders == ["USER", "SERVER", "SHARE", "CREDENTIALS_FILE"]
+    assert smb.placeholders == ["SERVER", "SHARE", "USER", "CREDENTIALS_FILE"]  # wizard field order
     assert all(t.fits("system") for t in templates if t is not smb)
 
 

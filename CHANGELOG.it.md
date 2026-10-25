@@ -8,6 +8,10 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+### Corretto
+
+- Template mount SMB: l'avvio è idempotente se la condivisione è già montata, l'arresto smonta la posizione realmente registrata da gvfs e non lascia più la unit in stato failed.
+
 ### Aggiunto
 
 - Codice di condotta (Contributor Covenant 2.1), politica di sicurezza, template per issue e pull request.
