@@ -1,8 +1,8 @@
 # UnitDeck
 
-**English** | [Italiano](README.it.md)
+**English** | [Italiano](https://github.com/n1c0p/UnitDeck/blob/main/README.it.md)
 
-[![License: GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](LICENSE)
+[![License: GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](https://github.com/n1c0p/UnitDeck/blob/main/LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/n1c0p/UnitDeck?include_prereleases&sort=semver)](https://github.com/n1c0p/UnitDeck/releases)
 [![Downloads](https://img.shields.io/github/downloads/n1c0p/UnitDeck/total?color=success)](https://github.com/n1c0p/UnitDeck/releases)
 [![CI](https://github.com/n1c0p/UnitDeck/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/n1c0p/UnitDeck/actions/workflows/ci.yml)
@@ -13,7 +13,7 @@
 
 **UnitDeck** is a desktop application for Linux to manage **systemd services**, both **system-wide** and **per-user**, from a clean graphical interface.
 
-![UnitDeck main window: the system services tab](docs/screenshot.png)
+![UnitDeck main window: the system services tab](https://raw.githubusercontent.com/n1c0p/UnitDeck/main/docs/screenshot.png)
 
 > **Status: early releases (0.x).** The first version is out and usable; expect rough edges and report them in the [issues](https://github.com/n1c0p/UnitDeck/issues).
 
@@ -56,6 +56,17 @@ sudo zypper install --allow-unsigned-rpm ./unitdeck-<version>-1.x86_64.rpm   # o
 ```
 
 Both packages hold the same bundle, built on Ubuntu 24.04 (glibc 2.39): any distribution with a newer glibc works, openSUSE Leap 15 does not.
+
+### From PyPI
+
+On any distribution with Python 3.12+ the application itself is on [PyPI](https://pypi.org/project/unitdeck/):
+
+```bash
+pipx install unitdeck     # or: pip install unitdeck, in a virtual environment
+unitdeck
+```
+
+Listing, logs, user services and polkit-authorized actions on system services work right away. Editing **system** unit files also needs the privileged helper and its polkit policy, which a Python package cannot install: get them from a clone of the repository with `packaging/install-dev-helper.sh` (asks for sudo), see "Build and install from source".
 
 ### Build and install from source
 
@@ -148,9 +159,9 @@ Contributions are welcome. The repository uses two long-lived branches:
 - `main`: always matches the latest release;
 - `develop`: ongoing development, the target for all pull requests.
 
-Start your work from `develop` in a `feature/*` or `fix/*` branch and open a pull request against `develop`. [CONTRIBUTING.md](CONTRIBUTING.md) describes the full workflow: branches, pull requests, SPDX headers, how a release is prepared and which GitHub rulesets protect `main`, `develop` and the `v*` tags.
+Start your work from `develop` in a `feature/*` or `fix/*` branch and open a pull request against `develop`. [CONTRIBUTING.md](https://github.com/n1c0p/UnitDeck/blob/main/CONTRIBUTING.md) describes the full workflow: branches, pull requests, SPDX headers, how a release is prepared and which GitHub rulesets protect `main`, `develop` and the `v*` tags.
 
-Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md); security problems go through [SECURITY.md](SECURITY.md), not public issues.
+Please read [CODE_OF_CONDUCT.md](https://github.com/n1c0p/UnitDeck/blob/main/CODE_OF_CONDUCT.md); security problems go through [SECURITY.md](https://github.com/n1c0p/UnitDeck/blob/main/SECURITY.md), not public issues.
 
 Documentation is kept in English and Italian: when you change `README.md` or `CHANGELOG.md`, please update `README.it.md` and `CHANGELOG.it.md` as well. If you are not comfortable with Italian, just mention it in the pull request and the maintainer will take care of the translation.
 
@@ -160,7 +171,7 @@ Service templates are plain files in the repository: adding a new one through a 
 
 ## Changelog
 
-All notable changes are listed in [CHANGELOG.md](CHANGELOG.md).
+All notable changes are listed in [CHANGELOG.md](https://github.com/n1c0p/UnitDeck/blob/main/CHANGELOG.md).
 
 ## License
 
@@ -168,4 +179,4 @@ Copyright (C) 2026 Nicola Palmieri ([n1c0p](https://github.com/n1c0p))
 
 UnitDeck is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-UnitDeck is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the [GNU General Public License](LICENSE) for more details.
+UnitDeck is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the [GNU General Public License](https://github.com/n1c0p/UnitDeck/blob/main/LICENSE) for more details.
