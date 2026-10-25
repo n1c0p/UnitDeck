@@ -53,19 +53,39 @@ Download the `.deb` package from the [Releases page](https://github.com/n1c0p/Un
 sudo apt install ./unitdeck_<version>_amd64.deb
 ```
 
-### From source
+### Build and install from source
 
-UnitDeck is written in **Python 3.12+** with **PyQt6**.
+UnitDeck is written in **Python 3.12+** with **PyQt6**. Two ways, both starting from a clone:
 
 ```bash
 git clone https://github.com/n1c0p/UnitDeck.git
 cd UnitDeck
-python3 -m venv .venv
-.venv/bin/pip install -e .
-.venv/bin/python -m unitdeck
 ```
 
-The version number comes from git tags via `setuptools-scm`: a checkout between releases reports a development version.
+**Package built locally (recommended).** Same result as the published package, removable with the package manager. Build on Ubuntu 24.04 or newer:
+
+```bash
+sudo apt install git python3 python3-venv libpython3.12 binutils lintian
+python3 -m venv .venv
+.venv/bin/pip install . pyinstaller
+PYTHON=.venv/bin/python packaging/build-deb.sh
+sudo apt install ./dist/unitdeck_*.deb
+```
+
+`packaging/build-deb.sh` bundles the application with PyInstaller (`unitdeck.spec`, one-directory mode) into `/opt/unitdeck`, adds the helper, the polkit policy, the desktop file, the icon and a man page, and produces the `.deb` with `dpkg-deb`, checked by `lintian` (a few tags accepted by design are listed in `packaging/lintian-suppress`). `packaging/test-install.sh` installs the result in a clean Ubuntu 24.04 container and runs `unitdeck --check`. Uninstall with `sudo apt remove unitdeck`.
+
+**Manual, without PyInstaller.** A virtual environment runs the application; the helper and its polkit policy, needed only to edit system unit files, are installed once with a script:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install .
+packaging/install-dev-helper.sh      # asks for sudo; "uninstall" removes them
+.venv/bin/unitdeck
+```
+
+For a launcher in the applications menu, create `~/.local/share/applications/eu.nicop.unitdeck.desktop` from `packaging/eu.nicop.unitdeck.desktop` with `Exec=` pointing at `.venv/bin/unitdeck` and `Icon=` at `packaging/icons/eu.nicop.unitdeck.svg` (absolute paths). The version number comes from git tags via `setuptools-scm`: a checkout between releases reports a development version.
+
+Either way the machine needs systemd, polkit with a desktop authentication agent, `pkexec`, `systemd-analyze` and `journalctl`, all present on a standard Ubuntu desktop. Every push to `develop` builds a preview package, kept 14 days as a workflow artifact; every merge into `main` publishes a release (see CONTRIBUTING).
 
 ## Usage
 
@@ -101,17 +121,6 @@ The interface is available in English and Italian: it follows the desktop langua
 ### Updates
 
 At startup UnitDeck asks the GitHub Releases API (`api.github.com`) whether a newer version exists; nothing else is sent. Turn this off with *Settings → Check for updates at startup*, or check by hand from *Info → Check for updates…*. When an update is available you can read the release notes, download the `.deb` (its SHA256 is verified against the checksum published with the release) and install it: the installation runs `apt-get` through `pkexec`, so the desktop asks for your password. Checks are skipped when running a development version from source.
-
-### Building the package
-
-`packaging/build-deb.sh` bundles the application with PyInstaller (`unitdeck.spec`, one-directory mode) into `/opt/unitdeck`, adds the helper, the polkit policy, the desktop file, the icon and a man page, and produces `dist/unitdeck_<version>_amd64.deb` with `dpkg-deb`, checked by `lintian` (a few tags accepted by design are listed in `packaging/lintian-suppress`). `packaging/test-install.sh` installs the result in a clean Ubuntu 24.04 container and runs `unitdeck --check`. Build on Ubuntu 24.04, the oldest supported release, so the bundle runs on newer glibc too:
-
-```bash
-pip install . pyinstaller
-packaging/build-deb.sh
-```
-
-Every push to `develop` builds a preview package, kept 14 days as a workflow artifact; every merge into `main` publishes a release (see CONTRIBUTING).
 
 ## Dependencies and licenses
 

@@ -8,6 +8,10 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+### Modificato
+
+- README: come compilare e installare dai sorgenti, come pacchetto locale o a mano in un ambiente virtuale.
+
 ## [0.1.3] - 2026-10-25
 
 ### Modificato

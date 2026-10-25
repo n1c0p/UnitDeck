@@ -53,19 +53,39 @@ Scarica il pacchetto `.deb` dalla [pagina Releases](https://github.com/n1c0p/Uni
 sudo apt install ./unitdeck_<versione>_amd64.deb
 ```
 
-### Dai sorgenti
+### Compilare e installare dai sorgenti
 
-UnitDeck è scritto in **Python 3.12+** con **PyQt6**.
+UnitDeck è scritto in **Python 3.12+** con **PyQt6**. Due strade, entrambe a partire da un clone:
 
 ```bash
 git clone https://github.com/n1c0p/UnitDeck.git
 cd UnitDeck
-python3 -m venv .venv
-.venv/bin/pip install -e .
-.venv/bin/python -m unitdeck
 ```
 
-Il numero di versione deriva dai tag git tramite `setuptools-scm`: un checkout tra una release e l'altra riporta una versione di sviluppo.
+**Pacchetto compilato in locale (consigliato).** Stesso risultato del pacchetto pubblicato, rimovibile con il gestore dei pacchetti. Compila su Ubuntu 24.04 o successiva:
+
+```bash
+sudo apt install git python3 python3-venv libpython3.12 binutils lintian
+python3 -m venv .venv
+.venv/bin/pip install . pyinstaller
+PYTHON=.venv/bin/python packaging/build-deb.sh
+sudo apt install ./dist/unitdeck_*.deb
+```
+
+`packaging/build-deb.sh` impacchetta l'applicazione con PyInstaller (`unitdeck.spec`, modalità onedir) in `/opt/unitdeck`, aggiunge helper, policy polkit, file desktop, icona e pagina man, e produce il `.deb` con `dpkg-deb`, controllato da `lintian` (i pochi tag accettati per scelta sono in `packaging/lintian-suppress`). `packaging/test-install.sh` installa il risultato in un container Ubuntu 24.04 pulito ed esegue `unitdeck --check`. Si disinstalla con `sudo apt remove unitdeck`.
+
+**Manuale, senza PyInstaller.** Un ambiente virtuale esegue l'applicazione; helper e policy polkit, necessari solo per modificare i file unit di sistema, si installano una volta con uno script:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install .
+packaging/install-dev-helper.sh      # chiede sudo; "uninstall" li rimuove
+.venv/bin/unitdeck
+```
+
+Per una voce nel menu delle applicazioni, crea `~/.local/share/applications/eu.nicop.unitdeck.desktop` partendo da `packaging/eu.nicop.unitdeck.desktop` con `Exec=` che punta a `.venv/bin/unitdeck` e `Icon=` a `packaging/icons/eu.nicop.unitdeck.svg` (percorsi assoluti). Il numero di versione deriva dai tag git tramite `setuptools-scm`: un checkout tra una release e l'altra riporta una versione di sviluppo.
+
+In entrambi i casi la macchina ha bisogno di systemd, polkit con un agente di autenticazione del desktop, `pkexec`, `systemd-analyze` e `journalctl`, tutti presenti su un desktop Ubuntu standard. Ogni push su `develop` compila un pacchetto di anteprima, conservato 14 giorni come artifact del workflow; ogni merge su `main` pubblica una release (vedi CONTRIBUTING).
 
 ## Uso
 
@@ -101,17 +121,6 @@ L'interfaccia è disponibile in inglese e in italiano: segue la lingua del deskt
 ### Aggiornamenti
 
 All'avvio UnitDeck chiede all'API delle GitHub Releases (`api.github.com`) se esiste una versione più recente; non viene inviato nient'altro. Si disattiva da *Impostazioni → Controlla aggiornamenti all'avvio*, oppure si controlla a mano da *Informazioni → Controlla aggiornamenti…*. Quando c'è un aggiornamento puoi leggere le note di rilascio, scaricare il `.deb` (il suo SHA256 viene verificato con il checksum pubblicato nella release) e installarlo: l'installazione esegue `apt-get` tramite `pkexec`, quindi il desktop chiede la password. Il controllo è saltato quando si esegue una versione di sviluppo dai sorgenti.
-
-### Compilare il pacchetto
-
-`packaging/build-deb.sh` impacchetta l'applicazione con PyInstaller (`unitdeck.spec`, modalità onedir) in `/opt/unitdeck`, aggiunge helper, policy polkit, file desktop, icona e pagina man, e produce `dist/unitdeck_<versione>_amd64.deb` con `dpkg-deb`, controllato da `lintian` (i pochi tag accettati per scelta sono in `packaging/lintian-suppress`). `packaging/test-install.sh` installa il risultato in un container Ubuntu 24.04 pulito ed esegue `unitdeck --check`. Compila su Ubuntu 24.04, la versione più vecchia supportata, così il bundle funziona anche con glibc più recenti:
-
-```bash
-pip install . pyinstaller
-packaging/build-deb.sh
-```
-
-Ogni push su `develop` compila un pacchetto di anteprima, conservato 14 giorni come artifact del workflow; ogni merge su `main` pubblica una release (vedi CONTRIBUTING).
 
 ## Dipendenze e licenze
 
