@@ -8,6 +8,12 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-25
+
+### Corretto
+
+- Il download dell'aggiornamento faceva andare in crash l'applicazione appena avviato (segnale di avanzamento incompatibile); gli errori non gestiti ora mostrano una finestra invece di terminare UnitDeck.
+
 ## [0.1.1] - 2026-10-25
 
 ### Corretto
@@ -46,6 +52,7 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 - Licenza GPL-3.0-or-later.
 - Questo changelog, in inglese e in italiano.
 
-[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.1.1...develop
+[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.1.2...develop
+[0.1.2]: https://github.com/n1c0p/UnitDeck/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/n1c0p/UnitDeck/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/n1c0p/UnitDeck/releases/tag/v0.1.0
