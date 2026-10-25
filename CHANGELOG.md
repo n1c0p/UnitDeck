@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-25
+
 ### Fixed
 
 - Update download crashed the application as soon as it started (incompatible progress signal); unhandled errors now show a dialog instead of terminating UnitDeck.
@@ -50,6 +52,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - GPL-3.0-or-later license.
 - This changelog, in English and Italian.
 
-[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.1.1...develop
+[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.1.2...develop
+[0.1.2]: https://github.com/n1c0p/UnitDeck/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/n1c0p/UnitDeck/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/n1c0p/UnitDeck/releases/tag/v0.1.0
