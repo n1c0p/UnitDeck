@@ -5,6 +5,7 @@ import hashlib
 from unitdeck.updater import (
     is_dev_version,
     is_newer,
+    package_format,
     parse_release,
     parse_sha256,
     sha256_of,
@@ -18,6 +19,8 @@ RELEASE = {
     "assets": [
         {"name": "unitdeck_0.2.0_amd64.deb.sha256", "browser_download_url": "https://x/sum"},
         {"name": "unitdeck_0.2.0_amd64.deb", "browser_download_url": "https://x/deb"},
+        {"name": "unitdeck-0.2.0-1.x86_64.rpm", "browser_download_url": "https://x/rpm"},
+        {"name": "unitdeck-0.2.0-1.x86_64.rpm.sha256", "browser_download_url": "https://x/rpmsum"},
     ],
 }
 
@@ -40,6 +43,24 @@ def test_parse_release_picks_deb_and_checksum():
     assert release.notes.startswith("## [0.2.0]")
     bare = parse_release({"tag_name": "v0.3.0"})
     assert bare.deb_url == "" and bare.page_url.endswith("/releases")
+    rpm = parse_release(RELEASE, ".rpm")
+    assert rpm.deb_name == "unitdeck-0.2.0-1.x86_64.rpm" and rpm.sha256_url == "https://x/rpmsum"
+    assert parse_release(RELEASE, "").deb_url == ""
+
+
+def test_package_format_from_os_release(tmp_path):
+    def family(text):
+        path = tmp_path / "os-release"
+        path.write_text(text)
+        return package_format(str(path))
+
+    assert family("ID=ubuntu\nID_LIKE=debian\n") == (".deb", ["pkexec", "apt-get", "install", "-y"])
+    assert family('ID="debian"\n')[0] == ".deb"
+    assert family("ID=fedora\n")[1][1] == "dnf"
+    assert family('ID=nobara\nID_LIKE="fedora"\n')[0] == ".rpm"
+    assert family('ID="opensuse-tumbleweed"\nID_LIKE="suse opensuse"\n')[1][1] == "zypper"
+    assert family("ID=arch\n") is None
+    assert package_format(str(tmp_path / "missing")) is None
 
 
 def test_parse_sha256_formats():

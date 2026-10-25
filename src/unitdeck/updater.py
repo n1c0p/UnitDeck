@@ -18,7 +18,17 @@ from unitdeck import __version__
 REPOSITORY = "n1c0p/UnitDeck"
 RELEASES_API = f"https://api.github.com/repos/{REPOSITORY}/releases/latest"
 RELEASES_PAGE = f"https://github.com/{REPOSITORY}/releases"
-INSTALL_COMMAND = ["pkexec", "apt-get", "install", "-y"]  # + absolute path of the .deb
+# Package format and installer per distribution family (ID / ID_LIKE of /etc/os-release).
+PACKAGE_FAMILIES = (
+    ({"debian", "ubuntu"}, ".deb", ["pkexec", "apt-get", "install", "-y"]),
+    ({"fedora", "rhel", "centos"}, ".rpm", ["pkexec", "dnf", "install", "-y"]),
+    (
+        {"suse", "opensuse"},
+        ".rpm",
+        ["pkexec", "zypper", "--non-interactive", "install", "--allow-unsigned-rpm"],
+    ),
+)
+ARCHITECTURES = ("amd64", "x86_64")
 
 
 @dataclass(slots=True)
@@ -50,7 +60,24 @@ def is_newer(candidate: str, installed: str) -> bool:
     return version_tuple(candidate) > version_tuple(installed)
 
 
-def parse_release(data: dict) -> Release:
+def package_format(os_release: str = "/etc/os-release") -> tuple[str, list[str]] | None:
+    """(package suffix, install command) for this distribution, None when unsupported."""
+    ids: set[str] = set()
+    try:
+        for line in Path(os_release).read_text(encoding="utf-8").splitlines():
+            key, _, value = line.partition("=")
+            if key.strip() in ("ID", "ID_LIKE"):
+                ids.update(value.strip().strip('"').split())
+    except OSError:
+        return None
+    for family, suffix, command in PACKAGE_FAMILIES:
+        if ids & family:
+            return suffix, command
+    return None
+
+
+def parse_release(data: dict, suffix: str = ".deb") -> Release:
+    """Release metadata with the package asset for ``suffix`` (``""`` selects none)."""
     release = Release(
         version=data["tag_name"].lstrip("v"),
         notes=data.get("body") or "",
@@ -58,7 +85,7 @@ def parse_release(data: dict) -> Release:
     )
     assets = {a["name"]: a["browser_download_url"] for a in data.get("assets", [])}
     for name, url in assets.items():
-        if name.endswith(".deb") and "amd64" in name:
+        if suffix and name.endswith(suffix) and any(arch in name for arch in ARCHITECTURES):
             release.deb_name, release.deb_url = name, url
             release.sha256_url = assets.get(name + ".sha256", "")
             break
@@ -98,6 +125,7 @@ class Updater(QObject):
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self.installed = __version__
+        self.format = package_format()  # None on distributions without a package
         self._nam = QNetworkAccessManager(self)
         self._proc: QProcess | None = None
 
@@ -123,7 +151,8 @@ class Updater(QObject):
             self.check_failed.emit(reply.errorString())
             return
         try:
-            release = parse_release(json.loads(bytes(reply.readAll())))
+            suffix = self.format[0] if self.format else ""
+            release = parse_release(json.loads(bytes(reply.readAll())), suffix)
         except (ValueError, KeyError, TypeError) as exc:
             self.check_failed.emit(f"unexpected answer from GitHub: {exc}")
             return
@@ -178,11 +207,15 @@ class Updater(QObject):
     # ---- install ----------------------------------------------------------------------------
 
     def install(self, path: str) -> None:
-        """pkexec shows the desktop authentication dialog; apt-get installs the local package."""
+        """pkexec shows the desktop authentication dialog; the package manager installs the file."""
+        if self.format is None:
+            self.install_finished.emit(False, "no package manager known for this system")
+            return
+        command = self.format[1]
         self._proc = QProcess(self)
         self._proc.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
         self._proc.finished.connect(self._on_installed)
-        self._proc.start(INSTALL_COMMAND[0], [*INSTALL_COMMAND[1:], path])
+        self._proc.start(command[0], [*command[1:], path])
 
     def _on_installed(self, code: int, _status: object) -> None:
         output = bytes(self._proc.readAllStandardOutput()).decode("utf-8", "replace")

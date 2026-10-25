@@ -8,6 +8,10 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+### Aggiunto
+
+- Pacchetto RPM per Fedora 40+ e openSUSE Tumbleweed, compilato dallo stesso bundle del `.deb` e pubblicato a ogni release; l'aggiornamento dall'app sceglie `.deb` o `.rpm` da `/etc/os-release` e installa con `apt-get`, `dnf` o `zypper`.
+
 ### Modificato
 
 - README: come compilare e installare dai sorgenti, come pacchetto locale o a mano in un ambiente virtuale.

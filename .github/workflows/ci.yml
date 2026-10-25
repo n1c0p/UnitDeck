@@ -56,15 +56,22 @@ jobs:
       # into the tool cache and the bundle matches what the package will run on.
       - name: Build tools
         run: |
-          sudo apt-get install -y --no-install-recommends python3-venv libpython3.12 lintian binutils libegl1 libgl1 libxkbcommon0 libdbus-1-3
+          sudo apt-get install -y --no-install-recommends python3-venv libpython3.12 lintian rpm binutils libegl1 libgl1 libxkbcommon0 libdbus-1-3
           python3 -m venv .venv
           .venv/bin/pip install . pyinstaller
-      - name: Build .deb
-        run: PYTHON=.venv/bin/python packaging/build-deb.sh
-      - name: Clean install test
-        run: packaging/test-install.sh dist/*.deb
+      - name: Build .deb and .rpm
+        run: |
+          PYTHON=.venv/bin/python packaging/stage.sh
+          REUSE_STAGE=1 packaging/build-deb.sh
+          REUSE_STAGE=1 packaging/build-rpm.sh
+      - name: Clean install tests
+        run: |
+          packaging/test-install.sh dist/*.deb
+          packaging/test-install.sh dist/*.rpm
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
-          name: unitdeck-deb-preview
-          path: dist/*.deb
+          name: unitdeck-packages-preview
+          path: |
+            dist/*.deb
+            dist/*.rpm
           retention-days: 14
