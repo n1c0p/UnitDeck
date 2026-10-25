@@ -10,6 +10,7 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ### Aggiunto
 
+- Pubblicazione su PyPI (`pipx install unitdeck`) dal workflow di release, tramite trusted publishing.
 - Pacchetto RPM per Fedora 40+ e openSUSE Tumbleweed, compilato dallo stesso bundle del `.deb` e pubblicato a ogni release; l'aggiornamento dall'app sceglie `.deb` o `.rpm` da `/etc/os-release` e installa con `apt-get`, `dnf` o `zypper`.
 
 ### Modificato

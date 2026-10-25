@@ -1,8 +1,8 @@
 # UnitDeck
 
-[English](README.md) | **Italiano**
+[English](https://github.com/n1c0p/UnitDeck/blob/main/README.md) | **Italiano**
 
-[![Licenza: GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](LICENSE)
+[![Licenza: GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](https://github.com/n1c0p/UnitDeck/blob/main/LICENSE)
 [![Ultima release](https://img.shields.io/github/v/release/n1c0p/UnitDeck?include_prereleases&sort=semver)](https://github.com/n1c0p/UnitDeck/releases)
 [![Download](https://img.shields.io/github/downloads/n1c0p/UnitDeck/total?color=success)](https://github.com/n1c0p/UnitDeck/releases)
 [![CI](https://github.com/n1c0p/UnitDeck/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/n1c0p/UnitDeck/actions/workflows/ci.yml)
@@ -13,7 +13,7 @@
 
 **UnitDeck** è un'applicazione desktop per Linux che permette di gestire i **servizi systemd**, sia **di sistema** sia **utente**, da un'interfaccia grafica semplice e ordinata.
 
-![Finestra principale di UnitDeck: la tab dei servizi di sistema](docs/screenshot.png)
+![Finestra principale di UnitDeck: la tab dei servizi di sistema](https://raw.githubusercontent.com/n1c0p/UnitDeck/main/docs/screenshot.png)
 
 > **Stato: prime release (0.x).** La prima versione è pubblicata e utilizzabile; aspettati qualche spigolo e segnalalo nelle [issue](https://github.com/n1c0p/UnitDeck/issues).
 
@@ -56,6 +56,17 @@ sudo zypper install --allow-unsigned-rpm ./unitdeck-<versione>-1.x86_64.rpm   # 
 ```
 
 I due pacchetti contengono lo stesso bundle, compilato su Ubuntu 24.04 (glibc 2.39): funziona qualunque distribuzione con una glibc più recente, openSUSE Leap 15 no.
+
+### Da PyPI
+
+Su qualunque distribuzione con Python 3.12+ l'applicazione in sé è su [PyPI](https://pypi.org/project/unitdeck/):
+
+```bash
+pipx install unitdeck     # oppure: pip install unitdeck, in un ambiente virtuale
+unitdeck
+```
+
+Elenco, log, servizi utente e azioni autorizzate da polkit sui servizi di sistema funzionano subito. Per modificare i file unit di **sistema** servono anche l'helper privilegiato e la sua policy polkit, che un pacchetto Python non può installare: prendili da un clone del repository con `packaging/install-dev-helper.sh` (chiede sudo), vedi "Compilare e installare dai sorgenti".
 
 ### Compilare e installare dai sorgenti
 
@@ -148,9 +159,9 @@ I contributi sono benvenuti. Il repository usa due branch permanenti:
 - `main`: corrisponde sempre all'ultima release;
 - `develop`: sviluppo in corso, destinazione di tutte le pull request.
 
-Parti da `develop` creando un branch `feature/*` o `fix/*` e apri una pull request verso `develop`. [CONTRIBUTING.it.md](CONTRIBUTING.it.md) descrive il flusso completo: branch, pull request, intestazioni SPDX, come si prepara una release e quali ruleset GitHub proteggono `main`, `develop` e i tag `v*`.
+Parti da `develop` creando un branch `feature/*` o `fix/*` e apri una pull request verso `develop`. [CONTRIBUTING.it.md](https://github.com/n1c0p/UnitDeck/blob/main/CONTRIBUTING.it.md) descrive il flusso completo: branch, pull request, intestazioni SPDX, come si prepara una release e quali ruleset GitHub proteggono `main`, `develop` e i tag `v*`.
 
-Leggi [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md); i problemi di sicurezza passano da [SECURITY.it.md](SECURITY.it.md), non da issue pubbliche.
+Leggi [CODE_OF_CONDUCT.md](https://github.com/n1c0p/UnitDeck/blob/main/CODE_OF_CONDUCT.md); i problemi di sicurezza passano da [SECURITY.it.md](https://github.com/n1c0p/UnitDeck/blob/main/SECURITY.it.md), non da issue pubbliche.
 
 La documentazione è mantenuta in inglese e in italiano: quando modifichi `README.md` o `CHANGELOG.md`, aggiorna anche `README.it.md` e `CHANGELOG.it.md`. Se non ti trovi a tuo agio con una delle due lingue, segnalalo nella pull request e la traduzione verrà completata dal maintainer.
 
@@ -160,7 +171,7 @@ I template dei servizi sono semplici file nel repository: aggiungerne uno nuovo 
 
 ## Changelog
 
-Tutte le modifiche rilevanti sono elencate in [CHANGELOG.it.md](CHANGELOG.it.md).
+Tutte le modifiche rilevanti sono elencate in [CHANGELOG.it.md](https://github.com/n1c0p/UnitDeck/blob/main/CHANGELOG.it.md).
 
 ## Licenza
 
@@ -168,4 +179,4 @@ Copyright (C) 2026 Nicola Palmieri ([n1c0p](https://github.com/n1c0p))
 
 UnitDeck è software libero: puoi redistribuirlo e/o modificarlo secondo i termini della GNU General Public License, pubblicata dalla Free Software Foundation, nella versione 3 della licenza o (a tua scelta) in una qualsiasi versione successiva.
 
-UnitDeck è distribuito nella speranza che sia utile, ma SENZA ALCUNA GARANZIA, nemmeno la garanzia implicita di COMMERCIABILITÀ o di IDONEITÀ PER UNO SCOPO PARTICOLARE. Per i dettagli consulta la [GNU General Public License](LICENSE). Il testo della licenza in `LICENSE` è quello ufficiale in inglese, l'unico con valore legale.
+UnitDeck è distribuito nella speranza che sia utile, ma SENZA ALCUNA GARANZIA, nemmeno la garanzia implicita di COMMERCIABILITÀ o di IDONEITÀ PER UNO SCOPO PARTICOLARE. Per i dettagli consulta la [GNU General Public License](https://github.com/n1c0p/UnitDeck/blob/main/LICENSE). Il testo della licenza in `LICENSE` è quello ufficiale in inglese, l'unico con valore legale.
