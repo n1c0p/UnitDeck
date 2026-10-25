@@ -4,6 +4,7 @@
 
 import os
 import sys
+import traceback
 
 from unitdeck import APP_ID, __version__
 
@@ -17,6 +18,21 @@ def ensure_not_root() -> None:
     """Exit immediately when running as root. There is no way to bypass this."""
     if os.geteuid() == 0:
         sys.exit(ROOT_ERROR)
+
+
+def report_exception(kind, value, tb) -> None:
+    """An unhandled exception in a Qt slot would abort the process: show it instead."""
+    text = "".join(traceback.format_exception(kind, value, tb))
+    sys.stderr.write(text)
+    try:
+        from PyQt6.QtWidgets import QApplication, QMessageBox
+
+        if QApplication.instance() is not None:
+            box = QMessageBox(QMessageBox.Icon.Critical, "UnitDeck", str(value) or kind.__name__)
+            box.setDetailedText(text)
+            box.exec()
+    except Exception:  # noqa: BLE001 - nothing else to do while reporting a crash
+        pass
 
 
 def main() -> None:
@@ -37,6 +53,7 @@ def main() -> None:
 
     from unitdeck.gui.main_window import MainWindow
 
+    sys.excepthook = report_exception
     app = QApplication(sys.argv)
     app.setApplicationName("UnitDeck")
     app.setOrganizationName("UnitDeck")  # QSettings -> ~/.config/UnitDeck/UnitDeck.conf

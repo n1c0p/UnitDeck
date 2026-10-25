@@ -54,3 +54,33 @@ def test_sha256_of(tmp_path):
     path = tmp_path / "f.bin"
     path.write_bytes(b"unitdeck" * 1000)
     assert sha256_of(path) == hashlib.sha256(b"unitdeck" * 1000).hexdigest()
+
+
+def test_download_from_a_local_file_url(tmp_path, monkeypatch):
+    """The whole download path runs inside Qt's event loop, with no network involved."""
+    from PyQt6.QtCore import QCoreApplication, QEventLoop, QStandardPaths, QTimer
+
+    from unitdeck.updater import Release, Updater
+
+    source = tmp_path / "unitdeck_9.9.9_amd64.deb"
+    source.write_bytes(b"deb" * 10000)
+    target_dir = tmp_path / "downloads"
+    target_dir.mkdir()
+    monkeypatch.setattr(QStandardPaths, "writableLocation", lambda _kind: str(target_dir))
+    updater = Updater()
+    results = []
+    progress = []
+    updater.progress.connect(lambda received, total: progress.append((received, total)))
+    updater.downloaded.connect(lambda path: results.append(("ok", path)))
+    updater.download_failed.connect(lambda error: results.append(("fail", error)))
+    updater.download(Release("9.9.9", "", "", f"file://{source}", source.name))
+    loop = QEventLoop()
+    QTimer.singleShot(5000, loop.quit)
+    poll = QTimer()
+    poll.timeout.connect(lambda: loop.quit() if results else None)
+    poll.start(20)
+    loop.exec()
+    QCoreApplication.processEvents()
+    assert results == [("ok", str(target_dir / source.name))]
+    assert (target_dir / source.name).read_bytes() == b"deb" * 10000
+    assert progress and progress[-1][0] == 30000
