@@ -53,7 +53,7 @@ While developing, never touch real system services: use throwaway **user** units
    Files that cannot carry a header are listed in `REUSE.toml`. `reuse lint` must pass.
 4. Add an entry to the **Unreleased** section of `CHANGELOG.md` **and** `CHANGELOG.it.md` for every completed feature or fix.
 5. Do not commit personal or network data: no IP addresses, usernames, hostnames or local paths, not even in tests or examples.
-6. Open the PR against `develop`. The `ci` check (ruff, `reuse lint`, pytest) must pass. PRs are squash-merged.
+6. Open the PR against `develop`. The `ci` check (ruff, `reuse lint`, pytest) must pass on every PR, documentation-only ones included: a required check that never reports would block the merge. PRs are squash-merged.
 
 ## Adding a service template
 
@@ -72,8 +72,8 @@ Versions follow [Semantic Versioning](https://semver.org/). The installed versio
 1. Open a PR from `develop` to `main`.
 2. In that PR, rename the `## [Unreleased]` section of **both** `CHANGELOG.md` and `CHANGELOG.it.md` to `## [X.Y.Z] - YYYY-MM-DD`, with the same version and date in both files, and add a fresh empty `## [Unreleased]` section above it.
 3. The `release-check` job fails if the version is missing or invalid, if the tag `vX.Y.Z` already exists, if the version is not greater than the latest release, or if the Italian changelog does not contain the same version and date. The `branch-origin` job fails if the PR does not come from `develop` or a `hotfix/*` branch.
-4. Merge with a **merge commit** (not squash). The `release.yml` workflow then tags the merge commit, builds the `.deb`, publishes the GitHub Release with the changelog section as notes, and opens a PR `main` → `develop` titled `chore: sync main into develop after vX.Y.Z`.
-5. Merge the sync PR into `develop` with a merge commit. Pull requests opened by `GITHUB_TOKEN` do not trigger workflows: if the `ci` check does not start, close and reopen the PR.
+4. Merge with a **merge commit** (not squash). The `release.yml` workflow then tags the merge commit, builds the `.deb`, publishes the GitHub Release with the changelog section as notes, and, when `main` holds changes that `develop` lacks (hotfixes), opens a PR `main` → `develop` titled `chore: sync main into develop after vX.Y.Z`. After an ordinary release `develop` lacks only the merge commit itself, which is harmless, and no PR is opened: a PR with an empty diff could never pass the required `ci` check.
+5. Merge the sync PR, when there is one, into `develop` with a merge commit. Pull requests opened by `GITHUB_TOKEN` do not trigger workflows: if the `ci` check does not start, close and reopen the PR.
 
 The release assets are `unitdeck_X.Y.Z_amd64.deb` and `unitdeck_X.Y.Z_amd64.deb.sha256`; the in-app update check relies on these names. The package is built on `ubuntu-24.04` runners (see "Building the package" in the README); every push to `develop` builds a preview artifact kept 14 days.
 

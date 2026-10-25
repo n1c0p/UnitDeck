@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
+blank_issues_enabled: true
+contact_links:
+  - name: Security problem
+    url: https://github.com/n1c0p/UnitDeck/security/advisories/new
+    about: Report vulnerabilities privately, not as a public issue.

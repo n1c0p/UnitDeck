@@ -4,16 +4,24 @@
 
 [![License: GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/n1c0p/UnitDeck?include_prereleases&sort=semver)](https://github.com/n1c0p/UnitDeck/releases)
+[![Downloads](https://img.shields.io/github/downloads/n1c0p/UnitDeck/total?color=success)](https://github.com/n1c0p/UnitDeck/releases)
+[![CI](https://github.com/n1c0p/UnitDeck/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/n1c0p/UnitDeck/actions/workflows/ci.yml)
+[![REUSE status](https://api.reuse.software/badge/github.com/n1c0p/UnitDeck)](https://api.reuse.software/info/github.com/n1c0p/UnitDeck)
+[![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![PyQt6](https://img.shields.io/badge/GUI-PyQt6-41CD52?logo=qt&logoColor=white)](https://www.riverbankcomputing.com/software/pyqt/)
+[![Linux · systemd](https://img.shields.io/badge/Platform-Linux%20%C2%B7%20systemd-FCC624?logo=linux&logoColor=black)](https://systemd.io/)
 
 **UnitDeck** is a desktop application for Linux to manage **systemd services**, both **system-wide** and **per-user**, from a clean graphical interface.
 
-> 🚧 **Status: early development.** No release is available yet. The features below describe the planned scope of the first versions.
+![UnitDeck main window: the system services tab](docs/screenshot.png)
+
+> **Status: early releases (0.x).** The first version is out and usable; expect rough edges and report them in the [issues](https://github.com/n1c0p/UnitDeck/issues).
 
 ## Why UnitDeck
 
 Managing services usually means juggling `systemctl`, `systemctl --user`, `journalctl` and an editor opened with `sudo`. UnitDeck brings all of it into a single window, without ever running the interface as root.
 
-## Planned features
+## Features
 
 - **Two tabs:** system services and user services, each in a searchable, filterable table showing load state, active state and boot status.
 - **Quick actions on every row:** start, stop, restart, edit, plus reload, enable/disable at boot, logs, mask/unmask, restore original and delete.
@@ -39,7 +47,7 @@ UnitDeck is designed to **never run as root**, and refuses to start if launched 
 
 ## Installation
 
-Once the first release is published, download the `.deb` package from the [Releases page](https://github.com/n1c0p/UnitDeck/releases) and install it:
+Download the `.deb` package from the [Releases page](https://github.com/n1c0p/UnitDeck/releases) and install it:
 
 ```bash
 sudo apt install ./unitdeck_<version>_amd64.deb
@@ -126,6 +134,8 @@ Contributions are welcome. The repository uses two long-lived branches:
 - `develop`: ongoing development, the target for all pull requests.
 
 Start your work from `develop` in a `feature/*` or `fix/*` branch and open a pull request against `develop`. [CONTRIBUTING.md](CONTRIBUTING.md) describes the full workflow: branches, pull requests, SPDX headers, how a release is prepared and which GitHub rulesets protect `main`, `develop` and the `v*` tags.
+
+Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md); security problems go through [SECURITY.md](SECURITY.md), not public issues.
 
 Documentation is kept in English and Italian: when you change `README.md` or `CHANGELOG.md`, please update `README.it.md` and `CHANGELOG.it.md` as well. If you are not comfortable with Italian, just mention it in the pull request and the maintainer will take care of the translation.
 

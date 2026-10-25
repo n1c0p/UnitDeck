@@ -106,7 +106,10 @@ jobs:
           if gh pr list --base develop --head main --state open --json number -q '.[0].number' | grep -q .; then
             echo "A sync PR is already open."
           elif git diff --quiet origin/develop..HEAD; then
-            echo "develop already contains main."
+            # Content, not history: after an ordinary release develop lacks only the merge
+            # commit, and a PR with an empty diff can never get its required ci check
+            # (GitHub runs no workflow for it). The sync PR matters when main carries hotfixes.
+            echo "develop already contains every change of main."
           else
             gh pr create --base develop --head main \
               --title "chore: sync main into develop after v${{ steps.version.outputs.version }}" \

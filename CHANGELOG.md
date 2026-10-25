@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-25
+
+### Fixed
+
+- SMB mount template: start is idempotent when the share is already mounted, stop unmounts the location gvfs really registered and no longer leaves the unit failed.
+
+### Added
+
+- Code of conduct (Contributor Covenant 2.1), security policy, issue and pull request templates.
+
+### Changed
+
+- CI runs on every pull request, documentation-only and empty diffs included, so the required `ci` check always reports.
+
 ## [0.1.0] - 2026-10-24
 
 ### Added
@@ -32,5 +46,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - GPL-3.0-or-later license.
 - This changelog, in English and Italian.
 
-[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.1.0...develop
+[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.1.1...develop
+[0.1.1]: https://github.com/n1c0p/UnitDeck/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/n1c0p/UnitDeck/releases/tag/v0.1.0

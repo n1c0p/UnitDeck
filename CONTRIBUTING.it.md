@@ -53,7 +53,7 @@ Durante lo sviluppo non toccare mai i servizi di sistema reali: usa unit **utent
    I file che non possono contenere un'intestazione sono elencati in `REUSE.toml`. `reuse lint` deve passare.
 4. Aggiungi una voce nella sezione **Unreleased** di `CHANGELOG.md` **e** di `CHANGELOG.it.md` per ogni feature o fix completato.
 5. Non committare dati personali o di rete: niente indirizzi IP, nomi utente, hostname o percorsi locali, nemmeno nei test o negli esempi.
-6. Apri la PR verso `develop`. Il controllo `ci` (ruff, `reuse lint`, pytest) deve passare. Le PR vengono unite con squash.
+6. Apri la PR verso `develop`. Il controllo `ci` (ruff, `reuse lint`, pytest) deve passare su ogni PR, anche quelle di sola documentazione: un controllo obbligatorio che non riporta nulla bloccherebbe il merge. Le PR vengono unite con squash.
 
 ## Aggiungere un template di servizio
 
@@ -72,8 +72,8 @@ Le versioni seguono il [Semantic Versioning](https://semver.org/). La versione i
 1. Apri una PR da `develop` a `main`.
 2. In quella PR rinomina la sezione `## [Unreleased]` di **entrambi** `CHANGELOG.md` e `CHANGELOG.it.md` in `## [X.Y.Z] - AAAA-MM-GG`, con lo stesso numero e la stessa data nei due file, e aggiungi sopra una nuova sezione `## [Unreleased]` vuota.
 3. Il job `release-check` fallisce se la versione manca o non è valida, se il tag `vX.Y.Z` esiste già, se la versione non è maggiore dell'ultima rilasciata o se il changelog italiano non contiene la stessa versione con la stessa data. Il job `branch-origin` fallisce se la PR non arriva da `develop` o da un branch `hotfix/*`.
-4. Unisci con un **merge commit** (non squash). Il workflow `release.yml` tagga il commit di merge, compila il `.deb`, pubblica la GitHub Release con la sezione del changelog come note e apre una PR `main` → `develop` dal titolo `chore: sync main into develop after vX.Y.Z`.
-5. Unisci la PR di sincronizzazione in `develop` con un merge commit. Le pull request aperte da `GITHUB_TOKEN` non avviano i workflow: se il controllo `ci` non parte, chiudi e riapri la PR.
+4. Unisci con un **merge commit** (non squash). Il workflow `release.yml` tagga il commit di merge, compila il `.deb`, pubblica la GitHub Release con la sezione del changelog come note e, quando `main` contiene modifiche che mancano a `develop` (hotfix), apre una PR `main` → `develop` dal titolo `chore: sync main into develop after vX.Y.Z`. Dopo una release ordinaria a `develop` manca solo il commit di merge, cosa innocua, e nessuna PR viene aperta: una PR senza differenze non potrebbe mai superare il controllo obbligatorio `ci`.
+5. Unisci la PR di sincronizzazione, quando c'è, in `develop` con un merge commit. Le pull request aperte da `GITHUB_TOKEN` non avviano i workflow: se il controllo `ci` non parte, chiudi e riapri la PR.
 
 Gli asset della release sono `unitdeck_X.Y.Z_amd64.deb` e `unitdeck_X.Y.Z_amd64.deb.sha256`; il controllo aggiornamenti nell'app si basa su questi nomi. Il pacchetto viene compilato su runner `ubuntu-24.04` (vedi "Compilare il pacchetto" nel README); ogni push su `develop` compila un artifact di anteprima conservato 14 giorni.
 
