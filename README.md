@@ -57,17 +57,6 @@ sudo zypper install --allow-unsigned-rpm ./unitdeck-<version>-1.x86_64.rpm   # o
 
 Both packages hold the same bundle, built on Ubuntu 24.04 (glibc 2.39): any distribution with a newer glibc works, openSUSE Leap 15 does not.
 
-### From PyPI
-
-On any distribution with Python 3.12+ the application itself is on [PyPI](https://pypi.org/project/unitdeck/):
-
-```bash
-pipx install unitdeck     # or: pip install unitdeck, in a virtual environment
-unitdeck
-```
-
-Listing, logs, user services and polkit-authorized actions on system services work right away. Editing **system** unit files also needs the privileged helper and its polkit policy, which a Python package cannot install: get them from a clone of the repository with `packaging/install-dev-helper.sh` (asks for sudo), see "Build and install from source".
-
 ### Build and install from source
 
 UnitDeck is written in **Python 3.12+** with **PyQt6**. Two ways, both starting from a clone:
