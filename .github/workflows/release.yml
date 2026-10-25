@@ -27,9 +27,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    outputs:
-      published: ${{ steps.version.outputs.skip != 'true' }}
-      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -123,27 +120,3 @@ jobs:
               --body "Merge with a merge commit, not squash. If the checks do not start (the PR was opened by GITHUB_TOKEN), close and reopen it."
           fi
 
-  pypi:
-    # Wheel and sdist on PyPI through trusted publishing (no token): the project owner must
-    # register this workflow and the "pypi" environment as a trusted publisher on pypi.org.
-    needs: release
-    if: needs.release.outputs.published == 'true'
-    runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: v${{ needs.release.outputs.version }}
-          fetch-depth: 0
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: "3.12"
-      - name: Build sdist and wheel
-        run: |
-          pip install build
-          python -m build
-          ls -l dist
-      - uses: pypa/gh-action-pypi-publish@aef6c9b6e301dc803e1bc9133e9ce67ae9b0906b # v1.14.3
