@@ -47,11 +47,15 @@ UnitDeck is designed to **never run as root**, and refuses to start if launched 
 
 ## Installation
 
-Download the `.deb` package from the [Releases page](https://github.com/n1c0p/UnitDeck/releases) and install it:
+Download the package for your distribution from the [Releases page](https://github.com/n1c0p/UnitDeck/releases) and install it:
 
 ```bash
-sudo apt install ./unitdeck_<version>_amd64.deb
+sudo apt install ./unitdeck_<version>_amd64.deb        # Ubuntu 24.04+, Debian 13+
+sudo dnf install ./unitdeck-<version>-1.x86_64.rpm     # Fedora 40+
+sudo zypper install --allow-unsigned-rpm ./unitdeck-<version>-1.x86_64.rpm   # openSUSE Tumbleweed
 ```
+
+Both packages hold the same bundle, built on Ubuntu 24.04 (glibc 2.39): any distribution with a newer glibc works, openSUSE Leap 15 does not.
 
 ### Build and install from source
 
@@ -72,7 +76,9 @@ PYTHON=.venv/bin/python packaging/build-deb.sh
 sudo apt install ./dist/unitdeck_*.deb
 ```
 
-`packaging/build-deb.sh` bundles the application with PyInstaller (`unitdeck.spec`, one-directory mode) into `/opt/unitdeck`, adds the helper, the polkit policy, the desktop file, the icon and a man page, and produces the `.deb` with `dpkg-deb`, checked by `lintian` (a few tags accepted by design are listed in `packaging/lintian-suppress`). `packaging/test-install.sh` installs the result in a clean Ubuntu 24.04 container and runs `unitdeck --check`. Uninstall with `sudo apt remove unitdeck`.
+On Fedora install `python3 rpm-build binutils` instead and run `packaging/build-rpm.sh`, then `sudo dnf install ./dist/unitdeck-*.rpm`.
+
+`packaging/stage.sh` bundles the application with PyInstaller (`unitdeck.spec`, one-directory mode) into `/opt/unitdeck` and adds the helper, the polkit policy, the desktop file, the icon and a man page; `build-deb.sh` turns that tree into the `.deb` with `dpkg-deb`, checked by `lintian` (a few tags accepted by design are listed in `packaging/lintian-suppress`), `build-rpm.sh` into the `.rpm` with `rpmbuild` (`packaging/unitdeck.rpm.spec`, dependencies by library soname). `packaging/test-install.sh` installs the result in a clean Ubuntu 24.04 or Fedora 41 container and runs `unitdeck --check`. Uninstall with `sudo apt remove unitdeck`.
 
 **Manual, without PyInstaller.** A virtual environment runs the application; the helper and its polkit policy, needed only to edit system unit files, are installed once with a script:
 
@@ -120,7 +126,7 @@ The interface is available in English and Italian: it follows the desktop langua
 
 ### Updates
 
-At startup UnitDeck asks the GitHub Releases API (`api.github.com`) whether a newer version exists; nothing else is sent. Turn this off with *Settings → Check for updates at startup*, or check by hand from *Info → Check for updates…*. When an update is available you can read the release notes, download the `.deb` (its SHA256 is verified against the checksum published with the release) and install it: the installation runs `apt-get` through `pkexec`, so the desktop asks for your password. Checks are skipped when running a development version from source.
+At startup UnitDeck asks the GitHub Releases API (`api.github.com`) whether a newer version exists; nothing else is sent. Turn this off with *Settings → Check for updates at startup*, or check by hand from *Info → Check for updates…*. When an update is available you can read the release notes, download the package for your distribution (`.deb` or `.rpm`, chosen from `/etc/os-release`; its SHA256 is verified against the checksum published with the release) and install it: the installation runs `apt-get`, `dnf` or `zypper` through `pkexec`, so the desktop asks for your password. Checks are skipped when running a development version from source.
 
 ## Dependencies and licenses
 

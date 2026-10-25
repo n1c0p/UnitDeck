@@ -75,7 +75,7 @@ Le versioni seguono il [Semantic Versioning](https://semver.org/). La versione i
 4. Unisci con un **merge commit** (non squash). Il workflow `release.yml` tagga il commit di merge, compila il `.deb`, pubblica la GitHub Release con la sezione del changelog come note e, quando `main` contiene modifiche che mancano a `develop` (hotfix), apre una PR `main` → `develop` dal titolo `chore: sync main into develop after vX.Y.Z`. Dopo una release ordinaria a `develop` manca solo il commit di merge, cosa innocua, e nessuna PR viene aperta: una PR senza differenze non potrebbe mai superare il controllo obbligatorio `ci`.
 5. Unisci la PR di sincronizzazione, quando c'è, in `develop` con un merge commit. Le pull request aperte da `GITHUB_TOKEN` non avviano i workflow: se il controllo `ci` non parte, chiudi e riapri la PR.
 
-Gli asset della release sono `unitdeck_X.Y.Z_amd64.deb` e `unitdeck_X.Y.Z_amd64.deb.sha256`; il controllo aggiornamenti nell'app si basa su questi nomi. Il pacchetto viene compilato su runner `ubuntu-24.04` (vedi "Compilare il pacchetto" nel README); ogni push su `develop` compila un artifact di anteprima conservato 14 giorni.
+Gli asset della release sono `unitdeck_X.Y.Z_amd64.deb`, `unitdeck-X.Y.Z-1.x86_64.rpm` e i rispettivi file `.sha256`; il controllo aggiornamenti nell'app si basa su questi nomi e sceglie il formato da `/etc/os-release`. Il pacchetto viene compilato su runner `ubuntu-24.04` (vedi "Compilare il pacchetto" nel README); ogni push su `develop` compila un artifact di anteprima conservato 14 giorni.
 
 Se il workflow di release fallisce, correggi la causa e rilancialo a mano dalla scheda Actions (`workflow_dispatch`): è idempotente e termina senza errori se il tag esiste già.
 
