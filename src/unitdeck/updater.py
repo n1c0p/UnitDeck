@@ -143,7 +143,9 @@ class Updater(QObject):
             return
         reply = self._get(release.deb_url)
         reply.readyRead.connect(lambda: file.write(reply.readAll()))
-        reply.downloadProgress.connect(self.progress)
+        # downloadProgress carries qint64 values: relay them, a direct signal-to-signal
+        # connection to an (int, int) signal is refused by Qt.
+        reply.downloadProgress.connect(lambda received, total: self.progress.emit(received, total))
         reply.finished.connect(lambda: self._on_download(reply, file, release, target))
 
     def _on_download(self, reply: QNetworkReply, file: QFile, release: Release, target: Path):

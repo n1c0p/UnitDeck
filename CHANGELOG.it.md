@@ -8,6 +8,10 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+### Corretto
+
+- Il download dell'aggiornamento faceva andare in crash l'applicazione appena avviato (segnale di avanzamento incompatibile); gli errori non gestiti ora mostrano una finestra invece di terminare UnitDeck.
+
 ## [0.1.1] - 2026-10-25
 
 ### Corretto
