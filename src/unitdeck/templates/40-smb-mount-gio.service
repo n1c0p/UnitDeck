@@ -4,6 +4,9 @@
 # gio needs a user session with D-Bus: this template is for user services only.
 # The credentials file (relative to your home) holds the answers to gio's prompts,
 # one per line: user name, domain (may be empty) and password.
+# Start mounts only when the share is not already listed by "gio mount -l"; stop unmounts
+# the location gvfs really registered (share names may come back in a different case, with
+# a trailing slash) and never leaves the unit failed when there is nothing to unmount.
 [Unit]
 Description=Mount SMB share
 After=network-online.target
@@ -11,8 +14,8 @@ After=network-online.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/bin/sh -c '/usr/bin/gio mount "smb://{USER}@{SERVER}/{SHARE}" < %h/{CREDENTIALS_FILE}'
-ExecStop=/usr/bin/gio mount -u "smb://{USER}@{SERVER}/{SHARE}"
+ExecStart=/bin/sh -c 'gio mount -l | grep -qi "smb://.*{SERVER}/{SHARE}" || /usr/bin/gio mount "smb://{USER}@{SERVER}/{SHARE}" < %h/{CREDENTIALS_FILE}'
+ExecStop=-/bin/sh -c '/usr/bin/gio mount -u "$(gio mount -l | grep -oi "smb://[^ ]*{SERVER}/{SHARE}/*" | head -n1)"'
 
 [Install]
 WantedBy=default.target

@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- SMB mount template: start is idempotent when the share is already mounted, stop unmounts the location gvfs really registered and no longer leaves the unit failed.
+
 ### Added
 
 - Code of conduct (Contributor Covenant 2.1), security policy, issue and pull request templates.
