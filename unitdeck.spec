@@ -19,7 +19,7 @@ SYSTEM_LIBS = (
     "X11 X11-xcb Xi Xrandr Xfixes Xcursor Xinerama Xcomposite Xdamage Xext Xrender xkbcommon "
     "xkbcommon-x11 wayland-client wayland-cursor wayland-egl fontconfig freetype dbus-1 "
     "ssl crypto gssapi_krb5 krb5 k5crypto krb5support keyutils com_err "
-    "expat ffi z bz2 lzma zstd"
+    "expat ffi z lzma zstd"  # bz2 stays bundled: Debian names it libbz2.so.1.0, Fedora libbz2.so.1
 ).split()
 SYSTEM_LIB = re.compile(r"^lib(?:" + "|".join(re.escape(n) for n in SYSTEM_LIBS) + r")\.so(?:\.\d+)*$")
 

@@ -1,8 +1,8 @@
 # UnitDeck
 
-[English](README.md) | **Italiano**
+[English](https://github.com/n1c0p/UnitDeck/blob/main/README.md) | **Italiano**
 
-[![Licenza: GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](LICENSE)
+[![Licenza: GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](https://github.com/n1c0p/UnitDeck/blob/main/LICENSE)
 [![Ultima release](https://img.shields.io/github/v/release/n1c0p/UnitDeck?include_prereleases&sort=semver)](https://github.com/n1c0p/UnitDeck/releases)
 [![Download](https://img.shields.io/github/downloads/n1c0p/UnitDeck/total?color=success)](https://github.com/n1c0p/UnitDeck/releases)
 [![CI](https://github.com/n1c0p/UnitDeck/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/n1c0p/UnitDeck/actions/workflows/ci.yml)
@@ -13,7 +13,7 @@
 
 **UnitDeck** è un'applicazione desktop per Linux che permette di gestire i **servizi systemd**, sia **di sistema** sia **utente**, da un'interfaccia grafica semplice e ordinata.
 
-![Finestra principale di UnitDeck: la tab dei servizi di sistema](docs/screenshot.png)
+![Finestra principale di UnitDeck: la tab dei servizi di sistema](https://raw.githubusercontent.com/n1c0p/UnitDeck/main/docs/screenshot.png)
 
 > **Stato: prime release (0.x).** La prima versione è pubblicata e utilizzabile; aspettati qualche spigolo e segnalalo nelle [issue](https://github.com/n1c0p/UnitDeck/issues).
 
@@ -47,25 +47,51 @@ UnitDeck è progettato per **non girare mai come root** e si rifiuta di partire 
 
 ## Installazione
 
-Scarica il pacchetto `.deb` dalla [pagina Releases](https://github.com/n1c0p/UnitDeck/releases) e installalo:
+Scarica il pacchetto per la tua distribuzione dalla [pagina Releases](https://github.com/n1c0p/UnitDeck/releases) e installalo:
 
 ```bash
-sudo apt install ./unitdeck_<versione>_amd64.deb
+sudo apt install ./unitdeck_<versione>_amd64.deb        # Ubuntu 24.04+, Debian 13+
+sudo dnf install ./unitdeck-<versione>-1.x86_64.rpm     # Fedora 40+
+sudo zypper install --allow-unsigned-rpm ./unitdeck-<versione>-1.x86_64.rpm   # openSUSE Tumbleweed
 ```
 
-### Dai sorgenti
+I due pacchetti contengono lo stesso bundle, compilato su Ubuntu 24.04 (glibc 2.39): funziona qualunque distribuzione con una glibc più recente, openSUSE Leap 15 no.
 
-UnitDeck è scritto in **Python 3.12+** con **PyQt6**.
+### Compilare e installare dai sorgenti
+
+UnitDeck è scritto in **Python 3.12+** con **PyQt6**. Due strade, entrambe a partire da un clone:
 
 ```bash
 git clone https://github.com/n1c0p/UnitDeck.git
 cd UnitDeck
-python3 -m venv .venv
-.venv/bin/pip install -e .
-.venv/bin/python -m unitdeck
 ```
 
-Il numero di versione deriva dai tag git tramite `setuptools-scm`: un checkout tra una release e l'altra riporta una versione di sviluppo.
+**Pacchetto compilato in locale (consigliato).** Stesso risultato del pacchetto pubblicato, rimovibile con il gestore dei pacchetti. Compila su Ubuntu 24.04 o successiva:
+
+```bash
+sudo apt install git python3 python3-venv libpython3.12 binutils lintian
+python3 -m venv .venv
+.venv/bin/pip install . pyinstaller
+PYTHON=.venv/bin/python packaging/build-deb.sh
+sudo apt install ./dist/unitdeck_*.deb
+```
+
+Su Fedora installa invece `python3 rpm-build binutils` ed esegui `packaging/build-rpm.sh`, poi `sudo dnf install ./dist/unitdeck-*.rpm`.
+
+`packaging/stage.sh` impacchetta l'applicazione con PyInstaller (`unitdeck.spec`, modalità onedir) in `/opt/unitdeck` e aggiunge helper, policy polkit, file desktop, icona e pagina man; `build-deb.sh` trasforma quell'albero nel `.deb` con `dpkg-deb`, controllato da `lintian` (i pochi tag accettati per scelta sono in `packaging/lintian-suppress`), `build-rpm.sh` nel `.rpm` con `rpmbuild` (`packaging/unitdeck.rpm.spec`, dipendenze per soname delle librerie). `packaging/test-install.sh` installa il risultato in un container Ubuntu 24.04 o Fedora 41 pulito ed esegue `unitdeck --check`. Si disinstalla con `sudo apt remove unitdeck`.
+
+**Manuale, senza PyInstaller.** Un ambiente virtuale esegue l'applicazione; helper e policy polkit, necessari solo per modificare i file unit di sistema, si installano una volta con uno script:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install .
+packaging/install-dev-helper.sh      # chiede sudo; "uninstall" li rimuove
+.venv/bin/unitdeck
+```
+
+Per una voce nel menu delle applicazioni, crea `~/.local/share/applications/eu.nicop.unitdeck.desktop` partendo da `packaging/eu.nicop.unitdeck.desktop` con `Exec=` che punta a `.venv/bin/unitdeck` e `Icon=` a `packaging/icons/eu.nicop.unitdeck.svg` (percorsi assoluti). Il numero di versione deriva dai tag git tramite `setuptools-scm`: un checkout tra una release e l'altra riporta una versione di sviluppo.
+
+In entrambi i casi la macchina ha bisogno di systemd, polkit con un agente di autenticazione del desktop, `pkexec`, `systemd-analyze` e `journalctl`, tutti presenti su un desktop Ubuntu standard. Ogni push su `develop` compila un pacchetto di anteprima, conservato 14 giorni come artifact del workflow; ogni merge su `main` pubblica una release (vedi CONTRIBUTING).
 
 ## Uso
 
@@ -100,18 +126,7 @@ L'interfaccia è disponibile in inglese e in italiano: segue la lingua del deskt
 
 ### Aggiornamenti
 
-All'avvio UnitDeck chiede all'API delle GitHub Releases (`api.github.com`) se esiste una versione più recente; non viene inviato nient'altro. Si disattiva da *Impostazioni → Controlla aggiornamenti all'avvio*, oppure si controlla a mano da *Informazioni → Controlla aggiornamenti…*. Quando c'è un aggiornamento puoi leggere le note di rilascio, scaricare il `.deb` (il suo SHA256 viene verificato con il checksum pubblicato nella release) e installarlo: l'installazione esegue `apt-get` tramite `pkexec`, quindi il desktop chiede la password. Il controllo è saltato quando si esegue una versione di sviluppo dai sorgenti.
-
-### Compilare il pacchetto
-
-`packaging/build-deb.sh` impacchetta l'applicazione con PyInstaller (`unitdeck.spec`, modalità onedir) in `/opt/unitdeck`, aggiunge helper, policy polkit, file desktop, icona e pagina man, e produce `dist/unitdeck_<versione>_amd64.deb` con `dpkg-deb`, controllato da `lintian` (i pochi tag accettati per scelta sono in `packaging/lintian-suppress`). `packaging/test-install.sh` installa il risultato in un container Ubuntu 24.04 pulito ed esegue `unitdeck --check`. Compila su Ubuntu 24.04, la versione più vecchia supportata, così il bundle funziona anche con glibc più recenti:
-
-```bash
-pip install . pyinstaller
-packaging/build-deb.sh
-```
-
-Ogni push su `develop` compila un pacchetto di anteprima, conservato 14 giorni come artifact del workflow; ogni merge su `main` pubblica una release (vedi CONTRIBUTING).
+All'avvio UnitDeck chiede all'API delle GitHub Releases (`api.github.com`) se esiste una versione più recente; non viene inviato nient'altro. Si disattiva da *Impostazioni → Controlla aggiornamenti all'avvio*, oppure si controlla a mano da *Informazioni → Controlla aggiornamenti…*. Quando c'è un aggiornamento puoi leggere le note di rilascio, scaricare il pacchetto per la tua distribuzione (`.deb` o `.rpm`, scelto da `/etc/os-release`; il suo SHA256 viene verificato con il checksum pubblicato nella release) e installarlo: l'installazione esegue `apt-get`, `dnf` o `zypper` tramite `pkexec`, quindi il desktop chiede la password. Il controllo è saltato quando si esegue una versione di sviluppo dai sorgenti.
 
 ## Dipendenze e licenze
 
@@ -133,9 +148,9 @@ I contributi sono benvenuti. Il repository usa due branch permanenti:
 - `main`: corrisponde sempre all'ultima release;
 - `develop`: sviluppo in corso, destinazione di tutte le pull request.
 
-Parti da `develop` creando un branch `feature/*` o `fix/*` e apri una pull request verso `develop`. [CONTRIBUTING.it.md](CONTRIBUTING.it.md) descrive il flusso completo: branch, pull request, intestazioni SPDX, come si prepara una release e quali ruleset GitHub proteggono `main`, `develop` e i tag `v*`.
+Parti da `develop` creando un branch `feature/*` o `fix/*` e apri una pull request verso `develop`. [CONTRIBUTING.it.md](https://github.com/n1c0p/UnitDeck/blob/main/CONTRIBUTING.it.md) descrive il flusso completo: branch, pull request, intestazioni SPDX, come si prepara una release e quali ruleset GitHub proteggono `main`, `develop` e i tag `v*`.
 
-Leggi [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md); i problemi di sicurezza passano da [SECURITY.it.md](SECURITY.it.md), non da issue pubbliche.
+Leggi [CODE_OF_CONDUCT.md](https://github.com/n1c0p/UnitDeck/blob/main/CODE_OF_CONDUCT.md); i problemi di sicurezza passano da [SECURITY.it.md](https://github.com/n1c0p/UnitDeck/blob/main/SECURITY.it.md), non da issue pubbliche.
 
 La documentazione è mantenuta in inglese e in italiano: quando modifichi `README.md` o `CHANGELOG.md`, aggiorna anche `README.it.md` e `CHANGELOG.it.md`. Se non ti trovi a tuo agio con una delle due lingue, segnalalo nella pull request e la traduzione verrà completata dal maintainer.
 
@@ -145,7 +160,7 @@ I template dei servizi sono semplici file nel repository: aggiungerne uno nuovo 
 
 ## Changelog
 
-Tutte le modifiche rilevanti sono elencate in [CHANGELOG.it.md](CHANGELOG.it.md).
+Tutte le modifiche rilevanti sono elencate in [CHANGELOG.it.md](https://github.com/n1c0p/UnitDeck/blob/main/CHANGELOG.it.md).
 
 ## Licenza
 
@@ -153,4 +168,4 @@ Copyright (C) 2026 Nicola Palmieri ([n1c0p](https://github.com/n1c0p))
 
 UnitDeck è software libero: puoi redistribuirlo e/o modificarlo secondo i termini della GNU General Public License, pubblicata dalla Free Software Foundation, nella versione 3 della licenza o (a tua scelta) in una qualsiasi versione successiva.
 
-UnitDeck è distribuito nella speranza che sia utile, ma SENZA ALCUNA GARANZIA, nemmeno la garanzia implicita di COMMERCIABILITÀ o di IDONEITÀ PER UNO SCOPO PARTICOLARE. Per i dettagli consulta la [GNU General Public License](LICENSE). Il testo della licenza in `LICENSE` è quello ufficiale in inglese, l'unico con valore legale.
+UnitDeck è distribuito nella speranza che sia utile, ma SENZA ALCUNA GARANZIA, nemmeno la garanzia implicita di COMMERCIABILITÀ o di IDONEITÀ PER UNO SCOPO PARTICOLARE. Per i dettagli consulta la [GNU General Public License](https://github.com/n1c0p/UnitDeck/blob/main/LICENSE). Il testo della licenza in `LICENSE` è quello ufficiale in inglese, l'unico con valore legale.

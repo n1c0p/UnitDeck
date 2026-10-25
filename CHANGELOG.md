@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-25
+
+### Added
+
+- RPM package for Fedora 40+ and openSUSE Tumbleweed, built from the same bundle as the `.deb` and published with every release; the in-app updater picks `.deb` or `.rpm` from `/etc/os-release` and installs with `apt-get`, `dnf` or `zypper`.
+
+### Changed
+
+- README: how to build and install from source, as a local package or manually in a virtual environment.
+
 ## [0.1.3] - 2026-10-25
 
 ### Changed
@@ -58,7 +68,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - GPL-3.0-or-later license.
 - This changelog, in English and Italian.
 
-[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.1.3...develop
+[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.2.0...develop
+[0.2.0]: https://github.com/n1c0p/UnitDeck/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/n1c0p/UnitDeck/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/n1c0p/UnitDeck/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/n1c0p/UnitDeck/compare/v0.1.0...v0.1.1

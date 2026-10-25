@@ -8,6 +8,16 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-25
+
+### Aggiunto
+
+- Pacchetto RPM per Fedora 40+ e openSUSE Tumbleweed, compilato dallo stesso bundle del `.deb` e pubblicato a ogni release; l'aggiornamento dall'app sceglie `.deb` o `.rpm` da `/etc/os-release` e installa con `apt-get`, `dnf` o `zypper`.
+
+### Modificato
+
+- README: come compilare e installare dai sorgenti, come pacchetto locale o a mano in un ambiente virtuale.
+
 ## [0.1.3] - 2026-10-25
 
 ### Modificato
@@ -58,7 +68,8 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 - Licenza GPL-3.0-or-later.
 - Questo changelog, in inglese e in italiano.
 
-[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.1.3...develop
+[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.2.0...develop
+[0.2.0]: https://github.com/n1c0p/UnitDeck/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/n1c0p/UnitDeck/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/n1c0p/UnitDeck/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/n1c0p/UnitDeck/compare/v0.1.0...v0.1.1
