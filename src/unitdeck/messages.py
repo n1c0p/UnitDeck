@@ -77,3 +77,9 @@ def readable(detail: str) -> str:
     if name in ERROR_LABELS:
         return tr(ERROR_LABELS[name])
     return message or detail
+
+
+def dropin_template(unit_name: str) -> str:
+    first = tr("Drop-in for {unit}: only the directives to change go here.")
+    second = tr("To replace a list like ExecStart=, first clear it with an empty ExecStart= line.")
+    return f"# {first.format(unit=unit_name)}\n# {second}\n[Service]\n"

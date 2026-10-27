@@ -243,3 +243,28 @@ def test_unknown_action_is_rejected():
 )
 def test_unit_can(unit, allowed):
     assert {a for a in ACTIONS if unit.can(a)} == allowed
+
+
+def test_job_removed_before_the_reply_still_finishes():
+    """dbus-fast delivers signals at once and replies when the caller resumes."""
+    backend, transport = make_backend()
+    backend.refresh()
+    results = []
+    backend.operation_finished.connect(lambda *args: results.append(args))
+    delayed = []
+    transport.replies["StopUnit"] = ["/j/9"]
+    original = transport.call
+
+    def late_reply(path, iface, member, args, on_reply, on_error, service=None, signature=""):
+        if member == "StopUnit":
+            transport.calls.append((path, iface, member, args))
+            delayed.append(on_reply)  # the reply is held back
+        else:
+            original(path, iface, member, args, on_reply, on_error, service, signature)
+
+    transport.call = late_reply
+    backend.run("stop", "web.service")
+    transport.emit("JobRemoved", "/org/freedesktop/systemd1", [9, "/j/9", "web.service", "done"])
+    assert results == [] and "web.service" in backend.busy
+    delayed[0](["/j/9"])  # now the reply arrives
+    assert results == [("web.service", "stop", True, "done")] and backend.busy == set()

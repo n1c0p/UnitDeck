@@ -56,6 +56,7 @@ class DBusBackend(SystemdBackend):
         self._t = transport
         self._path_to_name: dict[str, str] = {}
         self._jobs: dict[str, tuple[str, str]] = {}  # job object path -> (unit, action)
+        self._early_results: dict[str, str] = {}  # JobRemoved seen before the method reply
         self._lists: dict[str, list] = {}  # ListUnits / ListUnitFiles replies of one refresh
         self._refresh_pending = False
 
@@ -106,7 +107,7 @@ class DBusBackend(SystemdBackend):
                 MANAGER_IFACE,
                 JOB_METHODS[action],
                 [name, "replace"],
-                lambda args: self._jobs.__setitem__(args[0], (name, action)),
+                lambda args: self._on_job_started(args[0], name, action),
                 self._error_handler(name, action),
                 signature="ss",
             )
@@ -225,12 +226,26 @@ class DBusBackend(SystemdBackend):
 
     # ---- signals from systemd ---------------------------------------------------------------
 
+    def _on_job_started(self, job_path: str, name: str, action: str) -> None:
+        # An instant job can be removed before the reply naming it reaches us (the transport
+        # delivers signals as they arrive, replies when the caller resumes): settle it now.
+        result = self._early_results.pop(job_path, None)
+        if result is None:
+            self._jobs[job_path] = (name, action)
+        else:
+            self._job_done(name, action, result)
+
     def _on_job_removed(self, _path: str, args: list) -> None:
         _job_id, job_path, _unit, result = args
         pending = self._jobs.pop(job_path, None)
         if pending is None:
+            self._early_results[job_path] = result
+            if len(self._early_results) > 64:  # jobs of other clients: keep the dict small
+                self._early_results.pop(next(iter(self._early_results)))
             return
-        name, action = pending
+        self._job_done(pending[0], pending[1], result)
+
+    def _job_done(self, name: str, action: str, result: str) -> None:
         unit = self.units.get(name)
         if result != "failed" or unit is None or not unit.loaded:
             self._finish(name, action, result == "done", result)

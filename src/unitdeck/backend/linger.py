@@ -50,6 +50,9 @@ class LingerControl:
         self._t.close()
 
     def _on_user(self, args: list) -> None:
+        if not args or not isinstance(args[0], str):
+            self.failed.emit("org.freedesktop.login1: no user object")
+            return
         self._user_path = args[0]
         self._t.subscribe(
             self._user_path, PROPERTIES_IFACE, "PropertiesChanged", self._on_props, LOGIN1

@@ -130,7 +130,7 @@ At startup UnitDeck asks the GitHub Releases API (`api.github.com`) whether a ne
 
 ## Terminal interface
 
-`unitdeck-tui` is the same tool for a terminal, SSH session or TTY, in the spirit of `htop`: two tabs (system and user services), search with `/`, state filter with `f`, and single keys for the actions shown in the footer (`s` start, `x` stop, `r` restart, `e` enable/disable, `m` mask/unmask, `l` logs with `f` to follow, `d` daemon-reload, `F5` refresh, `q` quit). It never runs as root either: in a graphical session polkit shows the usual dialog; on a TTY or over SSH the screen is handed to `pkttyagent`, which asks for the password in the terminal like `systemctl` does. Editing, creating services and lingering arrive in a later version. From a source checkout:
+`unitdeck-tui` is the same tool for a terminal, SSH session or TTY, in the spirit of `htop`: two tabs (system and user services), search with `/`, state filter with `f`, and single keys for the actions shown in the footer (`s` start, `x` stop, `r` restart, `e` enable/disable, `m` mask/unmask, `l` logs with `f` to follow, `Ctrl+E` edit, `n` new service, `v` restore original, `Del` delete, `z` reset failed state, `g` linger on the user tab, `d` daemon-reload, `F5` refresh, `q` quit). The editor works like the desktop one: drop-in for package units (`Ctrl+T` switches to a full copy), direct edit for your own units, `Ctrl+V` verifies, `Ctrl+S` verifies and saves; the new-service form takes the same templates. It never runs as root either: in a graphical session polkit shows the usual dialog; on a TTY or over SSH the screen is handed to `pkttyagent`, which asks for the password in the terminal like `systemctl` does. From a source checkout:
 
 ```bash
 .venv/bin/pip install ".[tui]"
