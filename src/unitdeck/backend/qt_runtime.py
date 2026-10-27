@@ -88,7 +88,10 @@ class QtDBusTransport(QObject):
     def close(self) -> None:
         """Receivers die with this object, which disconnects them from the bus."""
         self._closed = True
-        self.deleteLater()
+        try:
+            self.deleteLater()
+        except RuntimeError:
+            pass  # already destroyed by Qt while the application shuts down
 
 
 def _marshal(value: object) -> object:
