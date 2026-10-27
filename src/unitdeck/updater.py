@@ -7,6 +7,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -39,6 +40,13 @@ class Release:
     deb_url: str = ""
     deb_name: str = ""
     sha256_url: str = ""
+
+
+def restart_command() -> list[str]:
+    """argv that starts a fresh instance: the packaged binary, or python -m unitdeck from source."""
+    if getattr(sys, "frozen", False):
+        return [sys.executable]
+    return [sys.executable, "-m", "unitdeck"]
 
 
 def version_tuple(text: str) -> tuple[int, ...]:

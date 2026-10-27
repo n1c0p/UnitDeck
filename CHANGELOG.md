@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- "Restart UnitDeck" button in the update dialog once the new version is installed: the application starts again on the new version by itself.
+
 ## [0.2.0] - 2026-10-25
 
 ### Added

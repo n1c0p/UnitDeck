@@ -85,6 +85,10 @@ IT = {
         "Installato. Riavvia UnitDeck per usare la nuova versione."
     ),
     "Installation failed.": "Installazione non riuscita.",
+    "Restart UnitDeck": "Riavvia UnitDeck",
+    "Could not start the new version, please restart UnitDeck.": (
+        "Impossibile avviare la nuova versione, riavvia UnitDeck."
+    ),
     # table
     "Name": "Nome",
     "Description": "Descrizione",

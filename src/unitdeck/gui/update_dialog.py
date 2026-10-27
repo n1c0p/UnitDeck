@@ -3,9 +3,10 @@
 
 from __future__ import annotations
 
-from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtCore import QProcess, Qt, QUrl
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
+    QApplication,
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -18,7 +19,7 @@ from PyQt6.QtWidgets import (
 )
 
 from unitdeck.i18n import tr
-from unitdeck.updater import Release, Updater
+from unitdeck.updater import Release, Updater, restart_command
 
 
 class UpdateDialog(QDialog):
@@ -49,11 +50,14 @@ class UpdateDialog(QDialog):
             self._status.setText(tr("No package for this system in the release."))
         page = QPushButton(tr("Open release page"))
         later = QPushButton(tr("Later"))
+        self._restart = QPushButton(tr("Restart UnitDeck"))
+        self._restart.hide()  # shown once the new version is installed
         buttons = QHBoxLayout()
         buttons.addWidget(page)
         buttons.addStretch(1)
         buttons.addWidget(later)
         buttons.addWidget(self._install)
+        buttons.addWidget(self._restart)
 
         layout = QVBoxLayout(self)
         layout.addWidget(headline)
@@ -65,6 +69,7 @@ class UpdateDialog(QDialog):
         self._install.clicked.connect(self._start)
         page.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(release.page_url)))
         later.clicked.connect(self.reject)
+        self._restart.clicked.connect(self._restart_application)
         updater.progress.connect(self._on_progress)
         updater.downloaded.connect(self._on_downloaded)
         updater.download_failed.connect(self._on_download_failed)
@@ -95,6 +100,9 @@ class UpdateDialog(QDialog):
     def _on_installed(self, ok: bool, output: str) -> None:
         if ok:
             self._status.setText(tr("Installed. Restart UnitDeck to use the new version."))
+            self._install.hide()
+            self._restart.show()
+            self._restart.setDefault(True)
             return
         self._install.setEnabled(True)
         self._status.setText(tr("Installation failed."))
@@ -103,3 +111,11 @@ class UpdateDialog(QDialog):
         )
         box.setDetailedText(output)
         box.exec()
+
+    def _restart_application(self) -> None:
+        """Start the new version detached, then leave: the installed binary is already updated."""
+        command = restart_command()
+        if QProcess.startDetached(command[0], command[1:]):
+            QApplication.quit()
+        else:
+            self._status.setText(tr("Could not start the new version, please restart UnitDeck."))
