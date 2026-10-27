@@ -38,6 +38,8 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
       - name: Validate changelog version against existing tags
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           set -eu
           heading="$(grep -m1 -E '^## \[[0-9]' CHANGELOG.md || true)"  # first numbered section
@@ -52,6 +54,12 @@ jobs:
             exit 1
           fi
           if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            # Already released: fine for a merge that adds no release (site, docs),
+            # as long as the changelogs are the ones main already has.
+            if git diff --quiet "origin/$BASE_REF" -- CHANGELOG.md CHANGELOG.it.md; then
+              echo "No new version, changelogs unchanged since $BASE_REF: not a release."
+              exit 0
+            fi
             echo "::error::Tag v$version already exists"
             exit 1
           fi
