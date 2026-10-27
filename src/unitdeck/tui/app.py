@@ -18,9 +18,9 @@ from unitdeck import __version__
 from unitdeck.backend.base import Runtime, Scope, SystemdBackend, Unit
 from unitdeck.backend.linger import LingerControl
 from unitdeck.backend.systemd import SystemBackend, UserBackend
+from unitdeck.filters import FILTER_LABELS, StateFilter, accepts
 from unitdeck.i18n import tr
 from unitdeck.messages import ACTION_LABELS, AUTH_ERRORS, readable
-from unitdeck.model import FILTER_LABELS, StateFilter
 from unitdeck.tui.logs import LogScreen
 from unitdeck.tui.polkit import TtyAgent, graphical_session
 from unitdeck.tui.screens import ConfirmScreen, EditScreen, NewServiceScreen
@@ -38,19 +38,7 @@ def state_text(unit: Unit, busy: bool) -> str:
     return f"[{style}]{escape(text)}[/]"
 
 
-def matches(unit: Unit, text: str, state: StateFilter, own_dir: str) -> bool:
-    if text and text not in unit.name.lower() and text not in unit.description.lower():
-        return False
-    match state:
-        case StateFilter.ACTIVE:
-            return unit.active_state not in ("inactive", "failed")
-        case StateFilter.INACTIVE:
-            return unit.active_state == "inactive"
-        case StateFilter.FAILED:
-            return unit.active_state == "failed"
-        case StateFilter.MINE:
-            return unit.fragment_path.startswith(own_dir.rstrip("/") + "/")
-    return True
+matches = accepts  # kept as the name the pane uses
 
 
 class UnitPane(Vertical):

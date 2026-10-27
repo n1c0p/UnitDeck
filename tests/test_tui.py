@@ -7,7 +7,7 @@ from fake_transport import FakeRuntime, FakeTransport
 from textual.widgets import DataTable
 
 from unitdeck.backend.base import Unit
-from unitdeck.model import StateFilter
+from unitdeck.filters import StateFilter
 from unitdeck.tui.app import UnitDeckApp, UnitPane, matches, state_text
 
 UNITS = [

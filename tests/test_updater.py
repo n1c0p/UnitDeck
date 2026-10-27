@@ -13,15 +13,25 @@ from unitdeck.updater import (
     version_tuple,
 )
 
+
+def asset(name, url):
+    return {"name": name, "browser_download_url": url}
+
+
 RELEASE = {
     "tag_name": "v0.2.0",
     "html_url": "https://github.com/n1c0p/UnitDeck/releases/tag/v0.2.0",
     "body": "## [0.2.0] - 2026-11-01\n\n### Added\n- Things",
     "assets": [
-        {"name": "unitdeck_0.2.0_amd64.deb.sha256", "browser_download_url": "https://x/sum"},
-        {"name": "unitdeck_0.2.0_amd64.deb", "browser_download_url": "https://x/deb"},
-        {"name": "unitdeck-0.2.0-1.x86_64.rpm", "browser_download_url": "https://x/rpm"},
-        {"name": "unitdeck-0.2.0-1.x86_64.rpm.sha256", "browser_download_url": "https://x/rpmsum"},
+        asset("unitdeck_0.2.0_amd64.deb.sha256", "https://x/sum"),
+        asset("unitdeck_0.2.0_amd64.deb", "https://x/deb"),
+        asset("unitdeck-common_0.2.0_amd64.deb", "https://x/common"),
+        asset("unitdeck-common_0.2.0_amd64.deb.sha256", "https://x/commonsum"),
+        asset("unitdeck-tui_0.2.0_amd64.deb", "https://x/tui"),
+        asset("unitdeck-0.2.0-1.x86_64.rpm", "https://x/rpm"),
+        asset("unitdeck-0.2.0-1.x86_64.rpm.sha256", "https://x/rpmsum"),
+        asset("unitdeck-common-0.2.0-1.x86_64.rpm", "https://x/rpmcommon"),
+        asset("unitdeck-tui-0.2.0-1.x86_64.rpm", "https://x/rpmtui"),
     ],
 }
 
@@ -36,17 +46,27 @@ def test_version_parsing_and_comparison():
     assert not is_dev_version("0.1.0")
 
 
-def test_parse_release_picks_deb_and_checksum():
+def test_parse_release_picks_common_and_desktop_packages():
     release = parse_release(RELEASE)
-    assert release.version == "0.2.0"
-    assert release.deb_name == "unitdeck_0.2.0_amd64.deb"
-    assert release.deb_url == "https://x/deb" and release.sha256_url == "https://x/sum"
-    assert release.notes.startswith("## [0.2.0]")
+    assert release.version == "0.2.0" and release.notes.startswith("## [0.2.0]")
+    assert [(a.name, a.url, a.sha256_url) for a in release.assets] == [
+        ("unitdeck-common_0.2.0_amd64.deb", "https://x/common", "https://x/commonsum"),
+        ("unitdeck_0.2.0_amd64.deb", "https://x/deb", "https://x/sum"),
+    ]
+    assert release.deb_name == "unitdeck-common_0.2.0_amd64.deb"  # first download
+    rpm = parse_release(RELEASE, ".rpm")
+    assert [a.name for a in rpm.assets] == [
+        "unitdeck-common-0.2.0-1.x86_64.rpm",
+        "unitdeck-0.2.0-1.x86_64.rpm",
+    ]
+    assert rpm.assets[1].sha256_url == "https://x/rpmsum"
     bare = parse_release({"tag_name": "v0.3.0"})
     assert bare.deb_url == "" and bare.page_url.endswith("/releases")
-    rpm = parse_release(RELEASE, ".rpm")
-    assert rpm.deb_name == "unitdeck-0.2.0-1.x86_64.rpm" and rpm.sha256_url == "https://x/rpmsum"
     assert parse_release(RELEASE, "").deb_url == ""
+    single = parse_release(
+        {"tag_name": "v0.1.0", "assets": [asset("unitdeck_0.1.0_amd64.deb", "u")]}
+    )
+    assert single.assets == []  # a release without the common package is not installable
 
 
 def test_package_format_from_os_release(tmp_path):
@@ -105,7 +125,18 @@ def test_download_from_a_local_file_url(tmp_path, monkeypatch):
     updater.progress.connect(lambda received, total: progress.append((received, total)))
     updater.downloaded.connect(lambda path: results.append(("ok", path)))
     updater.download_failed.connect(lambda error: results.append(("fail", error)))
-    updater.download(Release("9.9.9", "", "", f"file://{source}", source.name))
+    from unitdeck.updater import Asset
+
+    second = tmp_path / "unitdeck-common_9.9.9_amd64.deb"
+    second.write_bytes(b"common")
+    updater.download(
+        Release(
+            "9.9.9",
+            "",
+            "",
+            [Asset(second.name, f"file://{second}"), Asset(source.name, f"file://{source}")],
+        )
+    )
     loop = QEventLoop()
     QTimer.singleShot(5000, loop.quit)
     poll = QTimer()
@@ -113,6 +144,6 @@ def test_download_from_a_local_file_url(tmp_path, monkeypatch):
     poll.start(20)
     loop.exec()
     QCoreApplication.processEvents()
-    assert results == [("ok", str(target_dir / source.name))]
+    assert results == [("ok", f"{target_dir / second.name} {target_dir / source.name}")]
     assert (target_dir / source.name).read_bytes() == b"deb" * 10000
     assert progress and progress[-1][0] == 30000
