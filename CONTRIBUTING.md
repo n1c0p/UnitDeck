@@ -57,7 +57,7 @@ While developing, never touch real system services: use throwaway **user** units
 
 ## Architecture in one paragraph
 
-`unitdeck.backend` is plain Python: `base.py` (units, action rules, the `Signal` observer and the `Runtime`/`Transport` protocols), `systemd.py` (the D-Bus logic), `unitfiles.py`, `journal.py`, `linger.py`. A *runtime* supplies buses, a timer and subprocesses: `qt_runtime.py` for the desktop application (QtDBus, QTimer, QProcess) and `asyncio_runtime.py` for the terminal interface (dbus-fast, asyncio). Toolkit code lives only under `unitdeck.gui` (Qt) and, coming with #38, the terminal package. Tests drive the backend through the fake transport and runtime in `tests/fake_transport.py`.
+`unitdeck.backend` is plain Python: `base.py` (units, action rules, the `Signal` observer and the `Runtime`/`Transport` protocols), `systemd.py` (the D-Bus logic), `unitfiles.py`, `journal.py`, `linger.py`. A *runtime* supplies buses, a timer and subprocesses: `qt_runtime.py` for the desktop application (QtDBus, QTimer, QProcess) and `asyncio_runtime.py` for the terminal interface (dbus-fast, asyncio). Toolkit code lives only under `unitdeck.gui` (Qt) and `unitdeck.tui` (Textual); shared labels and error reasons are in `unitdeck.messages`. Tests drive the backend through the fake transport and runtime in `tests/fake_transport.py`.
 
 ## Adding a service template
 

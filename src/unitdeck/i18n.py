@@ -120,6 +120,10 @@ IT = {
         "Mantiene i servizi utente in esecuzione senza una sessione aperta (loginctl enable-linger)"
     ),
     "{action}: {reason}": "{action}: {reason}",
+    # terminal interface
+    "Connecting…": "Connessione…",
+    "Filter": "Filtro",
+    "last {n} lines": "ultime {n} righe",
     # new service wizard
     "Name and template": "Nome e template",
     "Service name:": "Nome del servizio:",

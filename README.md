@@ -128,7 +128,15 @@ The interface is available in English and Italian: it follows the desktop langua
 
 At startup UnitDeck asks the GitHub Releases API (`api.github.com`) whether a newer version exists; nothing else is sent. Turn this off with *Settings → Check for updates at startup*, or check by hand from *Info → Check for updates…*. When an update is available you can read the release notes, download the package for your distribution (`.deb` or `.rpm`, chosen from `/etc/os-release`; its SHA256 is verified against the checksum published with the release) and install it: the installation runs `apt-get`, `dnf` or `zypper` through `pkexec`, so the desktop asks for your password. Checks are skipped when running a development version from source.
 
-## Dependencies and licenses
+## Terminal interface
+
+`unitdeck-tui` is the same tool for a terminal, SSH session or TTY, in the spirit of `htop`: two tabs (system and user services), search with `/`, state filter with `f`, and single keys for the actions shown in the footer (`s` start, `x` stop, `r` restart, `e` enable/disable, `m` mask/unmask, `l` logs with `f` to follow, `d` daemon-reload, `F5` refresh, `q` quit). It never runs as root either: in a graphical session polkit shows the usual dialog; on a TTY or over SSH the screen is handed to `pkttyagent`, which asks for the password in the terminal like `systemctl` does. Editing, creating services and lingering arrive in a later version. From a source checkout:
+
+```bash
+.venv/bin/pip install ".[tui]"
+.venv/bin/unitdeck-tui
+```
+
 
 All dependencies are compatible with the GPL-3.0-or-later license of the project.
 
@@ -140,6 +148,8 @@ All dependencies are compatible with the GPL-3.0-or-later license of the project
 | [ruff](https://docs.astral.sh/ruff/) | Lint and format (development only) | MIT |
 | [reuse](https://reuse.software/) | License compliance check (development only) | Apache-2.0 / GPL-3.0-or-later |
 | [PyInstaller](https://pyinstaller.org/) | Bundles the application for the `.deb` (build only) | GPL-2.0-or-later with bootloader exception |
+| [Textual](https://textual.textualize.io/) | Terminal interface | MIT |
+| [dbus-fast](https://github.com/Bluetooth-Devices/dbus-fast) | D-Bus for the terminal interface | MIT |
 
 ## Contributing
 
