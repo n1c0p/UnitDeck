@@ -71,6 +71,8 @@ Summary:        Privileged helper and polkit policy of UnitDeck
 Requires:       python3
 Requires:       polkit
 Requires:       systemd
+# The helper and the policy lived in unitdeck before 0.3.0.
+Conflicts:      unitdeck < 0.3.0
 
 %description -n unitdeck-common
 The helper writes system unit files under /etc/systemd/system on behalf of

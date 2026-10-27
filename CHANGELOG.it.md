@@ -8,9 +8,15 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-27
+
+### Corretto
+
+- L'aggiornamento dalla 0.2.0 falliva: helper e policy polkit sono passati a `unitdeck-common` e dpkg rifiutava di sovrascrivere file ancora di `unitdeck` 0.2.0. `unitdeck-common` ora dichiara `Replaces` (deb) e `Conflicts` (rpm) sul vecchio pacchetto. La finestra di aggiornamento della 0.2.0 installa solo `unitdeck-common`: dopo installa `unitdeck` 0.3.1 a mano una volta (vedi README), poi l'aggiornamento dall'app gestisce entrambi i pacchetti.
+
 ## [0.3.0] - 2026-10-27
 
-Aggiornamento dalla 0.2.0: la finestra di aggiornamento della 0.2.0 scarica solo `unitdeck`, che ora richiede `unitdeck-common`, quindi l'installazione fallisce. Installa i due pacchetti a mano una volta, come mostra il README; dalla 0.3.0 l'aggiornamento dall'app gestisce entrambi.
+L'aggiornamento dalla 0.2.0 fallisce con questa release: usa la 0.3.1.
 
 ### Modificato
 

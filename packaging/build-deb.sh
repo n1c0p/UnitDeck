@@ -39,6 +39,9 @@ build() {  # build TREE PACKAGE DEPENDS RECOMMENDS DESCRIPTION-FILE
         printf 'Installed-Size: %s\nMaintainer: %s\nHomepage: https://github.com/n1c0p/UnitDeck\n' "$size" "$MAINTAINER"
         printf 'Depends: %s\n' "$depends"
         [ -n "$recommends" ] && printf 'Recommends: %s\n' "$recommends"
+        # The helper and the policy lived in unitdeck before 0.3.0: let dpkg hand them over
+        # (no Breaks: the 0.2.0 updater installs this package alone and must not lose the GUI).
+        [ "$package" = unitdeck-common ] && printf 'Replaces: unitdeck (<< 0.3.0)\n'
         printf 'Description: %s\n' "$description"
     } > "$stage/DEBIAN/control"
     rm -f "$deb"
