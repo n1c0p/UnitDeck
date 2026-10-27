@@ -9,7 +9,7 @@ from collections.abc import Callable
 from typing import Any
 
 from rich.markup import escape
-from textual.app import App, ComposeResult
+from textual.app import App, ComposeResult, SuspendNotSupported
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.widgets import DataTable, Footer, Header, Input, Static, TabbedContent, TabPane
@@ -25,6 +25,7 @@ from unitdeck.tui.polkit import TtyAgent, graphical_session
 
 STATE_STYLES = {"active": "green", "failed": "bold red"}
 COLUMNS = ("Name", "Description", "Load", "State", "Startup")
+DESCRIPTION_WIDTH = 50  # keeps the state and startup columns visible on narrow terminals
 
 
 def state_text(unit: Unit, busy: bool) -> str:
@@ -89,7 +90,7 @@ class UnitPane(Vertical):
     def _cells(self, unit: Unit) -> list[str]:
         return [
             escape(unit.name),
-            escape(unit.description),
+            escape(unit.description[:DESCRIPTION_WIDTH]),
             unit.load_state or tr("not loaded"),
             state_text(unit, unit.name in self.backend.busy),
             unit.unit_file_state or "–",
@@ -247,6 +248,9 @@ class UnitDeckApp(App[None]):
                 with self.suspend(), TtyAgent():
                     backend.run(action, unit.name)
                     await asyncio.wait_for(done, 600)
+            except SuspendNotSupported:  # headless or a driver without suspend: plain run
+                if not done.done():
+                    backend.run(action, unit.name)
             except TimeoutError:
                 self.status(
                     tr("{action} {unit}: {reason}").format(

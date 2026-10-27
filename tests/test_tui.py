@@ -48,6 +48,7 @@ def test_matches_and_state_text():
 async def test_app_lists_filters_and_runs_actions():
     runtime = make_runtime()
     app = UnitDeckApp(runtime_factory=lambda: runtime)
+    app._tty_agent = False  # the pkttyagent flow needs a real terminal; not under test here
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause()
         panes = app.query(UnitPane)
