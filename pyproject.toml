@@ -29,6 +29,7 @@ dependencies = ["PyQt6>=6.7"]
 
 [project.optional-dependencies]
 dev = ["pytest", "ruff", "reuse"]
+tui = ["dbus-fast>=2.0"]  # the terminal interface (issue #38), no Qt
 
 [project.scripts]
 unitdeck = "unitdeck.__main__:main"

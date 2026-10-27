@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
 import pytest
-from fake_transport import DBusError, FakeTransport
+from fake_transport import DBusError, FakeRuntime, FakeTransport
 
 from unitdeck.backend.base import ACTIONS, Scope, Unit, own_unit_dir
-from unitdeck.backend.systemd import UNIT_IFACE, QtDBusBackend, template_of
+from unitdeck.backend.systemd import UNIT_IFACE, DBusBackend, template_of
 
 UNIT_PATH = "/org/freedesktop/systemd1/unit/web_2eservice"
 LIST_UNITS = [
@@ -23,7 +23,7 @@ LIST_UNIT_FILES = [
 def make_backend(replies=None):
     transport = FakeTransport({"ListUnits": [LIST_UNITS], "ListUnitFiles": [LIST_UNIT_FILES]})
     transport.replies.update(replies or {})
-    backend = QtDBusBackend(Scope.USER, transport)
+    backend = DBusBackend(Scope.USER, transport, FakeRuntime(transport))
     backend.own_dir = "/home/me/.config/systemd/user"
     return backend, transport
 
@@ -38,7 +38,7 @@ def test_system_scope_backend_marks_etc_units_as_mine():
     transport = FakeTransport(
         {"ListUnits": [[]], "ListUnitFiles": [[("/etc/systemd/system/mine.service", "enabled")]]}
     )
-    backend = QtDBusBackend(Scope.SYSTEM, transport)
+    backend = DBusBackend(Scope.SYSTEM, transport, FakeRuntime(transport))
     backend.refresh()
     assert backend.units["mine.service"].fragment_path.startswith(backend.own_dir)
 
@@ -102,6 +102,7 @@ def test_start_tracks_job_until_removed():
     backend.operation_finished.connect(lambda *args: results.append(args))
     backend.run("start", "mine.service")
     assert transport.calls[-1][2:] == ("StartUnit", ["mine.service", "replace"])
+    assert transport.signatures["StartUnit"] == "ss"
     assert "mine.service" in backend.busy and results == []
     transport.emit(
         "JobRemoved",
@@ -139,6 +140,7 @@ def test_enable_passes_name_list_then_reloads():
     backend.operation_finished.connect(lambda *args: results.append(args))
     backend.run("enable", "mine.service")
     assert transport.calls[-2][2:] == ("EnableUnitFiles", [["mine.service"], False, False])
+    assert transport.signatures["EnableUnitFiles"] == "asbb"
     assert transport.calls[-1][2] == "Reload"
     assert results == [("mine.service", "enable", True, "")]
     backend.run("mask", "mine.service")
@@ -196,6 +198,25 @@ def test_reset_failed_is_a_plain_call():
     backend.run("reset-failed", "web.service")
     assert transport.calls[-1][2:] == ("ResetFailedUnit", ["web.service"])
     assert results == [("web.service", "reset-failed", True, "")] and backend.busy == set()
+
+
+def test_signals_coalesce_into_one_scheduled_refresh():
+    backend, transport = make_backend()
+    runtime = backend.runtime
+    transport.emit("UnitNew", "/org/freedesktop/systemd1", ["a.service", "/u/a"])
+    transport.emit("UnitRemoved", "/org/freedesktop/systemd1", ["b.service", "/u/b"])
+    assert len(runtime.scheduled) == 1 and runtime.scheduled[0][0] == 300
+    before = transport.members().count("ListUnits")
+    runtime.fire()
+    assert transport.members().count("ListUnits") == before + 1
+    transport.emit("Reloading", "/org/freedesktop/systemd1", [False])
+    assert len(runtime.scheduled) == 1  # armed again after firing
+
+
+def test_close_releases_the_transport():
+    backend, transport = make_backend()
+    backend.close()
+    assert transport.closed
 
 
 def test_unknown_action_is_rejected():

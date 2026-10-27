@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from unitdeck.backend.base import Scope
+from unitdeck.backend.base import Runtime, Scope
 from unitdeck.backend.journal import PRIORITIES, JournalReader
 from unitdeck.i18n import tr
 
@@ -29,7 +29,9 @@ PRIORITY_COLORS = {0: "#d1242f", 1: "#d1242f", 2: "#d1242f", 3: "#d1242f", 4: "#
 
 
 class LogViewer(QDialog):
-    def __init__(self, unit: str, scope: Scope, parent: QWidget | None = None) -> None:
+    def __init__(
+        self, unit: str, scope: Scope, runtime: Runtime, parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
         self._unit = unit
         self._scope = scope
@@ -68,7 +70,7 @@ class LogViewer(QDialog):
         layout.addLayout(bar)
         layout.addWidget(self._text)
 
-        self._reader = JournalReader(self)
+        self._reader = JournalReader(runtime)
         self._reader.entry.connect(self._append)
         self._reader.finished.connect(self._on_finished)
         self._priority.currentIndexChanged.connect(self.restart)

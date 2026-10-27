@@ -8,7 +8,8 @@ widgets are rebuilt. Strings with ``{placeholders}`` are formatted by the caller
 
 from __future__ import annotations
 
-from PyQt6.QtCore import QLocale
+import locale
+import os
 
 LANGUAGES = ("system", "en", "it")
 _current = "en"
@@ -31,9 +32,18 @@ def set_language(code: str) -> None:
 def resolve(code: str) -> str:
     if code != "system":
         return code
-    for name in QLocale.system().uiLanguages():
-        if name.split("-")[0] in CATALOGUES:
-            return name.split("-")[0]
+    candidates = [os.environ.get(var, "") for var in ("LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG")]
+    try:
+        candidates.append(locale.getlocale()[0] or "")
+    except ValueError:
+        pass
+    for name in candidates:
+        for item in name.split(":"):
+            language = item.split("_")[0].split("-")[0].split(".")[0]
+            if language in CATALOGUES:
+                return language
+            if language and language != "C":
+                return "en"
     return "en"
 
 
