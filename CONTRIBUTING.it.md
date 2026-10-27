@@ -57,7 +57,7 @@ Durante lo sviluppo non toccare mai i servizi di sistema reali: usa unit **utent
 
 ## Architettura in un paragrafo
 
-`unitdeck.backend` è Python puro: `base.py` (unit, regole delle azioni, l'osservatore `Signal` e i protocolli `Runtime`/`Transport`), `systemd.py` (la logica D-Bus), `unitfiles.py`, `journal.py`, `linger.py`. Un *runtime* fornisce bus, timer e sottoprocessi: `qt_runtime.py` per l'applicazione desktop (QtDBus, QTimer, QProcess) e `asyncio_runtime.py` per l'interfaccia da terminale (dbus-fast, asyncio). Il codice legato a un toolkit sta solo in `unitdeck.gui` (Qt) e, in arrivo con la #38, nel pacchetto del terminale. I test pilotano il backend con il transport e il runtime finti di `tests/fake_transport.py`.
+`unitdeck.backend` è Python puro: `base.py` (unit, regole delle azioni, l'osservatore `Signal` e i protocolli `Runtime`/`Transport`), `systemd.py` (la logica D-Bus), `unitfiles.py`, `journal.py`, `linger.py`. Un *runtime* fornisce bus, timer e sottoprocessi: `qt_runtime.py` per l'applicazione desktop (QtDBus, QTimer, QProcess) e `asyncio_runtime.py` per l'interfaccia da terminale (dbus-fast, asyncio). Il codice legato a un toolkit sta solo in `unitdeck.gui` (Qt) e `unitdeck.tui` (Textual); etichette e motivi di errore condivisi stanno in `unitdeck.messages`. I test pilotano il backend con il transport e il runtime finti di `tests/fake_transport.py`.
 
 ## Aggiungere un template di servizio
 

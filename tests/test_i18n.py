@@ -9,13 +9,7 @@ import pytest
 from unitdeck import i18n
 from unitdeck.gui.actions_delegate import BUTTONS
 from unitdeck.gui.new_service_wizard import LABELS
-from unitdeck.gui.unit_tab import (
-    ACTION_LABELS,
-    ERROR_LABELS,
-    JOB_RESULTS,
-    SERVICE_RESULTS,
-    readable,
-)
+from unitdeck.messages import ACTION_LABELS, ERROR_LABELS, JOB_RESULTS, SERVICE_RESULTS, readable
 from unitdeck.model import COLUMNS, FILTER_LABELS
 from unitdeck.templates import load_templates
 

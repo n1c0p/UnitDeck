@@ -128,7 +128,15 @@ L'interfaccia è disponibile in inglese e in italiano: segue la lingua del deskt
 
 All'avvio UnitDeck chiede all'API delle GitHub Releases (`api.github.com`) se esiste una versione più recente; non viene inviato nient'altro. Si disattiva da *Impostazioni → Controlla aggiornamenti all'avvio*, oppure si controlla a mano da *Informazioni → Controlla aggiornamenti…*. Quando c'è un aggiornamento puoi leggere le note di rilascio, scaricare il pacchetto per la tua distribuzione (`.deb` o `.rpm`, scelto da `/etc/os-release`; il suo SHA256 viene verificato con il checksum pubblicato nella release) e installarlo: l'installazione esegue `apt-get`, `dnf` o `zypper` tramite `pkexec`, quindi il desktop chiede la password. Il controllo è saltato quando si esegue una versione di sviluppo dai sorgenti.
 
-## Dipendenze e licenze
+## Interfaccia da terminale
+
+`unitdeck-tui` è lo stesso strumento per terminale, sessione SSH o TTY, nello spirito di `htop`: due tab (servizi di sistema e utente), ricerca con `/`, filtro per stato con `f`, e tasti singoli per le azioni mostrate nel piè di pagina (`s` avvia, `x` ferma, `r` riavvia, `e` abilita/disabilita, `m` maschera/smaschera, `l` log con `f` per seguire, `d` daemon-reload, `F5` aggiorna, `q` esci). Anche questo non gira mai come root: in una sessione grafica polkit mostra il solito dialogo; su TTY o via SSH lo schermo passa a `pkttyagent`, che chiede la password nel terminale come fa `systemctl`. Modifica, creazione di servizi e linger arrivano in una versione successiva. Da un checkout dei sorgenti:
+
+```bash
+.venv/bin/pip install ".[tui]"
+.venv/bin/unitdeck-tui
+```
+
 
 Tutte le dipendenze sono compatibili con la licenza GPL-3.0-or-later del progetto.
 
@@ -140,6 +148,8 @@ Tutte le dipendenze sono compatibili con la licenza GPL-3.0-or-later del progett
 | [ruff](https://docs.astral.sh/ruff/) | Lint e formattazione (solo sviluppo) | MIT |
 | [reuse](https://reuse.software/) | Controllo di conformità delle licenze (solo sviluppo) | Apache-2.0 / GPL-3.0-or-later |
 | [PyInstaller](https://pyinstaller.org/) | Impacchetta l'applicazione per il `.deb` (solo build) | GPL-2.0-or-later con eccezione per il bootloader |
+| [Textual](https://textual.textualize.io/) | Interfaccia da terminale | MIT |
+| [dbus-fast](https://github.com/Bluetooth-Devices/dbus-fast) | D-Bus per l'interfaccia da terminale | MIT |
 
 ## Contribuire
 

@@ -14,6 +14,7 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ### Aggiunto
 
+- Interfaccia da terminale `unitdeck-tui` (Textual): tab sistema e utente, ricerca, filtro per stato, avvia/ferma/riavvia, abilita/disabilita, maschera/smaschera, journal con follow, daemon-reload; pkttyagent per polkit senza sessione grafica. Si installa con l'extra `tui` (#38, fase T2).
 - Pulsante "Riavvia UnitDeck" nella finestra di aggiornamento una volta installata la nuova versione: l'applicazione si riavvia da sola sulla nuova versione.
 
 ## [0.2.0] - 2026-10-25
