@@ -24,12 +24,7 @@ from unitdeck.backend import unitfiles
 from unitdeck.backend.base import SystemdBackend, Unit
 from unitdeck.gui.code_editor import CodeEditor
 from unitdeck.i18n import tr
-
-
-def dropin_template(unit_name: str) -> str:
-    first = tr("Drop-in for {unit}: only the directives to change go here.")
-    second = tr("To replace a list like ExecStart=, first clear it with an empty ExecStart= line.")
-    return f"# {first.format(unit=unit_name)}\n# {second}\n[Service]\n"
+from unitdeck.messages import dropin_template
 
 
 class EditDialog(QDialog):

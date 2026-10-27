@@ -21,16 +21,27 @@ FILES = [
 ]
 
 
-def make_runtime():
+def make_runtime(own_dir="/own"):
     transport = FakeTransport(
         {
             "ListUnits": [UNITS],
             "ListUnitFiles": [FILES],
             "StartUnit": ["/j/1"],
             "StopUnit": ["/j/2"],
+            "GetUser": ["/org/freedesktop/login1/user/_1000"],
+            "Get": [False],
+            "GetAll": [{}],
         }
     )
-    return FakeRuntime(transport)
+    runtime = FakeRuntime(transport)
+    runtime.own_dir = own_dir
+    return runtime
+
+
+def make_app(runtime):
+    app = UnitDeckApp(runtime_factory=lambda: runtime)
+    app._tty_agent = False  # the pkttyagent flow needs a real terminal; not under test here
+    return app
 
 
 def test_matches_and_state_text():
@@ -47,8 +58,7 @@ def test_matches_and_state_text():
 @pytest.mark.asyncio
 async def test_app_lists_filters_and_runs_actions():
     runtime = make_runtime()
-    app = UnitDeckApp(runtime_factory=lambda: runtime)
-    app._tty_agent = False  # the pkttyagent flow needs a real terminal; not under test here
+    app = make_app(runtime)
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause()
         panes = app.query(UnitPane)
@@ -89,4 +99,75 @@ async def test_app_lists_filters_and_runs_actions():
         await pilot.press("s")
         await pilot.pause()
         assert len(runtime._transport.calls) == before
+        await pilot.press("q")
+
+
+@pytest.mark.asyncio
+async def test_user_tab_linger_editor_and_new_service(tmp_path, monkeypatch):
+    from textual.widgets import TextArea
+
+    from unitdeck.backend import base
+    from unitdeck.tui.screens import EditScreen, NewServiceScreen
+
+    monkeypatch.setattr(base, "own_unit_dir", lambda scope: str(tmp_path))
+    mine = tmp_path / "mine.service"
+    mine.write_text("[Unit]\nDescription=Mine\n\n[Service]\nExecStart=/bin/true\n")
+    units = UNITS + [
+        ("mine.service", "Mine", "loaded", "inactive", "dead", "", "/u/mine", 0, "", "/")
+    ]
+    files = FILES + [(str(mine), "disabled")]
+    runtime = make_runtime(str(tmp_path))
+    runtime._transport.replies["ListUnits"] = [units]
+    runtime._transport.replies["ListUnitFiles"] = [files]
+    transport = runtime._transport
+    app = make_app(runtime)
+    async with app.run_test(size=(120, 45)) as pilot:
+        await pilot.pause()
+        # user tab: linger label read from logind, toggled with g
+        app.query_one("#scopes").active = "user"
+        await pilot.pause()
+        pane = app.pane
+        assert pane.backend.scope.value == "user"
+        assert "Linger" in str(pane.query_one("#linger").content)
+        await pilot.press("g")
+        await pilot.pause()
+        assert (
+            transport.calls[-1][2:] == ("SetUserLinger", [1000, True, True])
+            or transport.calls[-1][2] == "Get"
+        )
+        assert any(c[2] == "SetUserLinger" for c in transport.calls)
+        # editor on the user-created unit: direct edit, saved through UserWriter
+        await pilot.press("slash")
+        await pilot.press(*"mine")
+        await pilot.press("enter")
+        await pilot.pause()
+        assert pane.selected_name() == "mine.service"
+        await pilot.press("ctrl+e")
+        await pilot.pause()
+        assert isinstance(app.screen, EditScreen)
+        editor = app.screen.query_one("#editor", TextArea)
+        assert "ExecStart=/bin/true" in editor.text
+        editor.load_text(editor.text + "Nice=5\n")
+        await pilot.press("ctrl+s")
+        await pilot.pause()
+        await pilot.pause()
+        assert "Nice=5" in mine.read_text() and (tmp_path / "mine.service.bak").exists()
+        assert not isinstance(app.screen, EditScreen)
+        # new service from the first template
+        await pilot.press("n")
+        await pilot.pause()
+        assert isinstance(app.screen, NewServiceScreen)
+        screen = app.screen
+        screen.query_one("#name").value = "test-new"
+        await pilot.pause()
+        screen.query_one("#f-EXEC_START").value = "/bin/sleep 1"
+        await pilot.pause()
+        screen._create()
+        await pilot.pause()
+        await pilot.pause()
+        created = tmp_path / "test-new.service"
+        assert created.exists() and "ExecStart=/bin/sleep 1" in created.read_text()
+        assert not isinstance(app.screen, NewServiceScreen)
+        members = [c[2] for c in transport.calls[-6:]]
+        assert "EnableUnitFiles" in members and "StartUnit" in members
         await pilot.press("q")

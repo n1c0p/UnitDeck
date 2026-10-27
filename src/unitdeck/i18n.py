@@ -124,6 +124,12 @@ IT = {
     "Connecting…": "Connessione…",
     "Filter": "Filtro",
     "last {n} lines": "ultime {n} righe",
+    "on": "attivo",
+    "off": "spento",
+    "Yes": "Sì",
+    "No": "No",
+    "Create": "Crea",
+    "{field} is required.": "{field} è obbligatorio.",
     # new service wizard
     "Name and template": "Nome e template",
     "Service name:": "Nome del servizio:",

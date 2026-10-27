@@ -16,12 +16,14 @@ from textual.widgets import DataTable, Footer, Header, Input, Static, TabbedCont
 
 from unitdeck import __version__
 from unitdeck.backend.base import Runtime, Scope, SystemdBackend, Unit
+from unitdeck.backend.linger import LingerControl
 from unitdeck.backend.systemd import SystemBackend, UserBackend
 from unitdeck.i18n import tr
 from unitdeck.messages import ACTION_LABELS, AUTH_ERRORS, readable
 from unitdeck.model import FILTER_LABELS, StateFilter
 from unitdeck.tui.logs import LogScreen
 from unitdeck.tui.polkit import TtyAgent, graphical_session
+from unitdeck.tui.screens import ConfirmScreen, EditScreen, NewServiceScreen
 
 STATE_STYLES = {"active": "green", "failed": "bold red"}
 COLUMNS = ("Name", "Description", "Load", "State", "Startup")
@@ -58,6 +60,7 @@ class UnitPane(Vertical):
     UnitPane > Horizontal { height: 3; }
     UnitPane > Horizontal > Input { width: 1fr; }
     UnitPane > Horizontal > #filter { width: auto; padding: 1 2; }
+    UnitPane > Horizontal > #linger { width: auto; padding: 1 2; color: $text-muted; }
     UnitPane > DataTable { height: 1fr; }
     """
 
@@ -67,11 +70,15 @@ class UnitPane(Vertical):
         self.text = ""
         self.state = StateFilter.ALL
         self._rows: dict[str, Unit] = {}
+        self.linger: LingerControl | None = None
+        self.linger_state: bool | None = None
 
     def compose(self) -> ComposeResult:
         with Horizontal():
             yield Input(placeholder=tr("Search by name or description…"))
             yield Static(id="filter")
+            if self.backend.scope is Scope.USER:
+                yield Static(id="linger")
         table = DataTable(cursor_type="row", zebra_stripes=True)
         yield table
 
@@ -84,6 +91,16 @@ class UnitPane(Vertical):
         self.backend.unit_updated.connect(self.update_row)
         self.backend.busy_changed.connect(lambda name, _busy: self.update_row(name))
         self.backend.refresh()
+        if self.backend.scope is Scope.USER:
+            self.linger = LingerControl(self.backend.runtime.transport("system", interactive=True))
+            self.linger.changed.connect(self._on_linger)
+            self.linger.failed.connect(lambda detail: self.app.status(f"{tr('Linger')}: {detail}"))
+            self.linger.refresh()
+
+    def _on_linger(self, enabled: bool) -> None:
+        self.linger_state = enabled
+        state = tr("on") if enabled else tr("off")
+        self.query_one("#linger", Static).update(f"{tr('Linger')}: {state}")
 
     # ---- table ------------------------------------------------------------------------------
 
@@ -162,6 +179,12 @@ class UnitDeckApp(App[None]):
         Binding("e", "toggle_enable", "Enable/Disable"),
         Binding("m", "toggle_mask", "Mask/Unmask"),
         Binding("l", "logs", "Logs"),
+        Binding("ctrl+e", "edit", "Edit"),
+        Binding("n", "new_service", "New"),
+        Binding("v", "unit_confirm('revert')", "Restore original", show=False),
+        Binding("delete", "unit_confirm('delete')", "Delete", show=False),
+        Binding("z", "unit('reset-failed')", "Reset failed", show=False),
+        Binding("g", "toggle_linger", "Linger", show=False),
         Binding("d", "daemon_reload", "daemon-reload"),
         Binding("slash", "focus_search", "Search", key_display="/"),
         Binding("f", "cycle_filter", "Filter"),
@@ -287,6 +310,93 @@ class UnitDeckApp(App[None]):
         unit = pane.selected_unit() if pane else None
         if pane and unit and self._runtime is not None:
             self.push_screen(LogScreen(unit.name, pane.backend.scope, self._runtime))
+
+    def action_edit(self) -> None:
+        pane = self.pane
+        unit = pane.selected_unit() if pane else None
+        if not pane or not unit or not unit.can("edit"):
+            return
+
+        def saved(ok: bool | None) -> None:
+            if not ok:
+                return
+            self.status(tr("{action} {unit}: done").format(action=tr("Save"), unit=unit.name))
+            current = pane.backend.units.get(unit.name, unit)
+            if current.running:
+                question = tr("{unit} is running. Restart it now to apply the new configuration?")
+                self.push_screen(
+                    ConfirmScreen(question.format(unit=unit.name)),
+                    lambda yes: (
+                        self.run_worker(self._run(pane.backend, "restart", current))
+                        if yes
+                        else None
+                    ),
+                )
+
+        self.push_screen(EditScreen(pane.backend, unit), saved)
+
+    def action_new_service(self) -> None:
+        pane = self.pane
+        if not pane:
+            return
+
+        def created(result: dict | None) -> None:
+            if not result:
+                return
+            name = result["name"]
+            self.status(tr("{action} {unit}: done").format(action=tr("Save"), unit=name))
+            if result["enable"]:
+                pane.backend.run("enable", name)
+            if result["start"]:
+                pane.backend.run("start", name)
+
+        self.push_screen(NewServiceScreen(pane.backend), created)
+
+    def action_unit_confirm(self, action: str) -> None:
+        pane = self.pane
+        unit = pane.selected_unit() if pane else None
+        if not pane or not unit or not unit.can(action):
+            return
+        if action == "revert":
+            question = tr(
+                "Remove every drop-in and local copy of {unit} and go back to the package version?"
+            )
+        else:
+            question = tr("Delete the unit file of {unit}? This cannot be undone.")
+
+        def answered(yes: bool) -> None:
+            if not yes:
+                return
+            if action == "delete":
+                self._delete(pane.backend, unit)
+            else:
+                self.run_worker(self._run(pane.backend, action, unit))
+
+        self.push_screen(ConfirmScreen(question.format(unit=unit.name)), answered)
+
+    def _delete(self, backend: SystemdBackend, unit: Unit) -> None:
+        """Stop and disable first (no orphan process, no .wants symlink), then remove the files."""
+        steps = [action for action in ("stop", "disable") if unit.can(action)]
+        current = [""]
+
+        def proceed(name: str = "", action: str = "", _ok: bool = True, _detail: str = "") -> None:
+            if name and (name != unit.name or action != current[0]):
+                return
+            if steps:
+                current[0] = steps.pop(0)
+                backend.run(current[0], unit.name)
+            else:
+                backend.operation_finished.disconnect(proceed)
+                backend.writer.delete_unit(unit.name)
+
+        backend.operation_finished.connect(proceed)
+        proceed()
+
+    def action_toggle_linger(self) -> None:
+        pane = self.pane
+        if not pane or pane.linger is None or pane.linger_state is None:
+            return
+        pane.linger.set_linger(not pane.linger_state)
 
     def action_daemon_reload(self) -> None:
         if self.pane:
