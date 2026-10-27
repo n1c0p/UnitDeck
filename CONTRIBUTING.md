@@ -19,8 +19,8 @@ Thank you for considering a contribution. This document describes how the reposi
 git clone https://github.com/n1c0p/UnitDeck.git
 cd UnitDeck
 python3 -m venv .venv
-.venv/bin/pip install -e ".[dev]"
-.venv/bin/python -m unitdeck
+.venv/bin/pip install -e ".[dev,gui,tui]"
+.venv/bin/python -m unitdeck        # or: .venv/bin/unitdeck-tui
 ```
 
 Before every commit run the same checks as the CI:
@@ -55,6 +55,10 @@ While developing, never touch real system services: use throwaway **user** units
 5. Do not commit personal or network data: no IP addresses, usernames, hostnames or local paths, not even in tests or examples.
 6. Open the PR against `develop`. The `ci` check (ruff, `reuse lint`, pytest) must pass on every PR, documentation-only ones included: a required check that never reports would block the merge. PRs are squash-merged.
 
+## Architecture in one paragraph
+
+`unitdeck.backend` is plain Python: `base.py` (units, action rules, the `Signal` observer and the `Runtime`/`Transport` protocols), `systemd.py` (the D-Bus logic), `unitfiles.py`, `journal.py`, `linger.py`. A *runtime* supplies buses, a timer and subprocesses: `qt_runtime.py` for the desktop application (QtDBus, QTimer, QProcess) and `asyncio_runtime.py` for the terminal interface (dbus-fast, asyncio). Toolkit code lives only under `unitdeck.gui` (Qt) and `unitdeck.tui` (Textual); shared labels and error reasons are in `unitdeck.messages`. Tests drive the backend through the fake transport and runtime in `tests/fake_transport.py`.
+
 ## Adding a service template
 
 Templates live in `src/unitdeck/templates/` as `NN-name.service` files (the number sets the order in the wizard). Each starts with the SPDX header and one line `# unitdeck: name=<label shown in the wizard>; scope=user|system|both`. The body is a normal unit file where `{PLACEHOLDERS}` become wizard fields: the standard ones (`DESCRIPTION`, `TYPE`, `EXEC_START`, `EXEC_STOP`, `RESTART`, `AFTER`, `WANTS`, `USER`, `GROUP`, `WANTED_BY`) get dedicated widgets and defaults, any other name becomes a text field (add its label to `LABELS` in `new_service_wizard.py` and to the Italian catalogue). A line `Key={PLACEHOLDER}` is dropped when the value is left empty. Other comment lines are kept in the generated unit, so use them to explain what the user must prepare.
@@ -75,7 +79,7 @@ Versions follow [Semantic Versioning](https://semver.org/). The installed versio
 4. Merge with a **merge commit** (not squash). The `release.yml` workflow then tags the merge commit, builds the `.deb`, publishes the GitHub Release with the changelog section as notes, and, when `main` holds changes that `develop` lacks (hotfixes), opens a PR `main` → `develop` titled `chore: sync main into develop after vX.Y.Z`. After an ordinary release `develop` lacks only the merge commit itself, which is harmless, and no PR is opened: a PR with an empty diff could never pass the required `ci` check.
 5. Merge the sync PR, when there is one, into `develop` with a merge commit. Pull requests opened by `GITHUB_TOKEN` do not trigger workflows: if the `ci` check does not start, close and reopen the PR.
 
-The release assets are `unitdeck_X.Y.Z_amd64.deb`, `unitdeck-X.Y.Z-1.x86_64.rpm` and their `.sha256` files; the in-app update check relies on these names and picks the format from `/etc/os-release`. The package is built on `ubuntu-24.04` runners (see "Building the package" in the README); every push to `develop` builds a preview artifact kept 14 days.
+The release assets are the three packages per format (`unitdeck-common`, `unitdeck`, `unitdeck-tui`: `*_X.Y.Z_amd64.deb` and `*-X.Y.Z-1.x86_64.rpm`) with a `.sha256` file each; the in-app update check relies on these names, picks the format from `/etc/os-release` and installs `unitdeck-common` together with `unitdeck`. The package is built on `ubuntu-24.04` runners (see "Building the package" in the README); every push to `develop` builds a preview artifact kept 14 days.
 
 If the release workflow fails, fix the cause and re-run it manually from the Actions tab (`workflow_dispatch`): it is idempotent and exits cleanly when the tag already exists.
 

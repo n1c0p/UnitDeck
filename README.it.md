@@ -49,13 +49,17 @@ UnitDeck è progettato per **non girare mai come root** e si rifiuta di partire 
 
 Scarica il pacchetto per la tua distribuzione dalla [pagina Releases](https://github.com/n1c0p/UnitDeck/releases) e installalo:
 
+Tre pacchetti per release, installa quello che usi: `unitdeck-common` (helper privilegiato e policy polkit, necessario a entrambe le interfacce), `unitdeck` (applicazione desktop) e `unitdeck-tui` (interfaccia da terminale, senza Qt). Esempio con l'applicazione desktop:
+
 ```bash
-sudo apt install ./unitdeck_<versione>_amd64.deb        # Ubuntu 24.04+, Debian 13+
-sudo dnf install ./unitdeck-<versione>-1.x86_64.rpm     # Fedora 40+
-sudo zypper install --allow-unsigned-rpm ./unitdeck-<versione>-1.x86_64.rpm   # openSUSE Tumbleweed
+sudo apt install ./unitdeck-common_<versione>_amd64.deb ./unitdeck_<versione>_amd64.deb        # Ubuntu 24.04+, Debian 13+
+sudo dnf install ./unitdeck-common-<versione>-1.x86_64.rpm ./unitdeck-<versione>-1.x86_64.rpm  # Fedora 40+
+sudo zypper install --allow-unsigned-rpm ./unitdeck-common-<versione>-1.x86_64.rpm ./unitdeck-<versione>-1.x86_64.rpm   # openSUSE Tumbleweed
 ```
 
-I due pacchetti contengono lo stesso bundle, compilato su Ubuntu 24.04 (glibc 2.39): funziona qualunque distribuzione con una glibc più recente, openSUSE Leap 15 no.
+Per l'interfaccia da terminale prendi `unitdeck-tui` al posto di (o insieme a) `unitdeck`.
+
+I bundle sono compilati su Ubuntu 24.04 (glibc 2.39): funziona qualunque distribuzione con una glibc più recente, openSUSE Leap 15 no.
 
 ### Compilare e installare dai sorgenti
 
@@ -71,22 +75,22 @@ cd UnitDeck
 ```bash
 sudo apt install git python3 python3-venv libpython3.12 binutils lintian
 python3 -m venv .venv
-.venv/bin/pip install . pyinstaller
+.venv/bin/pip install ".[gui,tui]" pyinstaller
 PYTHON=.venv/bin/python packaging/build-deb.sh
-sudo apt install ./dist/unitdeck_*.deb
+sudo apt install ./dist/unitdeck-common_*.deb ./dist/unitdeck_*.deb   # aggiungi ./dist/unitdeck-tui_*.deb per il terminale
 ```
 
-Su Fedora installa invece `python3 rpm-build binutils` ed esegui `packaging/build-rpm.sh`, poi `sudo dnf install ./dist/unitdeck-*.rpm`.
+Su Fedora installa invece `python3 rpm-build binutils` ed esegui `packaging/build-rpm.sh`, poi `sudo dnf install ./dist/unitdeck*.rpm`.
 
-`packaging/stage.sh` impacchetta l'applicazione con PyInstaller (`unitdeck.spec`, modalità onedir) in `/opt/unitdeck` e aggiunge helper, policy polkit, file desktop, icona e pagina man; `build-deb.sh` trasforma quell'albero nel `.deb` con `dpkg-deb`, controllato da `lintian` (i pochi tag accettati per scelta sono in `packaging/lintian-suppress`), `build-rpm.sh` nel `.rpm` con `rpmbuild` (`packaging/unitdeck.rpm.spec`, dipendenze per soname delle librerie). `packaging/test-install.sh` installa il risultato in un container Ubuntu 24.04 o Fedora 41 pulito ed esegue `unitdeck --check`. Si disinstalla con `sudo apt remove unitdeck`.
+`packaging/stage.sh` impacchetta le due applicazioni con PyInstaller (`unitdeck.spec` e `unitdeck-tui.spec`, modalità onedir) in `/opt/unitdeck` e `/opt/unitdeck-tui` e prepara tre alberi (common: helper e policy polkit; desktop: bundle, file desktop, icona, pagina man; terminale: bundle, pagina man); `build-deb.sh` li trasforma nei tre `.deb` con `dpkg-deb`, controllato da `lintian` (i pochi tag accettati per scelta sono in `packaging/lintian-suppress`), `build-rpm.sh` nei tre `.rpm` con `rpmbuild` (`packaging/unitdeck.rpm.spec`, dipendenze per soname delle librerie). `packaging/test-install.sh` installa il risultato in un container Ubuntu 24.04 o Fedora 41 pulito ed esegue `unitdeck --check`. Si disinstalla con `sudo apt remove unitdeck`.
 
 **Manuale, senza PyInstaller.** Un ambiente virtuale esegue l'applicazione; helper e policy polkit, necessari solo per modificare i file unit di sistema, si installano una volta con uno script:
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install .
+.venv/bin/pip install ".[gui]"        # oppure ".[tui]", o entrambi
 packaging/install-dev-helper.sh      # chiede sudo; "uninstall" li rimuove
-.venv/bin/unitdeck
+.venv/bin/unitdeck                   # .venv/bin/unitdeck-tui per il terminale
 ```
 
 Per una voce nel menu delle applicazioni, crea `~/.local/share/applications/eu.nicop.unitdeck.desktop` partendo da `packaging/eu.nicop.unitdeck.desktop` con `Exec=` che punta a `.venv/bin/unitdeck` e `Icon=` a `packaging/icons/eu.nicop.unitdeck.svg` (percorsi assoluti). Il numero di versione deriva dai tag git tramite `setuptools-scm`: un checkout tra una release e l'altra riporta una versione di sviluppo.
@@ -126,9 +130,19 @@ L'interfaccia è disponibile in inglese e in italiano: segue la lingua del deskt
 
 ### Aggiornamenti
 
-All'avvio UnitDeck chiede all'API delle GitHub Releases (`api.github.com`) se esiste una versione più recente; non viene inviato nient'altro. Si disattiva da *Impostazioni → Controlla aggiornamenti all'avvio*, oppure si controlla a mano da *Informazioni → Controlla aggiornamenti…*. Quando c'è un aggiornamento puoi leggere le note di rilascio, scaricare il pacchetto per la tua distribuzione (`.deb` o `.rpm`, scelto da `/etc/os-release`; il suo SHA256 viene verificato con il checksum pubblicato nella release) e installarlo: l'installazione esegue `apt-get`, `dnf` o `zypper` tramite `pkexec`, quindi il desktop chiede la password. Il controllo è saltato quando si esegue una versione di sviluppo dai sorgenti.
+All'avvio UnitDeck chiede all'API delle GitHub Releases (`api.github.com`) se esiste una versione più recente; non viene inviato nient'altro. Si disattiva da *Impostazioni → Controlla aggiornamenti all'avvio*, oppure si controlla a mano da *Informazioni → Controlla aggiornamenti…*. Quando c'è un aggiornamento puoi leggere le note di rilascio, scaricare `unitdeck-common` e `unitdeck` per la tua distribuzione (`.deb` o `.rpm`, scelti da `/etc/os-release`; ogni SHA256 viene verificato con il checksum pubblicato nella release) e installarli: l'installazione esegue `apt-get`, `dnf` o `zypper` tramite `pkexec`, quindi il desktop chiede la password. Il controllo è saltato quando si esegue una versione di sviluppo dai sorgenti.
 
-## Dipendenze e licenze
+## Interfaccia da terminale
+
+`unitdeck-tui` è lo stesso strumento per terminale, sessione SSH o TTY, nello spirito di `htop`: due tab (servizi di sistema e utente), ricerca con `/`, filtro per stato con `f`, e tasti singoli per le azioni mostrate nel piè di pagina (`s` avvia, `x` ferma, `r` riavvia, `e` abilita/disabilita, `m` maschera/smaschera, `l` log con `f` per seguire, `Ctrl+E` modifica, `n` nuovo servizio, `v` ripristina originale, `Canc` elimina, `z` azzera lo stato fallito, `g` linger nella tab utente, `d` daemon-reload, `F5` aggiorna, `q` esci). L'editor funziona come quello desktop: drop-in per le unit di pacchetto (`Ctrl+T` passa alla copia completa), modifica diretta per le unit tue, `Ctrl+V` verifica, `Ctrl+S` verifica e salva; il modulo del nuovo servizio usa gli stessi template. Anche questo non gira mai come root: in una sessione grafica polkit mostra il solito dialogo; su TTY o via SSH lo schermo passa a `pkttyagent`, che chiede la password nel terminale come fa `systemctl`. Da un checkout dei sorgenti:
+
+```bash
+.venv/bin/pip install ".[tui]"
+.venv/bin/unitdeck-tui
+```
+
+Impacchettata, è `unitdeck-tui` accanto a `unitdeck-common` nella pagina Releases, senza Qt dentro.
+
 
 Tutte le dipendenze sono compatibili con la licenza GPL-3.0-or-later del progetto.
 
@@ -140,6 +154,8 @@ Tutte le dipendenze sono compatibili con la licenza GPL-3.0-or-later del progett
 | [ruff](https://docs.astral.sh/ruff/) | Lint e formattazione (solo sviluppo) | MIT |
 | [reuse](https://reuse.software/) | Controllo di conformità delle licenze (solo sviluppo) | Apache-2.0 / GPL-3.0-or-later |
 | [PyInstaller](https://pyinstaller.org/) | Impacchetta l'applicazione per il `.deb` (solo build) | GPL-2.0-or-later con eccezione per il bootloader |
+| [Textual](https://textual.textualize.io/) | Interfaccia da terminale | MIT |
+| [dbus-fast](https://github.com/Bluetooth-Devices/dbus-fast) | D-Bus per l'interfaccia da terminale | MIT |
 
 ## Contribuire
 

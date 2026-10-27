@@ -25,13 +25,16 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: System :: Systems Administration",
 ]
-dependencies = ["PyQt6>=6.7"]
+dependencies = []  # pick an interface: .[gui] and/or .[tui]
 
 [project.optional-dependencies]
-dev = ["pytest", "ruff", "reuse"]
+gui = ["PyQt6>=6.7"]  # the desktop application
+tui = ["dbus-fast>=2.0", "textual>=8.0"]  # the terminal interface, no Qt
+dev = ["pytest", "pytest-asyncio", "ruff", "reuse"]
 
 [project.scripts]
 unitdeck = "unitdeck.__main__:main"
+unitdeck-tui = "unitdeck.tui.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/n1c0p/UnitDeck"
@@ -62,3 +65,5 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"

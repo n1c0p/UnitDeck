@@ -49,13 +49,17 @@ UnitDeck is designed to **never run as root**, and refuses to start if launched 
 
 Download the package for your distribution from the [Releases page](https://github.com/n1c0p/UnitDeck/releases) and install it:
 
+Three packages per release, install what you use: `unitdeck-common` (the privileged helper and its polkit policy, needed by both interfaces), `unitdeck` (the desktop application) and `unitdeck-tui` (the terminal interface, no Qt). Example with the desktop application:
+
 ```bash
-sudo apt install ./unitdeck_<version>_amd64.deb        # Ubuntu 24.04+, Debian 13+
-sudo dnf install ./unitdeck-<version>-1.x86_64.rpm     # Fedora 40+
-sudo zypper install --allow-unsigned-rpm ./unitdeck-<version>-1.x86_64.rpm   # openSUSE Tumbleweed
+sudo apt install ./unitdeck-common_<version>_amd64.deb ./unitdeck_<version>_amd64.deb        # Ubuntu 24.04+, Debian 13+
+sudo dnf install ./unitdeck-common-<version>-1.x86_64.rpm ./unitdeck-<version>-1.x86_64.rpm  # Fedora 40+
+sudo zypper install --allow-unsigned-rpm ./unitdeck-common-<version>-1.x86_64.rpm ./unitdeck-<version>-1.x86_64.rpm   # openSUSE Tumbleweed
 ```
 
-Both packages hold the same bundle, built on Ubuntu 24.04 (glibc 2.39): any distribution with a newer glibc works, openSUSE Leap 15 does not.
+For the terminal interface take `unitdeck-tui` instead of (or besides) `unitdeck`.
+
+The bundles are built on Ubuntu 24.04 (glibc 2.39): any distribution with a newer glibc works, openSUSE Leap 15 does not.
 
 ### Build and install from source
 
@@ -71,22 +75,22 @@ cd UnitDeck
 ```bash
 sudo apt install git python3 python3-venv libpython3.12 binutils lintian
 python3 -m venv .venv
-.venv/bin/pip install . pyinstaller
+.venv/bin/pip install ".[gui,tui]" pyinstaller
 PYTHON=.venv/bin/python packaging/build-deb.sh
-sudo apt install ./dist/unitdeck_*.deb
+sudo apt install ./dist/unitdeck-common_*.deb ./dist/unitdeck_*.deb   # add ./dist/unitdeck-tui_*.deb for the terminal
 ```
 
-On Fedora install `python3 rpm-build binutils` instead and run `packaging/build-rpm.sh`, then `sudo dnf install ./dist/unitdeck-*.rpm`.
+On Fedora install `python3 rpm-build binutils` instead and run `packaging/build-rpm.sh`, then `sudo dnf install ./dist/unitdeck*.rpm`.
 
-`packaging/stage.sh` bundles the application with PyInstaller (`unitdeck.spec`, one-directory mode) into `/opt/unitdeck` and adds the helper, the polkit policy, the desktop file, the icon and a man page; `build-deb.sh` turns that tree into the `.deb` with `dpkg-deb`, checked by `lintian` (a few tags accepted by design are listed in `packaging/lintian-suppress`), `build-rpm.sh` into the `.rpm` with `rpmbuild` (`packaging/unitdeck.rpm.spec`, dependencies by library soname). `packaging/test-install.sh` installs the result in a clean Ubuntu 24.04 or Fedora 41 container and runs `unitdeck --check`. Uninstall with `sudo apt remove unitdeck`.
+`packaging/stage.sh` bundles the two applications with PyInstaller (`unitdeck.spec` and `unitdeck-tui.spec`, one-directory mode) into `/opt/unitdeck` and `/opt/unitdeck-tui` and lays out three trees (common: helper and polkit policy; desktop: bundle, desktop file, icon, man page; terminal: bundle, man page); `build-deb.sh` turns them into the three `.deb` files with `dpkg-deb`, checked by `lintian` (a few tags accepted by design are listed in `packaging/lintian-suppress`), `build-rpm.sh` into the three `.rpm` files with `rpmbuild` (`packaging/unitdeck.rpm.spec`, dependencies by library soname). `packaging/test-install.sh` installs the result in a clean Ubuntu 24.04 or Fedora 41 container and runs `unitdeck --check`. Uninstall with `sudo apt remove unitdeck`.
 
 **Manual, without PyInstaller.** A virtual environment runs the application; the helper and its polkit policy, needed only to edit system unit files, are installed once with a script:
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install .
+.venv/bin/pip install ".[gui]"        # or ".[tui]", or both
 packaging/install-dev-helper.sh      # asks for sudo; "uninstall" removes them
-.venv/bin/unitdeck
+.venv/bin/unitdeck                   # .venv/bin/unitdeck-tui for the terminal
 ```
 
 For a launcher in the applications menu, create `~/.local/share/applications/eu.nicop.unitdeck.desktop` from `packaging/eu.nicop.unitdeck.desktop` with `Exec=` pointing at `.venv/bin/unitdeck` and `Icon=` at `packaging/icons/eu.nicop.unitdeck.svg` (absolute paths). The version number comes from git tags via `setuptools-scm`: a checkout between releases reports a development version.
@@ -126,9 +130,19 @@ The interface is available in English and Italian: it follows the desktop langua
 
 ### Updates
 
-At startup UnitDeck asks the GitHub Releases API (`api.github.com`) whether a newer version exists; nothing else is sent. Turn this off with *Settings → Check for updates at startup*, or check by hand from *Info → Check for updates…*. When an update is available you can read the release notes, download the package for your distribution (`.deb` or `.rpm`, chosen from `/etc/os-release`; its SHA256 is verified against the checksum published with the release) and install it: the installation runs `apt-get`, `dnf` or `zypper` through `pkexec`, so the desktop asks for your password. Checks are skipped when running a development version from source.
+At startup UnitDeck asks the GitHub Releases API (`api.github.com`) whether a newer version exists; nothing else is sent. Turn this off with *Settings → Check for updates at startup*, or check by hand from *Info → Check for updates…*. When an update is available you can read the release notes, download `unitdeck-common` and `unitdeck` for your distribution (`.deb` or `.rpm`, chosen from `/etc/os-release`; each SHA256 is verified against the checksum published with the release) and install them: the installation runs `apt-get`, `dnf` or `zypper` through `pkexec`, so the desktop asks for your password. Checks are skipped when running a development version from source.
 
-## Dependencies and licenses
+## Terminal interface
+
+`unitdeck-tui` is the same tool for a terminal, SSH session or TTY, in the spirit of `htop`: two tabs (system and user services), search with `/`, state filter with `f`, and single keys for the actions shown in the footer (`s` start, `x` stop, `r` restart, `e` enable/disable, `m` mask/unmask, `l` logs with `f` to follow, `Ctrl+E` edit, `n` new service, `v` restore original, `Del` delete, `z` reset failed state, `g` linger on the user tab, `d` daemon-reload, `F5` refresh, `q` quit). The editor works like the desktop one: drop-in for package units (`Ctrl+T` switches to a full copy), direct edit for your own units, `Ctrl+V` verifies, `Ctrl+S` verifies and saves; the new-service form takes the same templates. It never runs as root either: in a graphical session polkit shows the usual dialog; on a TTY or over SSH the screen is handed to `pkttyagent`, which asks for the password in the terminal like `systemctl` does. From a source checkout:
+
+```bash
+.venv/bin/pip install ".[tui]"
+.venv/bin/unitdeck-tui
+```
+
+Packaged, it is `unitdeck-tui` next to `unitdeck-common` on the Releases page, with no Qt inside.
+
 
 All dependencies are compatible with the GPL-3.0-or-later license of the project.
 
@@ -140,6 +154,8 @@ All dependencies are compatible with the GPL-3.0-or-later license of the project
 | [ruff](https://docs.astral.sh/ruff/) | Lint and format (development only) | MIT |
 | [reuse](https://reuse.software/) | License compliance check (development only) | Apache-2.0 / GPL-3.0-or-later |
 | [PyInstaller](https://pyinstaller.org/) | Bundles the application for the `.deb` (build only) | GPL-2.0-or-later with bootloader exception |
+| [Textual](https://textual.textualize.io/) | Terminal interface | MIT |
+| [dbus-fast](https://github.com/Bluetooth-Devices/dbus-fast) | D-Bus for the terminal interface | MIT |
 
 ## Contributing
 

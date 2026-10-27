@@ -1,14 +1,40 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
-"""Backend interface. Depends on QtCore only, never on the GUI."""
+"""Backend interface: plain Python, no GUI toolkit.
+
+The backend talks to systemd through a *runtime* (see ``Runtime``) that a toolkit provides:
+Qt for the desktop application, asyncio with dbus-fast for the terminal one. Results reach the
+caller through ``Signal`` objects, simple lists of callbacks.
+"""
 
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import StrEnum
+from typing import Any, Protocol
 
-from PyQt6.QtCore import QObject, pyqtSignal
+
+class Signal:
+    """Minimal observer: ``connect`` a callable, ``emit`` arguments to every connected one."""
+
+    def __init__(self) -> None:
+        self._slots: list[Callable[..., Any]] = []
+
+    def connect(self, slot: Callable[..., Any]) -> None:
+        self._slots.append(slot)
+
+    def disconnect(self, slot: Callable[..., Any]) -> None:
+        self._slots.remove(slot)
+
+    def emit(self, *args: Any) -> None:
+        for slot in list(self._slots):
+            slot(*args)
+
+
+class UInt(int):
+    """An int that must travel as D-Bus uint32 (a plain int would go as int32)."""
 
 
 class Scope(StrEnum):
@@ -97,31 +123,84 @@ class Unit:
         return False
 
 
-class SystemdBackend(QObject):
+ReplyHandler = Callable[[list], None]
+ErrorHandler = Callable[[str, str], None]  # (D-Bus error name, message)
+SignalHandler = Callable[[str, list], None]  # (object path, arguments)
+ProcessDone = Callable[[int, str, str], None]  # (exit code, stdout, stderr)
+
+
+class Transport(Protocol):
+    """Asynchronous access to one D-Bus bus. Replies arrive through callbacks, never blocking."""
+
+    def call(
+        self,
+        path: str,
+        interface: str,
+        member: str,
+        args: list,
+        on_reply: ReplyHandler,
+        on_error: ErrorHandler,
+        service: str = "org.freedesktop.systemd1",
+        signature: str = "",
+    ) -> None: ...
+
+    def subscribe(
+        self,
+        path: str,
+        interface: str,
+        member: str,
+        handler: SignalHandler,
+        service: str = "org.freedesktop.systemd1",
+    ) -> None: ...
+
+    def close(self) -> None: ...
+
+
+class Runtime(Protocol):
+    """What a toolkit must provide: buses, a timer and subprocesses, all non-blocking."""
+
+    def transport(self, bus: str, interactive: bool = False) -> Transport:
+        """``bus`` is "session" or "user" for the user manager, "system" for the system one."""
+        ...
+
+    def schedule(self, delay_ms: int, callback: Callable[[], None]) -> None: ...
+
+    def run(self, argv: list[str], stdin: str | None, on_done: ProcessDone) -> None: ...
+
+    def stream(
+        self,
+        argv: list[str],
+        on_line: Callable[[bytes], None],
+        on_exit: Callable[[int, str], None],
+    ) -> Callable[[], None]:
+        """Start a process and deliver its stdout line by line; returns a stop() callable."""
+        ...
+
+
+class SystemdBackend:
     """One systemd manager, system or user.
 
-    Every call is asynchronous: results arrive through the signals below, the GUI never blocks.
+    Every call is asynchronous: results arrive through the signals below, the caller never blocks.
     """
 
-    units_changed = pyqtSignal()  # self.units was rebuilt
-    unit_updated = pyqtSignal(str)  # one unit changed in place
-    busy_changed = pyqtSignal(str, bool)  # an operation on that unit started / ended
-    operation_finished = pyqtSignal(str, str, bool, str)  # unit ("" = manager), action, ok, detail
-
-    def __init__(self, scope: Scope, parent: QObject | None = None) -> None:
-        super().__init__(parent)
+    def __init__(self, scope: Scope, runtime: Runtime) -> None:
         self.scope = scope
+        self.runtime = runtime
         self.own_dir = own_unit_dir(scope)
         self.units: dict[str, Unit] = {}
         self.busy: set[str] = set()
-        self.writer: QObject | None = None  # UnitWriter, set by the concrete backends
+        self.units_changed = Signal()  # self.units was rebuilt
+        self.unit_updated = Signal()  # (name): one unit changed in place
+        self.busy_changed = Signal()  # (name, busy): an operation on that unit started / ended
+        self.operation_finished = Signal()  # (unit "" = manager, action, ok, detail)
+        self.writer: Any = None  # UnitWriter, set by the concrete backends
 
     def refresh(self) -> None:
         """Reload the whole unit list; emits units_changed."""
         raise NotImplementedError
 
     def fetch_details(self, name: str) -> None:
-        """Fill can_reload and drop_in_paths of a loaded unit; emits unit_updated."""
+        """Fill can_reload and drop_in_paths of a unit; emits unit_updated."""
         raise NotImplementedError
 
     def run(self, action: str, name: str) -> None:
@@ -130,3 +209,6 @@ class SystemdBackend(QObject):
 
     def daemon_reload(self) -> None:
         raise NotImplementedError
+
+    def close(self) -> None:
+        """Stop listening to the bus; the object is not usable afterwards."""

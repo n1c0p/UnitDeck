@@ -7,6 +7,7 @@ from PyQt6.QtCore import QSettings, QTimer
 from PyQt6.QtGui import QActionGroup
 from PyQt6.QtWidgets import QMainWindow, QMenuBar, QMessageBox, QTabWidget
 
+from unitdeck.backend.qt_runtime import QtRuntime
 from unitdeck.backend.systemd import SystemBackend, UserBackend
 from unitdeck.gui.unit_tab import UnitTab
 from unitdeck.gui.update_dialog import UpdateDialog
@@ -23,6 +24,8 @@ class MainWindow(QMainWindow):
         self.resize(1150, 650)
         self._settings = QSettings()
         set_language(self._settings.value("language", "system"))
+        self._runtime = QtRuntime(self)
+        self._backends: list[SystemBackend | UserBackend] = []
         self._updater = Updater(self)
         self._updater.available.connect(self._on_update_available)
         self._updater.up_to_date.connect(self._on_up_to_date)
@@ -41,15 +44,20 @@ class MainWindow(QMainWindow):
     # ---- construction (repeated after a language change) ----------------------------------
 
     def _build(self) -> None:
+        for backend in self._backends:  # the previous content goes away with its listeners
+            backend.close()
+        self._backends = []
         tabs = QTabWidget()
         for backend_class, title in (
             (SystemBackend, "System services"),
             (UserBackend, "User services"),
         ):
-            tab = UnitTab(backend_class(tabs), tabs)
+            backend = backend_class(self._runtime)
+            self._backends.append(backend)
+            tab = UnitTab(backend, tabs)
             tabs.addTab(tab, tr(title))
             tab.message.connect(self.statusBar().showMessage)
-        self.setCentralWidget(tabs)  # deletes the previous content, backends included
+        self.setCentralWidget(tabs)  # deletes the previous content
         self.setMenuBar(self._menu_bar())
         self.statusBar().showMessage(tr("Ready"))
 

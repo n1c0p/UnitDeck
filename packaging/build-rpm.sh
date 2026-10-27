@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
 #
-# Build dist/unitdeck-<version>-1.x86_64.rpm from the staging tree made by packaging/stage.sh
-# (run automatically unless REUSE_STAGE=1 and build/stage exists). Requires rpmbuild (apt
+# Build the three RPM packages (unitdeck-common, unitdeck, unitdeck-tui) from the staging trees
+# made by packaging/stage.sh (run automatically unless REUSE_STAGE=1 and build/stage exists). Requires rpmbuild (apt
 # package "rpm" on Ubuntu). Dependencies are declared by shared-library soname, so the same
 # package installs on Fedora 40+ and openSUSE Tumbleweed (glibc >= 2.39).
 set -eu
@@ -23,7 +23,5 @@ rpmbuild -bb packaging/unitdeck.rpm.spec \
     --define "_version $RPM_VERSION" \
     --define "_stage $PWD/build/stage" \
     --quiet
-RPM="$(find "$TOPDIR/RPMS" -name 'unitdeck-*.rpm' | head -n1)"
-cp "$RPM" dist/
-ls -l "dist/$(basename "$RPM")"
-echo "dist/$(basename "$RPM")"
+find "$TOPDIR/RPMS" -name 'unitdeck*.rpm' -exec cp {} dist/ \;
+ls -l dist/unitdeck*-"$RPM_VERSION"-1.x86_64.rpm

@@ -7,7 +7,8 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from dataclasses import dataclass
+import sys
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from PyQt6.QtCore import QFile, QIODevice, QObject, QProcess, QStandardPaths, QUrl, pyqtSignal
@@ -32,13 +33,37 @@ ARCHITECTURES = ("amd64", "x86_64")
 
 
 @dataclass(slots=True)
+class Asset:
+    name: str
+    url: str
+    sha256_url: str = ""
+
+
+@dataclass(slots=True)
 class Release:
     version: str
     notes: str
     page_url: str
-    deb_url: str = ""
-    deb_name: str = ""
-    sha256_url: str = ""
+    assets: list[Asset] = field(default_factory=list)  # packages to download, in order
+
+    @property
+    def deb_url(self) -> str:  # "" when the release has no package for this system
+        return self.assets[0].url if self.assets else ""
+
+    @property
+    def deb_name(self) -> str:
+        return self.assets[0].name if self.assets else ""
+
+
+# Packages the desktop application updates: its own plus the shared helper package.
+PACKAGES = ("unitdeck-common", "unitdeck")
+
+
+def restart_command() -> list[str]:
+    """argv that starts a fresh instance: the packaged binary, or python -m unitdeck from source."""
+    if getattr(sys, "frozen", False):
+        return [sys.executable]
+    return [sys.executable, "-m", "unitdeck"]
 
 
 def version_tuple(text: str) -> tuple[int, ...]:
@@ -84,11 +109,17 @@ def parse_release(data: dict, suffix: str = ".deb") -> Release:
         page_url=data.get("html_url") or RELEASES_PAGE,
     )
     assets = {a["name"]: a["browser_download_url"] for a in data.get("assets", [])}
-    for name, url in assets.items():
-        if suffix and name.endswith(suffix) and any(arch in name for arch in ARCHITECTURES):
-            release.deb_name, release.deb_url = name, url
-            release.sha256_url = assets.get(name + ".sha256", "")
-            break
+    for package in PACKAGES:
+        # unitdeck-common_1.2.3_amd64.deb / unitdeck-common-1.2.3-1.x86_64.rpm
+        pattern = re.compile(
+            rf"^{re.escape(package)}[_-]\d.*({'|'.join(ARCHITECTURES)}).*{re.escape(suffix)}$"
+        )
+        for name, url in assets.items():
+            if suffix and pattern.match(name):
+                release.assets.append(Asset(name, url, assets.get(name + ".sha256", "")))
+                break
+    if len(release.assets) != len(PACKAGES):  # older releases shipped one package: skip them
+        release.assets = []
     return release
 
 
@@ -164,50 +195,66 @@ class Updater(QObject):
     # ---- download ---------------------------------------------------------------------------
 
     def download(self, release: Release) -> None:
+        """Download every asset of the release in turn; ``downloaded`` carries the paths."""
+        self._download_next(release, list(release.assets), [])
+
+    def _download_next(self, release: Release, pending: list[Asset], done: list[Path]) -> None:
+        if not pending:
+            self.downloaded.emit(" ".join(str(path) for path in done))
+            return
+        asset = pending[0]
         folder = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DownloadLocation)
-        target = Path(folder) / release.deb_name
+        target = Path(folder) / asset.name
         file = QFile(str(target))
         if not file.open(QIODevice.OpenModeFlag.WriteOnly | QIODevice.OpenModeFlag.Truncate):
             self.download_failed.emit(file.errorString())
             return
-        reply = self._get(release.deb_url)
+        reply = self._get(asset.url)
         reply.readyRead.connect(lambda: file.write(reply.readAll()))
         # downloadProgress carries qint64 values: relay them, a direct signal-to-signal
         # connection to an (int, int) signal is refused by Qt.
         reply.downloadProgress.connect(lambda received, total: self.progress.emit(received, total))
-        reply.finished.connect(lambda: self._on_download(reply, file, release, target))
+        reply.finished.connect(
+            lambda: self._on_download(reply, file, asset, target, release, pending, done)
+        )
 
-    def _on_download(self, reply: QNetworkReply, file: QFile, release: Release, target: Path):
+    def _on_download(self, reply, file, asset: Asset, target: Path, release, pending, done):
         file.write(reply.readAll())
         file.close()
         reply.deleteLater()
         if reply.error() != QNetworkReply.NetworkError.NoError:
             target.unlink(missing_ok=True)
             self.download_failed.emit(reply.errorString())
-        elif release.sha256_url:
-            check = self._get(release.sha256_url)
-            check.finished.connect(lambda: self._on_checksum(check, release, target))
-        else:
-            self.downloaded.emit(str(target))
+            return
 
-    def _on_checksum(self, reply: QNetworkReply, release: Release, target: Path) -> None:
+        def verified() -> None:
+            self._download_next(release, pending[1:], [*done, target])
+
+        if asset.sha256_url:
+            check = self._get(asset.sha256_url)
+            check.finished.connect(lambda: self._on_checksum(check, asset, target, verified))
+        else:
+            verified()
+
+    def _on_checksum(self, reply, asset: Asset, target: Path, then) -> None:
         reply.deleteLater()
         if reply.error() != QNetworkReply.NetworkError.NoError:
             target.unlink(missing_ok=True)
             self.download_failed.emit(reply.errorString())
             return
-        expected = parse_sha256(bytes(reply.readAll()).decode("utf-8", "replace"), release.deb_name)
+        expected = parse_sha256(bytes(reply.readAll()).decode("utf-8", "replace"), asset.name)
         # ponytail: hashing ~150 MB blocks the GUI for well under a second; move to a thread if not
         if expected and expected == sha256_of(target):
-            self.downloaded.emit(str(target))
+            then()
         else:
             target.unlink(missing_ok=True)
             self.download_failed.emit("checksum mismatch")
 
     # ---- install ----------------------------------------------------------------------------
 
-    def install(self, path: str) -> None:
-        """pkexec shows the desktop authentication dialog; the package manager installs the file."""
+    def install(self, paths: str) -> None:
+        """pkexec shows the desktop authentication dialog; the package manager installs the files
+        (space-separated absolute paths, as ``downloaded`` gives them)."""
         if self.format is None:
             self.install_finished.emit(False, "no package manager known for this system")
             return
@@ -215,7 +262,7 @@ class Updater(QObject):
         self._proc = QProcess(self)
         self._proc.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
         self._proc.finished.connect(self._on_installed)
-        self._proc.start(command[0], [*command[1:], path])
+        self._proc.start(command[0], [*command[1:], *paths.split(" ")])
 
     def _on_installed(self, code: int, _status: object) -> None:
         output = bytes(self._proc.readAllStandardOutput()).decode("utf-8", "replace")

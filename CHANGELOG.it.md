@@ -8,6 +8,20 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-27
+
+Aggiornamento dalla 0.2.0: la finestra di aggiornamento della 0.2.0 scarica solo `unitdeck`, che ora richiede `unitdeck-common`, quindi l'installazione fallisce. Installa i due pacchetti a mano una volta, come mostra il README; dalla 0.3.0 l'aggiornamento dall'app gestisce entrambi.
+
+### Modificato
+
+- Backend separato da Qt: nucleo in Python puro con un'astrazione `Runtime`, runtime Qt per l'applicazione desktop e runtime asyncio/dbus-fast per la futura interfaccia da terminale (#38). Nessun cambiamento visibile.
+
+### Aggiunto
+
+- Tre pacchetti per release: `unitdeck-common` (helper e policy polkit), `unitdeck` (desktop) e `unitdeck-tui` (terminale, senza Qt), installabili separatamente; l'aggiornamento dall'app installa `unitdeck-common` insieme a `unitdeck`. Gli extra Python `gui` e `tui` sostituiscono la dipendenza obbligatoria da PyQt6 (#38, fase T4).
+- Interfaccia da terminale `unitdeck-tui` (Textual): tab sistema e utente, ricerca, filtro per stato, avvia/ferma/riavvia, abilita/disabilita, maschera/smaschera, journal con follow, daemon-reload, editor con drop-in, nuovo servizio dai template, ripristino originale, eliminazione, azzeramento dello stato fallito, linger; pkttyagent per polkit senza sessione grafica. Si installa con l'extra `tui` (#38, fasi T2 e T3).
+- Pulsante "Riavvia UnitDeck" nella finestra di aggiornamento una volta installata la nuova versione: l'applicazione si riavvia da sola sulla nuova versione.
+
 ## [0.2.0] - 2026-10-25
 
 ### Aggiunto

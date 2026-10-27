@@ -1,17 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
-"""Backend implementation on org.freedesktop.systemd1, shared by the system and user buses."""
+"""Backend on org.freedesktop.systemd1, shared by the system and user buses and by every toolkit."""
 
 from __future__ import annotations
 
 import os
-from typing import Any
 
-from PyQt6.QtCore import QObject, QTimer
-from PyQt6.QtDBus import QDBusConnection
-
-from unitdeck.backend.base import Scope, SystemdBackend, Unit
-from unitdeck.backend.transport import QtDBusTransport
+from unitdeck.backend.base import Runtime, Scope, SystemdBackend, Transport, Unit
 from unitdeck.backend.unitfiles import HelperWriter, UserWriter, is_own, vendor_copy
 
 MANAGER_PATH = "/org/freedesktop/systemd1"
@@ -26,12 +21,16 @@ JOB_METHODS = {
     "restart": "RestartUnit",
     "reload": "ReloadUnit",
 }
-FILE_METHODS = {  # action -> (method, arguments after the unit name list)
-    "enable": ("EnableUnitFiles", [False, False]),  # runtime, force
-    "disable": ("DisableUnitFiles", [False]),
-    "mask": ("MaskUnitFiles", [False, False]),
-    "unmask": ("UnmaskUnitFiles", [False]),
-    "revert": ("RevertUnitFiles", []),  # drops drop-ins and /etc copies, like systemctl revert
+FILE_METHODS = {  # action -> (method, signature, arguments after the unit name list)
+    "enable": ("EnableUnitFiles", "asbb", [False, False]),  # runtime, force
+    "disable": ("DisableUnitFiles", "asb", [False]),
+    "mask": ("MaskUnitFiles", "asbb", [False, False]),
+    "unmask": ("UnmaskUnitFiles", "asb", [False]),
+    "revert": (
+        "RevertUnitFiles",
+        "as",
+        [],
+    ),  # drops drop-ins and /etc copies, like systemctl revert
 }
 SIMPLE_METHODS = {"reset-failed": "ResetFailedUnit"}  # no job, no reload
 PROPERTY_FIELDS = {
@@ -51,19 +50,15 @@ def template_of(name: str) -> str:
     return f"{prefix}@.{rest.rpartition('.')[2]}" if at else ""
 
 
-class QtDBusBackend(SystemdBackend):
-    def __init__(self, scope: Scope, transport: Any, parent: QObject | None = None) -> None:
-        super().__init__(scope, parent)
+class DBusBackend(SystemdBackend):
+    def __init__(self, scope: Scope, transport: Transport, runtime: Runtime) -> None:
+        super().__init__(scope, runtime)
         self._t = transport
-        if isinstance(transport, QObject):  # die together: no signal reaches a dead backend
-            transport.setParent(self)
         self._path_to_name: dict[str, str] = {}
         self._jobs: dict[str, tuple[str, str]] = {}  # job object path -> (unit, action)
+        self._early_results: dict[str, str] = {}  # JobRemoved seen before the method reply
         self._lists: dict[str, list] = {}  # ListUnits / ListUnitFiles replies of one refresh
-        self._refresh_timer = QTimer(self)
-        self._refresh_timer.setSingleShot(True)
-        self._refresh_timer.setInterval(REFRESH_DEBOUNCE_MS)
-        self._refresh_timer.timeout.connect(self.refresh)
+        self._refresh_pending = False
 
         # Without Subscribe the manager emits no UnitNew/UnitRemoved/JobRemoved/PropertiesChanged.
         self._t.call(MANAGER_PATH, MANAGER_IFACE, "Subscribe", [], _ignore, _ignore)
@@ -101,17 +96,8 @@ class QtDBusBackend(SystemdBackend):
                 [name],
                 lambda args: self._get_all(name, args[0]),
                 self._error_handler(name, "details"),
+                signature="s",
             )
-
-    def _get_all(self, name: str, object_path: str) -> None:
-        self._t.call(
-            object_path,
-            PROPERTIES_IFACE,
-            "GetAll",
-            [UNIT_IFACE],
-            lambda args: self._on_details(name, args[0]),
-            self._error_handler(name, "details"),
-        )
 
     def run(self, action: str, name: str) -> None:
         if action in JOB_METHODS:
@@ -121,11 +107,12 @@ class QtDBusBackend(SystemdBackend):
                 MANAGER_IFACE,
                 JOB_METHODS[action],
                 [name, "replace"],
-                lambda args: self._jobs.__setitem__(args[0], (name, action)),
+                lambda args: self._on_job_started(args[0], name, action),
                 self._error_handler(name, action),
+                signature="ss",
             )
         elif action in FILE_METHODS:
-            method, extra = FILE_METHODS[action]
+            method, signature, extra = FILE_METHODS[action]
             self._set_busy(name, True)
             self._t.call(
                 MANAGER_PATH,
@@ -135,6 +122,7 @@ class QtDBusBackend(SystemdBackend):
                 # Like systemctl: reload the manager so the change is picked up right away.
                 lambda _args: self._reload(name, action),
                 self._error_handler(name, action),
+                signature=signature,
             )
         elif action in SIMPLE_METHODS:
             self._set_busy(name, True)
@@ -145,12 +133,16 @@ class QtDBusBackend(SystemdBackend):
                 [name],
                 lambda _args: self._finish(name, action, True, ""),
                 self._error_handler(name, action),
+                signature="s",
             )
         else:
             raise ValueError(f"unknown action {action!r}")
 
     def daemon_reload(self) -> None:
         self._reload("", "daemon-reload")
+
+    def close(self) -> None:
+        self._t.close()
 
     # ---- replies ----------------------------------------------------------------------------
 
@@ -197,6 +189,17 @@ class QtDBusBackend(SystemdBackend):
         self._path_to_name = {u.object_path: n for n, u in units.items() if u.object_path}
         self.units_changed.emit()
 
+    def _get_all(self, name: str, object_path: str) -> None:
+        self._t.call(
+            object_path,
+            PROPERTIES_IFACE,
+            "GetAll",
+            [UNIT_IFACE],
+            lambda args: self._on_details(name, args[0]),
+            self._error_handler(name, "details"),
+            signature="s",
+        )
+
     def _on_details(self, name: str, props: dict) -> None:
         unit = self.units.get(name)
         if unit is None:
@@ -223,12 +226,26 @@ class QtDBusBackend(SystemdBackend):
 
     # ---- signals from systemd ---------------------------------------------------------------
 
+    def _on_job_started(self, job_path: str, name: str, action: str) -> None:
+        # An instant job can be removed before the reply naming it reaches us (the transport
+        # delivers signals as they arrive, replies when the caller resumes): settle it now.
+        result = self._early_results.pop(job_path, None)
+        if result is None:
+            self._jobs[job_path] = (name, action)
+        else:
+            self._job_done(name, action, result)
+
     def _on_job_removed(self, _path: str, args: list) -> None:
         _job_id, job_path, _unit, result = args
         pending = self._jobs.pop(job_path, None)
         if pending is None:
+            self._early_results[job_path] = result
+            if len(self._early_results) > 64:  # jobs of other clients: keep the dict small
+                self._early_results.pop(next(iter(self._early_results)))
             return
-        name, action = pending
+        self._job_done(pending[0], pending[1], result)
+
+    def _job_done(self, name: str, action: str, result: str) -> None:
         unit = self.units.get(name)
         if result != "failed" or unit is None or not unit.loaded:
             self._finish(name, action, result == "done", result)
@@ -241,6 +258,7 @@ class QtDBusBackend(SystemdBackend):
             [SERVICE_IFACE, "Result"],
             lambda args: self._finish(name, action, False, f"failed ({args[0]})"),
             lambda _error, _message: self._finish(name, action, False, result),
+            signature="ss",
         )
 
     def _on_properties_changed(self, path: str, args: list) -> None:
@@ -256,7 +274,15 @@ class QtDBusBackend(SystemdBackend):
             self._schedule_refresh()
 
     def _schedule_refresh(self, *_args: object) -> None:
-        self._refresh_timer.start()
+        """Coalesce bursts of UnitNew/UnitRemoved into one refresh."""
+        if self._refresh_pending:
+            return
+        self._refresh_pending = True
+        self.runtime.schedule(REFRESH_DEBOUNCE_MS, self._scheduled_refresh)
+
+    def _scheduled_refresh(self) -> None:
+        self._refresh_pending = False
+        self.refresh()
 
     # ---- bookkeeping ------------------------------------------------------------------------
 
@@ -284,20 +310,17 @@ def _ignore(*_args: object) -> None:
     pass
 
 
-class UserBackend(QtDBusBackend):
-    """Session bus: no authentication involved."""
+class UserBackend(DBusBackend):
+    """Session bus: no authentication involved, files written directly."""
 
-    def __init__(self, parent: QObject | None = None) -> None:
-        super().__init__(Scope.USER, QtDBusTransport(QDBusConnection.sessionBus()), parent)
+    def __init__(self, runtime: Runtime) -> None:
+        super().__init__(Scope.USER, runtime.transport("session"), runtime)
         self.writer = UserWriter(self)
 
 
-class SystemBackend(QtDBusBackend):
-    """System bus: interactive authorization makes systemd ask polkit, which can take minutes."""
+class SystemBackend(DBusBackend):
+    """System bus: interactive authorization makes systemd ask polkit; files through the helper."""
 
-    def __init__(self, parent: QObject | None = None) -> None:
-        transport = QtDBusTransport(
-            QDBusConnection.systemBus(), interactive=True, timeout_ms=10 * 60 * 1000
-        )
-        super().__init__(Scope.SYSTEM, transport, parent)
+    def __init__(self, runtime: Runtime) -> None:
+        super().__init__(Scope.SYSTEM, runtime.transport("system", interactive=True), runtime)
         self.writer = HelperWriter(self)

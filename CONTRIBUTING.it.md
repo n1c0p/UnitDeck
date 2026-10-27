@@ -19,8 +19,8 @@ Grazie per aver pensato di contribuire. Questo documento descrive come è organi
 git clone https://github.com/n1c0p/UnitDeck.git
 cd UnitDeck
 python3 -m venv .venv
-.venv/bin/pip install -e ".[dev]"
-.venv/bin/python -m unitdeck
+.venv/bin/pip install -e ".[dev,gui,tui]"
+.venv/bin/python -m unitdeck        # oppure: .venv/bin/unitdeck-tui
 ```
 
 Prima di ogni commit esegui gli stessi controlli della CI:
@@ -55,6 +55,10 @@ Durante lo sviluppo non toccare mai i servizi di sistema reali: usa unit **utent
 5. Non committare dati personali o di rete: niente indirizzi IP, nomi utente, hostname o percorsi locali, nemmeno nei test o negli esempi.
 6. Apri la PR verso `develop`. Il controllo `ci` (ruff, `reuse lint`, pytest) deve passare su ogni PR, anche quelle di sola documentazione: un controllo obbligatorio che non riporta nulla bloccherebbe il merge. Le PR vengono unite con squash.
 
+## Architettura in un paragrafo
+
+`unitdeck.backend` è Python puro: `base.py` (unit, regole delle azioni, l'osservatore `Signal` e i protocolli `Runtime`/`Transport`), `systemd.py` (la logica D-Bus), `unitfiles.py`, `journal.py`, `linger.py`. Un *runtime* fornisce bus, timer e sottoprocessi: `qt_runtime.py` per l'applicazione desktop (QtDBus, QTimer, QProcess) e `asyncio_runtime.py` per l'interfaccia da terminale (dbus-fast, asyncio). Il codice legato a un toolkit sta solo in `unitdeck.gui` (Qt) e `unitdeck.tui` (Textual); etichette e motivi di errore condivisi stanno in `unitdeck.messages`. I test pilotano il backend con il transport e il runtime finti di `tests/fake_transport.py`.
+
 ## Aggiungere un template di servizio
 
 I template stanno in `src/unitdeck/templates/` come file `NN-nome.service` (il numero decide l'ordine nel wizard). Ognuno inizia con l'intestazione SPDX e una riga `# unitdeck: name=<etichetta mostrata nel wizard>; scope=user|system|both`. Il corpo è un normale file unit in cui i `{SEGNAPOSTO}` diventano campi del wizard: quelli standard (`DESCRIPTION`, `TYPE`, `EXEC_START`, `EXEC_STOP`, `RESTART`, `AFTER`, `WANTS`, `USER`, `GROUP`, `WANTED_BY`) hanno widget e valori predefiniti dedicati, qualunque altro nome diventa un campo di testo (aggiungi la sua etichetta a `LABELS` in `new_service_wizard.py` e al catalogo italiano). Una riga `Chiave={SEGNAPOSTO}` viene eliminata se il valore resta vuoto. Le altre righe di commento restano nella unit generata: usale per spiegare cosa deve preparare l'utente.
@@ -75,7 +79,7 @@ Le versioni seguono il [Semantic Versioning](https://semver.org/). La versione i
 4. Unisci con un **merge commit** (non squash). Il workflow `release.yml` tagga il commit di merge, compila il `.deb`, pubblica la GitHub Release con la sezione del changelog come note e, quando `main` contiene modifiche che mancano a `develop` (hotfix), apre una PR `main` → `develop` dal titolo `chore: sync main into develop after vX.Y.Z`. Dopo una release ordinaria a `develop` manca solo il commit di merge, cosa innocua, e nessuna PR viene aperta: una PR senza differenze non potrebbe mai superare il controllo obbligatorio `ci`.
 5. Unisci la PR di sincronizzazione, quando c'è, in `develop` con un merge commit. Le pull request aperte da `GITHUB_TOKEN` non avviano i workflow: se il controllo `ci` non parte, chiudi e riapri la PR.
 
-Gli asset della release sono `unitdeck_X.Y.Z_amd64.deb`, `unitdeck-X.Y.Z-1.x86_64.rpm` e i rispettivi file `.sha256`; il controllo aggiornamenti nell'app si basa su questi nomi e sceglie il formato da `/etc/os-release`. Il pacchetto viene compilato su runner `ubuntu-24.04` (vedi "Compilare il pacchetto" nel README); ogni push su `develop` compila un artifact di anteprima conservato 14 giorni.
+Gli asset della release sono i tre pacchetti per formato (`unitdeck-common`, `unitdeck`, `unitdeck-tui`: `*_X.Y.Z_amd64.deb` e `*-X.Y.Z-1.x86_64.rpm`) con un file `.sha256` ciascuno; il controllo aggiornamenti nell'app si basa su questi nomi, sceglie il formato da `/etc/os-release` e installa `unitdeck-common` insieme a `unitdeck`. Il pacchetto viene compilato su runner `ubuntu-24.04` (vedi "Compilare il pacchetto" nel README); ogni push su `develop` compila un artifact di anteprima conservato 14 giorni.
 
 Se il workflow di release fallisce, correggi la causa e rilancialo a mano dalla scheda Actions (`workflow_dispatch`): è idempotente e termina senza errori se il tag esiste già.
 

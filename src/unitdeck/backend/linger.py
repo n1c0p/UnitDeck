@@ -5,12 +5,8 @@
 from __future__ import annotations
 
 import os
-from typing import Any
 
-from PyQt6.QtCore import QObject, pyqtSignal
-from PyQt6.QtDBus import QDBusConnection
-
-from unitdeck.backend.transport import QtDBusTransport, UInt
+from unitdeck.backend.base import Signal, Transport, UInt
 
 LOGIN1 = "org.freedesktop.login1"
 LOGIN1_PATH = "/org/freedesktop/login1"
@@ -19,35 +15,23 @@ USER_IFACE = "org.freedesktop.login1.User"
 PROPERTIES_IFACE = "org.freedesktop.DBus.Properties"
 
 
-class LingerControl(QObject):
-    changed = pyqtSignal(bool)  # current linger state
-    failed = pyqtSignal(str)  # "error.name: message"
+class LingerControl:
+    """``transport`` must be on the system bus with interactive authorization (polkit may ask)."""
 
-    def __init__(self, transport: Any = None, uid: int | None = None, parent=None) -> None:
-        super().__init__(parent)
-        if transport is None:  # SetUserLinger is privileged: polkit may ask, so allow interaction
-            transport = QtDBusTransport(
-                QDBusConnection.systemBus(),
-                interactive=True,
-                timeout_ms=10 * 60 * 1000,
-                parent=self,
-            )
+    def __init__(self, transport: Transport, uid: int | None = None) -> None:
         self._t = transport
         self._uid = os.getuid() if uid is None else uid
         self._user_path = ""
+        self.changed = Signal()  # (enabled)
+        self.failed = Signal()  # ("error.name: message")
 
     def refresh(self) -> None:
         if self._user_path:
             self._read()
             return
+        args = [UInt(self._uid)]
         self._t.call(
-            LOGIN1_PATH,
-            MANAGER_IFACE,
-            "GetUser",
-            [UInt(self._uid)],
-            self._on_user,
-            self._error,
-            LOGIN1,
+            LOGIN1_PATH, MANAGER_IFACE, "GetUser", args, self._on_user, self._error, LOGIN1, "u"
         )
 
     def set_linger(self, enabled: bool) -> None:
@@ -59,9 +43,16 @@ class LingerControl(QObject):
             lambda _args: self.refresh(),
             self._error,
             LOGIN1,
+            "ubb",
         )
 
+    def close(self) -> None:
+        self._t.close()
+
     def _on_user(self, args: list) -> None:
+        if not args or not isinstance(args[0], str):
+            self.failed.emit("org.freedesktop.login1: no user object")
+            return
         self._user_path = args[0]
         self._t.subscribe(
             self._user_path, PROPERTIES_IFACE, "PropertiesChanged", self._on_props, LOGIN1
@@ -77,6 +68,7 @@ class LingerControl(QObject):
             lambda args: self.changed.emit(bool(args[0])),
             self._error,
             LOGIN1,
+            "ss",
         )
 
     def _on_props(self, _path: str, args: list) -> None:

@@ -2,8 +2,8 @@
 # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
 from fake_transport import DBusError, FakeTransport
 
+from unitdeck.backend.base import UInt
 from unitdeck.backend.linger import USER_IFACE, LingerControl
-from unitdeck.backend.transport import UInt
 
 
 def test_linger_reads_state_and_follows_changes():
@@ -14,6 +14,7 @@ def test_linger_reads_state_and_follows_changes():
     control.refresh()
     assert transport.calls[0][2:] == ("GetUser", [1000])
     assert isinstance(transport.calls[0][3][0], UInt)
+    assert transport.signatures["GetUser"] == "u"
     assert transport.calls[-1][:3] == (
         "/org/freedesktop/login1/user/_1000",
         "org.freedesktop.DBus.Properties",
