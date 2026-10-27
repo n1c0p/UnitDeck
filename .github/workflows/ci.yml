@@ -58,7 +58,12 @@ jobs:
         run: |
           sudo apt-get install -y --no-install-recommends python3-venv libpython3.12 lintian rpm binutils libegl1 libgl1 libxkbcommon0 libdbus-1-3
           python3 -m venv .venv
-          .venv/bin/pip install ".[gui,tui]" pyinstaller
+          # Release tags sit on merge commits of main, unreachable from develop, so
+          # setuptools-scm would say 0.1.devN: below the "unitdeck < 0.3.0" Conflicts
+          # of unitdeck-common. Name the preview after the latest tag instead.
+          latest="$(git tag --list 'v*' | sed 's/^v//' | sort -V | tail -n1)"
+          echo "SETUPTOOLS_SCM_PRETEND_VERSION=${latest:-0.0.0}.post${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          SETUPTOOLS_SCM_PRETEND_VERSION="${latest:-0.0.0}.post${GITHUB_RUN_NUMBER}" .venv/bin/pip install ".[gui,tui]" pyinstaller
       - name: Build .deb and .rpm
         run: |
           PYTHON=.venv/bin/python packaging/stage.sh
