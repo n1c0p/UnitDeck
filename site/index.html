@@ -1,0 +1,154 @@
+<!doctype html>
+<!--
+SPDX-License-Identifier: GPL-3.0-or-later
+SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UnitDeck</title>
+<meta name="description" content="Manage systemd system and user services from a desktop window or a terminal, without ever running as root. Free software for Linux.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:title" content="UnitDeck: systemd services, one window">
+<meta property="og:description" content="Start, stop, edit with drop-ins, read the journal and create services from templates. Desktop and terminal interfaces, polkit for privileges, never root. GPL-3.0-or-later.">
+<meta property="og:image" content="https://n1c0p.github.io/UnitDeck/screenshot.png">
+<meta property="og:image:width" content="1722">
+<meta property="og:image:height" content="900">
+<meta property="og:url" content="https://n1c0p.github.io/UnitDeck/">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+:root {
+  --bg: #f7f7f5; --fg: #1c1c1a; --muted: #5a5a56; --card: #ffffff; --line: #e2e2dd;
+  --accent: #b2410e; --code-bg: #efeeea;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161614; --fg: #ecebe6; --muted: #a3a29b; --card: #1f1f1c; --line: #2e2e2a;
+    --accent: #f08a4b; --code-bg: #26261f;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 960px; margin: 0 auto; padding: 0 16px 48px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 0; }
+header .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; }
+header img { width: 32px; height: 32px; }
+.lang button { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 6px; padding: 4px 10px; cursor: pointer; font: inherit; font-size: 14px; }
+.lang button[aria-pressed="true"] { color: var(--fg); border-color: var(--accent); }
+h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1.15; margin: 24px 0 12px; }
+.lead { font-size: 19px; color: var(--muted); max-width: 42rem; margin: 0 0 24px; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 32px; }
+.cta a { display: inline-block; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; border: 1px solid var(--accent); }
+.cta a.primary { background: var(--accent); color: #fff; }
+.cta a.secondary { color: var(--accent); }
+.shot { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--card); }
+.shot img { display: block; width: 100%; height: auto; }
+h2 { font-size: 24px; margin: 40px 0 12px; }
+ul.features { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+ul.features li { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+ul.features b { display: block; margin-bottom: 4px; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-size: 14px; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+p code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-size: 90%; }
+.note { color: var(--muted); font-size: 15px; }
+footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+a { color: var(--accent); }
+[lang-block] { display: none; }
+html[data-lang="en"] [lang-block="en"], html[data-lang="it"] [lang-block="it"] { display: block; }
+html[data-lang="en"] li[lang-block="en"], html[data-lang="it"] li[lang-block="it"] { display: list-item; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="brand"><img src="icon.svg" alt=""> UnitDeck</div>
+  <div class="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="en" aria-pressed="true">English</button>
+    <button type="button" data-lang="it" aria-pressed="false">Italiano</button>
+  </div>
+</header>
+
+<div lang-block="en">
+  <h1>systemd services, one window.<br>Never as root.</h1>
+  <p class="lead">Start, stop, edit with drop-ins, read the journal and create services from templates. On the desktop or in a terminal over SSH. Privileges through polkit, one action at a time.</p>
+  <div class="cta">
+    <a class="primary" href="https://github.com/n1c0p/UnitDeck/releases/latest">Download (.deb / .rpm)</a>
+    <a class="secondary" href="https://github.com/n1c0p/UnitDeck">Source on GitHub</a>
+  </div>
+</div>
+<div lang-block="it">
+  <h1>I servizi systemd in una finestra.<br>Mai come root.</h1>
+  <p class="lead">Avvia, ferma, modifica con i drop-in, leggi il journal e crea servizi da template. Sul desktop o in un terminale via SSH. Privilegi tramite polkit, un'azione alla volta.</p>
+  <div class="cta">
+    <a class="primary" href="https://github.com/n1c0p/UnitDeck/releases/latest">Scarica (.deb / .rpm)</a>
+    <a class="secondary" href="https://github.com/n1c0p/UnitDeck/blob/main/README.it.md">Sorgenti su GitHub</a>
+  </div>
+</div>
+
+<div class="shot"><img src="screenshot.png" width="1722" height="900" alt="UnitDeck main window: the system services tab with state columns and row actions"></div>
+
+<div lang-block="en">
+  <h2>What it does</h2>
+  <ul class="features">
+    <li><b>System and user services</b>Two tabs, searchable and filterable by state, updated live over D-Bus.</li>
+    <li><b>Safe edits</b>Package units get an <code>override.conf</code> drop-in that survives upgrades; every change passes <code>systemd-analyze verify</code> first. "Restore original" reverts.</li>
+    <li><b>New service wizard</b>Templates for common cases, validation, optional "enable and start now".</li>
+    <li><b>Journal</b>Logs of the selected service with follow and priority filter.</li>
+    <li><b>Terminal interface</b><code>unitdeck-tui</code>, htop-style: same actions on single keys, works on a TTY or over SSH, no Qt inside.</li>
+    <li><b>Security model</b>The interface runs as your user. Privileged actions go through polkit; system unit files are written by a small helper launched with <code>pkexec</code>, limited to a fixed set of operations.</li>
+  </ul>
+
+  <h2>Install</h2>
+  <p>Ubuntu 24.04+ and Debian 13+, Fedora 40+, openSUSE Tumbleweed. Take <code>unitdeck-common</code> plus the interface you want: <code>unitdeck</code> (desktop) or <code>unitdeck-tui</code> (terminal), or both.</p>
+<pre><code>sudo apt install ./unitdeck-common_*.deb ./unitdeck_*.deb
+sudo dnf install ./unitdeck-common-*.rpm ./unitdeck-*.rpm</code></pre>
+  <p class="note">The desktop application checks GitHub Releases for updates and installs them on request; it can be turned off in the settings.</p>
+</div>
+<div lang-block="it">
+  <h2>Cosa fa</h2>
+  <ul class="features">
+    <li><b>Servizi di sistema e utente</b>Due schede, ricerca e filtro per stato, aggiornate in tempo reale via D-Bus.</li>
+    <li><b>Modifiche sicure</b>Le unità dei pacchetti ricevono un drop-in <code>override.conf</code> che sopravvive agli aggiornamenti; ogni modifica passa prima da <code>systemd-analyze verify</code>. "Ripristina originale" annulla.</li>
+    <li><b>Nuovo servizio guidato</b>Template per i casi comuni, validazione, "abilita e avvia ora" opzionale.</li>
+    <li><b>Journal</b>Log del servizio selezionato con follow e filtro per priorità.</li>
+    <li><b>Interfaccia da terminale</b><code>unitdeck-tui</code>, stile htop: stesse azioni su singoli tasti, funziona su TTY o via SSH, senza Qt.</li>
+    <li><b>Modello di sicurezza</b>L'interfaccia gira con il tuo utente. Le azioni privilegiate passano da polkit; i file delle unità di sistema li scrive un piccolo helper lanciato con <code>pkexec</code>, limitato a un insieme fisso di operazioni.</li>
+  </ul>
+
+  <h2>Installazione</h2>
+  <p>Ubuntu 24.04+ e Debian 13+, Fedora 40+, openSUSE Tumbleweed. Prendi <code>unitdeck-common</code> più l'interfaccia che vuoi: <code>unitdeck</code> (desktop) o <code>unitdeck-tui</code> (terminale), o entrambe.</p>
+<pre><code>sudo apt install ./unitdeck-common_*.deb ./unitdeck_*.deb
+sudo dnf install ./unitdeck-common-*.rpm ./unitdeck-*.rpm</code></pre>
+  <p class="note">L'applicazione desktop controlla gli aggiornamenti su GitHub Releases e li installa su richiesta; si può disattivare nelle impostazioni.</p>
+</div>
+
+<footer>
+  <span lang-block="en">Free software, GPL-3.0-or-later. Python, PyQt6 and Textual. © 2026 Nicola Palmieri.</span>
+  <span lang-block="it">Software libero, GPL-3.0-or-later. Python, PyQt6 e Textual. © 2026 Nicola Palmieri.</span>
+</footer>
+</main>
+<script>
+(function () {
+  var html = document.documentElement;
+  function set(lang) {
+    html.setAttribute("data-lang", lang);
+    html.setAttribute("lang", lang);
+    document.querySelectorAll(".lang button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.lang === lang));
+    });
+  }
+  var wanted = /^it/i.test(navigator.language || "") ? "it" : "en";
+  try { wanted = localStorage.getItem("lang") || wanted; } catch (e) {}
+  set(wanted);
+  document.querySelectorAll(".lang button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      set(b.dataset.lang);
+      try { localStorage.setItem("lang", b.dataset.lang); } catch (e) {}
+    });
+  });
+})();
+</script>
+</body>
+</html>
