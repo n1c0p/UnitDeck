@@ -1,0 +1,24 @@
+.\" SPDX-License-Identifier: GPL-3.0-or-later
+.\" SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
+.TH UNITDECK-TUI 1 "2026" "UnitDeck" "User Commands"
+.SH NAME
+unitdeck-tui \- manage systemd system and user services from a terminal
+.SH SYNOPSIS
+.B unitdeck-tui
+.RI [ \-\-version ]
+.SH DESCRIPTION
+The terminal interface of UnitDeck, in the spirit of htop: two tabs (system and user
+services), search, state filter and single-key actions shown in the footer: start, stop,
+restart, enable/disable, mask/unmask, logs, edit with drop-ins, new service from a template,
+restore original, delete, reset failed state, linger, daemon-reload.
+.PP
+It never runs as root. In a graphical session polkit shows the desktop dialog; on a TTY or
+over SSH the screen is handed to
+.BR pkttyagent (1),
+which asks for the password in the terminal.
+.SH SEE ALSO
+.BR unitdeck (1),
+.BR systemctl (1),
+.BR journalctl (1)
+.SH AUTHOR
+Nicola Palmieri (n1c0p), https://github.com/n1c0p/UnitDeck

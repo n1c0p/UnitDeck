@@ -7,8 +7,8 @@ from __future__ import annotations
 import sys
 
 from unitdeck import __version__
-from unitdeck.__main__ import ensure_not_root
 from unitdeck.i18n import set_language
+from unitdeck.rootcheck import ensure_not_root
 
 
 def main() -> None:

@@ -25,11 +25,12 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: System :: Systems Administration",
 ]
-dependencies = ["PyQt6>=6.7"]
+dependencies = []  # pick an interface: .[gui] and/or .[tui]
 
 [project.optional-dependencies]
+gui = ["PyQt6>=6.7"]  # the desktop application
+tui = ["dbus-fast>=2.0", "textual>=8.0"]  # the terminal interface, no Qt
 dev = ["pytest", "pytest-asyncio", "ruff", "reuse"]
-tui = ["dbus-fast>=2.0", "textual>=8.0"]  # the terminal interface (issue #38), no Qt
 
 [project.scripts]
 unitdeck = "unitdeck.__main__:main"

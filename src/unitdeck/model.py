@@ -4,13 +4,15 @@
 
 from __future__ import annotations
 
-from enum import StrEnum
 from typing import Any
 
 from PyQt6.QtCore import QAbstractTableModel, QModelIndex, QObject, QSortFilterProxyModel, Qt
 from PyQt6.QtGui import QColor
 
 from unitdeck.backend.base import SystemdBackend, Unit
+from unitdeck.filters import FILTER_LABELS, StateFilter, accepts
+
+__all__ = ["FILTER_LABELS", "StateFilter", "UnitModel", "UnitProxy"]
 from unitdeck.i18n import tr
 
 COLUMNS = ("Name", "Description", "Load", "State", "Startup", "Actions")  # source strings
@@ -87,23 +89,6 @@ class UnitModel(QAbstractTableModel):
             self.dataChanged.emit(self.index(row, 0), self.index(row, len(COLUMNS) - 1))
 
 
-class StateFilter(StrEnum):
-    ALL = "all"
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    FAILED = "failed"
-    MINE = "mine"
-
-
-FILTER_LABELS = {  # source strings, translate with tr() at use time
-    StateFilter.ALL: "All",
-    StateFilter.ACTIVE: "Active",
-    StateFilter.INACTIVE: "Inactive",
-    StateFilter.FAILED: "Failed",
-    StateFilter.MINE: "Created by me",
-}
-
-
 class UnitProxy(QSortFilterProxyModel):
     """Search on name/description plus a state filter; sorting is the default string sort."""
 
@@ -124,19 +109,4 @@ class UnitProxy(QSortFilterProxyModel):
 
     def filterAcceptsRow(self, row: int, parent: QModelIndex) -> bool:
         unit: Unit = self.sourceModel().index(row, NAME, parent).data(UnitRole)
-        if (
-            self._text
-            and self._text not in unit.name.lower()
-            and (self._text not in unit.description.lower())
-        ):
-            return False
-        match self.state:
-            case StateFilter.ACTIVE:  # transitions included: a restarting row must not vanish
-                return unit.active_state not in ("inactive", "failed")
-            case StateFilter.INACTIVE:
-                return unit.active_state == "inactive"
-            case StateFilter.FAILED:
-                return unit.active_state == "failed"
-            case StateFilter.MINE:
-                return unit.fragment_path.startswith(self._own_dir)
-        return True
+        return accepts(unit, self._text, self.state, self._own_dir)

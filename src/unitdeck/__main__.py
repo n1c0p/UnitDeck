@@ -2,22 +2,11 @@
 # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
 """Entry point: ``python -m unitdeck`` or the ``unitdeck`` script."""
 
-import os
 import sys
 import traceback
 
 from unitdeck import APP_ID, __version__
-
-ROOT_ERROR = (
-    "UnitDeck must not run as root.\n"
-    "Run it as a normal user: privileged actions are authorized through polkit."
-)
-
-
-def ensure_not_root() -> None:
-    """Exit immediately when running as root. There is no way to bypass this."""
-    if os.geteuid() == 0:
-        sys.exit(ROOT_ERROR)
+from unitdeck.rootcheck import ROOT_ERROR, ensure_not_root  # noqa: F401 - re-exported for tests
 
 
 def report_exception(kind, value, tb) -> None:
