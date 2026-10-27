@@ -4,7 +4,7 @@ version = 1
 # report it as ignored, so it is covered here instead of failing reuse lint.
 
 [[annotations]]
-path = ["LICENSE", "*.md", "docs/**", ".gitignore", "src/*.egg-info/**", "packaging/copyright"]
+path = ["LICENSE", "*.md", "docs/**", "site/**", ".gitignore", "src/*.egg-info/**", "packaging/copyright"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Nicola Palmieri (n1c0p)"
 SPDX-License-Identifier = "GPL-3.0-or-later"
