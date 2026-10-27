@@ -15,7 +15,6 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
-    QSplitter,
     QVBoxLayout,
     QWidget,
 )
@@ -23,6 +22,7 @@ from PyQt6.QtWidgets import (
 from unitdeck.backend import unitfiles
 from unitdeck.backend.base import SystemdBackend, Unit
 from unitdeck.gui.code_editor import CodeEditor
+from unitdeck.gui.service_form import ServiceEditor
 from unitdeck.i18n import tr
 
 
@@ -45,7 +45,7 @@ class EditDialog(QDialog):
         self._staged = ""
         self.saved_content = ""
         self.setWindowTitle(tr("Edit – {unit}").format(unit=unit.name))
-        self.resize(1100, 650)
+        self.resize(1150, 720)
 
         self._info = QLabel()
         self._info.setWordWrap(True)
@@ -56,19 +56,15 @@ class EditDialog(QDialog):
         self._copy.setVisible(self._package)
         self._copy.toggled.connect(self._switch_mode)
 
-        self._editor = CodeEditor()
+        self._editor = ServiceEditor()
         self._effective = CodeEditor()
         self._effective.setReadOnly(True)
         effective_label = QLabel(tr("Effective configuration (unit file and drop-ins):"))
-        right = QWidget()
-        right_layout = QVBoxLayout(right)
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.addWidget(effective_label)
-        right_layout.addWidget(self._effective)
-        splitter = QSplitter()
-        splitter.addWidget(self._editor)
-        splitter.addWidget(right)
-        splitter.setSizes([600, 500])
+        effective = QWidget()
+        effective_layout = QVBoxLayout(effective)
+        effective_layout.addWidget(effective_label)
+        effective_layout.addWidget(self._effective)
+        self._editor.tabs.addTab(effective, tr("Effective configuration"))
 
         self._output = QPlainTextEdit()
         self._output.setReadOnly(True)
@@ -88,7 +84,7 @@ class EditDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.addWidget(self._info)
         layout.addWidget(self._copy)
-        layout.addWidget(splitter, 1)
+        layout.addWidget(self._editor, 1)
         layout.addWidget(self._output)
         layout.addLayout(buttons)
 

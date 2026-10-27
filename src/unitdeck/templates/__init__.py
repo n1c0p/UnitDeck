@@ -45,6 +45,18 @@ class Template:
             seen.setdefault(match.group(1))
         return list(seen)
 
+    @property
+    def fields(self) -> list[str]:
+        """Placeholders used inside a value: the wizard asks for them. A placeholder that is a
+        whole ``Key={PLACEHOLDER}`` line is left to the service editor instead."""
+        inline = {
+            m.group(1)
+            for line in self.body.splitlines()
+            if not WHOLE_LINE.match(line)
+            for m in PLACEHOLDER.finditer(line)
+        }
+        return [name for name in self.placeholders if name in inline]
+
     def fits(self, scope: str) -> bool:
         return self.scope in ("both", scope)
 

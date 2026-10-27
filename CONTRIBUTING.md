@@ -57,7 +57,9 @@ While developing, never touch real system services: use throwaway **user** units
 
 ## Adding a service template
 
-Templates live in `src/unitdeck/templates/` as `NN-name.service` files (the number sets the order in the wizard). Each starts with the SPDX header and one line `# unitdeck: name=<label shown in the wizard>; scope=user|system|both`. The body is a normal unit file where `{PLACEHOLDERS}` become wizard fields: the standard ones (`DESCRIPTION`, `TYPE`, `EXEC_START`, `EXEC_STOP`, `RESTART`, `AFTER`, `WANTS`, `USER`, `GROUP`, `WANTED_BY`) get dedicated widgets and defaults, any other name becomes a text field (add its label to `LABELS` in `new_service_wizard.py` and to the Italian catalogue). A line `Key={PLACEHOLDER}` is dropped when the value is left empty. Other comment lines are kept in the generated unit, so use them to explain what the user must prepare.
+Templates live in `src/unitdeck/templates/` as `NN-name.service` files (the number sets the order in the wizard). Each starts with the SPDX header and one line `# unitdeck: name=<label shown in the wizard>; scope=user|system|both`. The body is a normal unit file with `{PLACEHOLDERS}`. A placeholder that fills a whole line, `Key={PLACEHOLDER}`, is left to the service editor: the line is dropped when empty (`DESCRIPTION`, `TYPE` and `WANTED_BY` get a default value). A placeholder used inside a value, like `ExecStart=/usr/bin/gio mount smb://{SERVER}/{SHARE}`, becomes a field of the wizard's step before the editor (add its label to `LABELS` in `new_service_wizard.py` and to the Italian catalogue).
+
+The directives the editor offers, with their description, example and value type, are in `src/unitdeck/backend/directives.py`; a new one also needs the Italian translation of its description in `i18n.py`. Other comment lines are kept in the generated unit, so use them to explain what the user must prepare.
 
 ## Bilingual documentation
 
