@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-27
+
+Upgrading from 0.2.0: the update dialog of 0.2.0 downloads only `unitdeck`, which now needs `unitdeck-common`, so its installation fails. Install the two packages by hand once, as shown in the README; from 0.3.0 on, the in-app update handles both.
+
 ### Changed
 
 - Backend decoupled from Qt: plain-Python core with a `Runtime` abstraction, Qt runtime for the desktop application and asyncio/dbus-fast runtime for the upcoming terminal interface (#38). No visible change.
