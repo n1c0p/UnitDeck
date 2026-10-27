@@ -59,6 +59,8 @@ sudo zypper install --allow-unsigned-rpm ./unitdeck-common-<version>-1.x86_64.rp
 
 For the terminal interface take `unitdeck-tui` instead of (or besides) `unitdeck`.
 
+Why a third package: dpkg and rpm do not allow the same file in two packages, so the helper and the policy cannot sit in both `unitdeck` and `unitdeck-tui`; keeping them in `unitdeck` alone would force the terminal interface to pull in Qt. `unitdeck-common` is a few kilobytes, and the in-app update fetches it by itself.
+
 The bundles are built on Ubuntu 24.04 (glibc 2.39): any distribution with a newer glibc works, openSUSE Leap 15 does not.
 
 ### Build and install from source
