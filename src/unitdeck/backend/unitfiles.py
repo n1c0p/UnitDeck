@@ -3,7 +3,8 @@
 """Unit files on disk: locations, effective configuration, validation staging and writers.
 
 The functions are plain filesystem code. The writers wrap them (user scope: direct writes;
-system scope: the privileged helper through pkexec) behind one signal-based interface.
+system scope: the privileged helper through pkexec) behind one signal-based interface, using
+the backend's runtime for subprocesses, so they work with any toolkit.
 """
 
 from __future__ import annotations
@@ -13,9 +14,7 @@ import shutil
 import tempfile
 from collections.abc import Callable
 
-from PyQt6.QtCore import QObject, QProcess, pyqtSignal
-
-from unitdeck.backend.base import Scope, SystemdBackend
+from unitdeck.backend.base import Scope, Signal, SystemdBackend
 
 DROPIN = "override.conf"
 HELPER_PATH = "/usr/libexec/unitdeck/unitdeck-helper"
@@ -161,10 +160,12 @@ def delete_unit_files(path: str, dropin: str) -> None:
 # ---- writers --------------------------------------------------------------------------------
 
 
-class UnitWriter(QObject):
+class UnitWriter:
     """Writes unit files for one scope and reloads the manager afterwards."""
 
-    finished = pyqtSignal(str, bool, str)  # operation ("save" / "delete"), ok, detail
+    def __init__(self, backend: SystemdBackend) -> None:
+        self._backend = backend
+        self.finished = Signal()  # (operation "save" / "delete", ok, detail)
 
     def write_dropin(self, unit_name: str, content: str) -> None:
         raise NotImplementedError
@@ -179,7 +180,6 @@ class UnitWriter(QObject):
 class UserWriter(UnitWriter):
     def __init__(self, backend: SystemdBackend) -> None:
         super().__init__(backend)
-        self._backend = backend
         self._own = backend.own_dir
 
     def write_dropin(self, unit_name: str, content: str) -> None:
@@ -209,9 +209,6 @@ class UserWriter(UnitWriter):
 class HelperWriter(UnitWriter):
     """pkexec + unitdeck-helper: polkit asks for the password, the helper writes under /etc."""
 
-    def __init__(self, backend: SystemdBackend) -> None:
-        super().__init__(backend)
-
     def write_dropin(self, unit_name: str, content: str) -> None:
         self._run("save", ["write-dropin", unit_name], content)
 
@@ -225,16 +222,13 @@ class HelperWriter(UnitWriter):
         if not os.path.isfile(HELPER_PATH):
             self.finished.emit(operation, False, f"{HELPER_MISSING}: {HELPER_PATH}")
             return
-        proc = QProcess(self)
-        proc.finished.connect(lambda code, _status: self._done(operation, proc, code))
-        proc.start("pkexec", [HELPER_PATH, *args, "--reload"])
-        if content is not None:
-            proc.write(content.encode("utf-8"))
-        proc.closeWriteChannel()
+        self._backend.runtime.run(
+            ["pkexec", HELPER_PATH, *args, "--reload"],
+            content if content is not None else "",
+            lambda code, _out, err: self._done(operation, code, err.strip()),
+        )
 
-    def _done(self, operation: str, proc: QProcess, code: int) -> None:
-        stderr = bytes(proc.readAllStandardError()).decode("utf-8", "replace").strip()
-        proc.deleteLater()
+    def _done(self, operation: str, code: int, stderr: str) -> None:
         if code == 0:
             self.finished.emit(operation, True, "")
         elif code in (126, 127):  # pkexec: dialog dismissed / not authorized

@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Backend decoupled from Qt: plain-Python core with a `Runtime` abstraction, Qt runtime for the desktop application and asyncio/dbus-fast runtime for the upcoming terminal interface (#38). No visible change.
+
 ### Added
 
 - "Restart UnitDeck" button in the update dialog once the new version is installed: the application starts again on the new version by itself.

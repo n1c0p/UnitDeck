@@ -1,15 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
-"""Journal reader: ``journalctl -o json`` through QProcess, one entry per line."""
+"""Journal reader: ``journalctl -o json`` through the runtime, one entry per line."""
 
 from __future__ import annotations
 
 import datetime
 import json
+from collections.abc import Callable
 
-from PyQt6.QtCore import QObject, QProcess, pyqtSignal
-
-from unitdeck.backend.base import Scope
+from unitdeck.backend.base import Runtime, Scope, Signal
 
 PRIORITIES = ("emerg", "alert", "crit", "err", "warning", "notice", "info", "debug")
 
@@ -41,40 +40,32 @@ def format_entry(entry: dict) -> tuple[str, int]:
     return (f"{stamp} {ident}: {message}" if ident else f"{stamp} {message}"), priority
 
 
-class JournalReader(QObject):
-    entry = pyqtSignal(str, int)  # line, priority
-    finished = pyqtSignal(int, str)  # exit code, stderr
-
-    def __init__(self, parent: QObject | None = None) -> None:
-        super().__init__(parent)
-        self._buffer = b""
-        self._proc = QProcess(self)
-        self._proc.readyReadStandardOutput.connect(self._read)
-        self._proc.finished.connect(self._on_finished)
+class JournalReader:
+    def __init__(self, runtime: Runtime) -> None:
+        self._runtime = runtime
+        self._stop: Callable[[], None] | None = None
+        self.entry = Signal()  # (line, priority)
+        self.finished = Signal()  # (exit code, stderr)
 
     def start(self, unit: str, scope: Scope, lines: int, priority: int, follow: bool) -> None:
         self.stop()
-        self._buffer = b""
-        self._proc.start("journalctl", journalctl_args(unit, scope, lines, priority, follow))
+        args = ["journalctl", *journalctl_args(unit, scope, lines, priority, follow)]
+        self._stop = self._runtime.stream(args, self._on_line, self._on_exit)
 
     def stop(self) -> None:
-        if self._proc.state() != QProcess.ProcessState.NotRunning:
-            self._proc.terminate()
-            if not self._proc.waitForFinished(1000):
-                self._proc.kill()
+        if self._stop is not None:
+            stop, self._stop = self._stop, None
+            stop()
 
-    def _read(self) -> None:
-        self._buffer += bytes(self._proc.readAllStandardOutput())
-        *lines, self._buffer = self._buffer.split(b"\n")
-        for raw in lines:
-            if not raw.strip():
-                continue
-            try:
-                entry = json.loads(raw)
-            except ValueError:
-                continue
-            self.entry.emit(*format_entry(entry))
+    def _on_line(self, raw: bytes) -> None:
+        if not raw.strip():
+            return
+        try:
+            entry = json.loads(raw)
+        except ValueError:
+            return
+        self.entry.emit(*format_entry(entry))
 
-    def _on_finished(self, code: int, _status: object) -> None:
-        stderr = bytes(self._proc.readAllStandardError()).decode("utf-8", "replace").strip()
+    def _on_exit(self, code: int, stderr: str) -> None:
+        self._stop = None
         self.finished.emit(code, stderr)

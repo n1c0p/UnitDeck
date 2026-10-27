@@ -8,7 +8,7 @@ from unitdeck.model import ACTIVE, NAME, StateFilter, UnitModel, UnitProxy
 
 class StaticBackend(SystemdBackend):
     def __init__(self, units):
-        super().__init__(Scope.USER)
+        super().__init__(Scope.USER, None)
         self.units = {u.name: u for u in units}
 
 

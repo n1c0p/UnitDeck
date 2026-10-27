@@ -55,6 +55,10 @@ While developing, never touch real system services: use throwaway **user** units
 5. Do not commit personal or network data: no IP addresses, usernames, hostnames or local paths, not even in tests or examples.
 6. Open the PR against `develop`. The `ci` check (ruff, `reuse lint`, pytest) must pass on every PR, documentation-only ones included: a required check that never reports would block the merge. PRs are squash-merged.
 
+## Architecture in one paragraph
+
+`unitdeck.backend` is plain Python: `base.py` (units, action rules, the `Signal` observer and the `Runtime`/`Transport` protocols), `systemd.py` (the D-Bus logic), `unitfiles.py`, `journal.py`, `linger.py`. A *runtime* supplies buses, a timer and subprocesses: `qt_runtime.py` for the desktop application (QtDBus, QTimer, QProcess) and `asyncio_runtime.py` for the terminal interface (dbus-fast, asyncio). Toolkit code lives only under `unitdeck.gui` (Qt) and, coming with #38, the terminal package. Tests drive the backend through the fake transport and runtime in `tests/fake_transport.py`.
+
 ## Adding a service template
 
 Templates live in `src/unitdeck/templates/` as `NN-name.service` files (the number sets the order in the wizard). Each starts with the SPDX header and one line `# unitdeck: name=<label shown in the wizard>; scope=user|system|both`. The body is a normal unit file where `{PLACEHOLDERS}` become wizard fields: the standard ones (`DESCRIPTION`, `TYPE`, `EXEC_START`, `EXEC_STOP`, `RESTART`, `AFTER`, `WANTS`, `USER`, `GROUP`, `WANTED_BY`) get dedicated widgets and defaults, any other name becomes a text field (add its label to `LABELS` in `new_service_wizard.py` and to the Italian catalogue). A line `Key={PLACEHOLDER}` is dropped when the value is left empty. Other comment lines are kept in the generated unit, so use them to explain what the user must prepare.

@@ -157,10 +157,13 @@ class UnitTab(QWidget):
                 tr("Keep user services running without an open session (loginctl enable-linger)")
             )
             self._linger.setEnabled(False)  # until logind answered
-            self._linger_control = LingerControl(parent=self)
+            self._linger_control = LingerControl(
+                backend.runtime.transport("system", interactive=True)
+            )
             self._linger_control.changed.connect(self._on_linger)
             self._linger_control.failed.connect(self._on_linger_failed)
             self._linger.clicked.connect(self._linger_control.set_linger)
+            self.destroyed.connect(lambda *_: self._linger_control.close())
             self._linger_control.refresh()
             top.addWidget(self._linger)
 
@@ -335,7 +338,7 @@ class UnitTab(QWidget):
     def _show_logs(self, unit: Unit) -> None:
         viewer = self._logs.get(unit.name)
         if viewer is None:
-            viewer = LogViewer(unit.name, self._backend.scope, self)
+            viewer = LogViewer(unit.name, self._backend.scope, self._backend.runtime, self)
             viewer.destroyed.connect(lambda _obj=None, n=unit.name: self._logs.pop(n, None))
             self._logs[unit.name] = viewer
         viewer.show()

@@ -8,6 +8,10 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+### Modificato
+
+- Backend separato da Qt: nucleo in Python puro con un'astrazione `Runtime`, runtime Qt per l'applicazione desktop e runtime asyncio/dbus-fast per la futura interfaccia da terminale (#38). Nessun cambiamento visibile.
+
 ### Aggiunto
 
 - Pulsante "Riavvia UnitDeck" nella finestra di aggiornamento una volta installata la nuova versione: l'applicazione si riavvia da sola sulla nuova versione.
