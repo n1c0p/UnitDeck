@@ -8,6 +8,7 @@ from unitdeck.updater import (
     package_format,
     parse_release,
     parse_sha256,
+    restart_command,
     sha256_of,
     version_tuple,
 )
@@ -61,6 +62,16 @@ def test_package_format_from_os_release(tmp_path):
     assert family('ID="opensuse-tumbleweed"\nID_LIKE="suse opensuse"\n')[1][1] == "zypper"
     assert family("ID=arch\n") is None
     assert package_format(str(tmp_path / "missing")) is None
+
+
+def test_restart_command(monkeypatch):
+    import sys
+
+    monkeypatch.delattr(sys, "frozen", raising=False)
+    assert restart_command() == [sys.executable, "-m", "unitdeck"]
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "executable", "/opt/unitdeck/unitdeck")
+    assert restart_command() == ["/opt/unitdeck/unitdeck"]
 
 
 def test_parse_sha256_formats():
