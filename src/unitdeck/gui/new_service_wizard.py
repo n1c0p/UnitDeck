@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
-"""Four-step wizard that creates a new .service unit from a template."""
+"""Wizard that creates a new .service unit from a template.
+
+Steps: name and template, the template's own fields (only when it has placeholders inside a
+value), the service editor, final options.
+"""
 
 from __future__ import annotations
 
@@ -22,9 +26,9 @@ from PyQt6.QtWidgets import (
     QWizardPage,
 )
 
-from unitdeck.backend import unitfiles
+from unitdeck.backend import unitfiles, unitparse
 from unitdeck.backend.base import Scope, SystemdBackend
-from unitdeck.gui.code_editor import CodeEditor
+from unitdeck.gui.service_form import ServiceEditor
 from unitdeck.i18n import tr
 from unitdeck.newservice import (
     REQUIRED,
@@ -50,10 +54,10 @@ class NewServiceWizard(QWizard):
         self._saving = False
         self.setWindowTitle(tr("New service"))
         self.setWizardStyle(QWizard.WizardStyle.ModernStyle)
-        self.resize(900, 650)
+        self.resize(1150, 780)
         self.addPage(_NamePage(backend))
         self.addPage(_FieldsPage(backend))
-        self.addPage(_PreviewPage(backend))
+        self.addPage(_EditorPage(backend))
         self.addPage(_OptionsPage(backend))
         backend.writer.finished.connect(self._on_written)
 
@@ -123,6 +127,10 @@ class _NamePage(QWizardPage):
         self.setField("name", self.unit_name())
         return True
 
+    def nextId(self) -> int:
+        template = self.template()
+        return 1 if template is not None and template.fields else 2  # skip the fields page
+
 
 class _FieldsPage(QWizardPage):
     def __init__(self, backend: SystemdBackend) -> None:
@@ -131,18 +139,18 @@ class _FieldsPage(QWizardPage):
         self.setTitle(tr("Guided fields"))
         self._form = QFormLayout(self)
         self._widgets: dict[str, QWidget] = {}
-        self._template: Template | None = None
+        self.template: Template | None = None  # the one the fields were built for
 
     def initializePage(self) -> None:
         template = self.wizard().page(0).template()
-        if template is self._template:
+        if template is self.template:
             return
-        self._template = template
+        self.template = template
         while self._form.rowCount():
             self._form.removeRow(0)
         self._widgets = {}
         system = self._backend.scope is Scope.SYSTEM
-        for name in template.placeholders:
+        for name in template.fields:
             if name in ("USER", "GROUP") and not system:
                 continue  # user services already run as the user
             widget: QWidget
@@ -164,10 +172,6 @@ class _FieldsPage(QWizardPage):
                     widget.textChanged.connect(lambda _t: self.completeChanged.emit())
             self._widgets[name] = widget
             self._form.addRow(placeholder_label(name) + ":", widget)
-        if system and "USER" in self._widgets:
-            note = QLabel(tr("Without User= and Group= the service runs as root."))
-            note.setWordWrap(True)
-            self._form.addRow("", note)
         self.completeChanged.emit()
 
     def values(self) -> dict[str, str]:
@@ -182,36 +186,61 @@ class _FieldsPage(QWizardPage):
         )
 
 
-class _PreviewPage(QWizardPage):
+class _EditorPage(QWizardPage):
     def __init__(self, backend: SystemdBackend) -> None:
         super().__init__()
         self._backend = backend
         self._rendered = ""
         self._staged = ""
-        self.setTitle(tr("Preview"))
-        self._editor = CodeEditor()
+        self.setTitle(tr("Service"))
+        self.setSubTitle(tr("Fill in the directives, or write the unit file in the Text tab."))
+        self._editor = ServiceEditor()
+        self._editor.changed.connect(self.completeChanged)
         self._output = QPlainTextEdit()
         self._output.setReadOnly(True)
         self._output.setMaximumHeight(90)
         verify = QPushButton(tr("Verify"))
         verify.clicked.connect(self.verify)
         row = QHBoxLayout()
-        row.addWidget(QLabel(tr("Generated unit file, editable by hand:")))
+        if backend.scope is Scope.SYSTEM:
+            row.addWidget(QLabel(tr("Without User= and Group= the service runs as root.")))
         row.addStretch(1)
         row.addWidget(verify)
         layout = QVBoxLayout(self)
-        layout.addLayout(row)
         layout.addWidget(self._editor, 1)
+        layout.addLayout(row)
         layout.addWidget(self._output)
 
     def initializePage(self) -> None:
         wizard = self.wizard()
-        rendered = render(wizard.page(0).template(), wizard.page(1).values())
+        template = wizard.page(0).template()
+        fields = wizard.page(1)
+        values = fields.values() if fields.template is template else {}
+        system = self._backend.scope is Scope.SYSTEM
+        values.setdefault("DESCRIPTION", self.field("name").removesuffix(".service"))
+        values.setdefault("TYPE", "simple")
+        values.setdefault("WANTED_BY", "multi-user.target" if system else "default.target")
+        rendered = render(template, values)
+        if not self._exec_start(rendered):  # an empty row to fill in, rather than none
+            rendered = rendered.replace("[Service]\n", "[Service]\nExecStart=\n", 1)
         if rendered != self._rendered or not self._editor.document().isModified():
             self._rendered = rendered
             self._editor.setPlainText(rendered)
             self._editor.document().setModified(False)
         self.verify()
+
+    @staticmethod
+    def _exec_start(text: str) -> bool:
+        sections = unitparse.parse(text).sections
+        return any(
+            e.key == "ExecStart" and e.value
+            for s in sections
+            if s.name == "Service"
+            for e in s.entries
+        )
+
+    def isComplete(self) -> bool:
+        return self._exec_start(self._editor.toPlainText())
 
     def content(self) -> str:
         text = self._editor.toPlainText()
