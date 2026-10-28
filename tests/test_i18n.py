@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from unitdeck import i18n
+from unitdeck.backend.directives import CATALOG
 from unitdeck.gui.actions_delegate import BUTTONS
 from unitdeck.messages import ACTION_LABELS, ERROR_LABELS, JOB_RESULTS, SERVICE_RESULTS, readable
 from unitdeck.model import COLUMNS, FILTER_LABELS
@@ -43,6 +44,7 @@ def source_strings() -> set[str]:
     found.update(button[3] for button in BUTTONS)
     found.update(LABELS.values())
     found.update(t.name for t in load_templates())
+    found.update(d.info for d in CATALOG)
     return found
 
 
