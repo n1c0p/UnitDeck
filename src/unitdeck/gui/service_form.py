@@ -149,9 +149,7 @@ class Row(QWidget):
         if isinstance(edit, QComboBox):
             return edit.currentText()
         if isinstance(edit, QCheckBox):
-            if directives.parse_bool(self.entry.orig or "") == edit.isChecked():
-                return self.entry.orig  # keep the user's spelling (true, on, 1...)
-            return "yes" if edit.isChecked() else "no"
+            return directives.bool_value(edit.isChecked(), self.entry.orig)
         if edit.isReadOnly():
             return self.entry.value
         return edit.text().strip()
@@ -244,8 +242,7 @@ class Accordion(QFrame):
 
     def _add_picked(self) -> None:
         d: Directive = self._picker.currentData()
-        value = d.example if d.kind in ("enum", "bool") else ""
-        self._append(d, Entry(d.key, value))
+        self._append(d, Entry(d.key, directives.initial_value(d)))
         self._refresh_choices()
         self.changed()
 
@@ -383,12 +380,10 @@ class ServiceEditor(QWidget):
         """Text -> form."""
         text = self._text.toPlainText()
         self._doc = unitparse.parse(text)
-        first: dict[str, list[Entry]] = {}
-        for section in self._doc.sections:
-            first.setdefault(section.name, section.entries)
+        first = unitparse.first_entries(self._doc, SECTIONS)
         self._loading = True
         for name, accordion in self._sections.items():
-            accordion.load(first.get(name, []))
+            accordion.load(first[name])
         self._loading = False
         self._synced = text
         self._show_preview(text)

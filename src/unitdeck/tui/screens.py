@@ -10,9 +10,19 @@ from collections.abc import Callable
 from rich.markup import escape
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, Footer, Input, Label, Select, Static, TextArea
+from textual.widgets import (
+    Button,
+    Checkbox,
+    Footer,
+    Input,
+    Label,
+    Select,
+    Static,
+    TabPane,
+    TextArea,
+)
 
 from unitdeck.backend import unitfiles
 from unitdeck.backend.base import Scope, SystemdBackend, Unit
@@ -22,11 +32,14 @@ from unitdeck.newservice import (
     REQUIRED,
     RESTARTS,
     TYPES,
+    editor_text,
+    has_exec_start,
     name_problem,
     normalize_name,
     placeholder_label,
 )
-from unitdeck.templates import Template, load_templates, render
+from unitdeck.templates import Template, load_templates
+from unitdeck.tui.service_editor import ServiceEditor
 
 
 class ConfirmScreen(ModalScreen[bool]):
@@ -89,8 +102,7 @@ class EditScreen(ModalScreen[bool]):
     EditScreen > #info {
         dock: top; height: auto; padding: 0 1; background: $primary; color: $text;
     }
-    EditScreen > Horizontal { height: 1fr; }
-    EditScreen > Horizontal > TextArea { width: 1fr; }
+    EditScreen #effective { height: 1fr; }
     EditScreen > #output {
         dock: bottom; height: auto; max-height: 6; padding: 0 1; color: $warning;
     }
@@ -99,6 +111,7 @@ class EditScreen(ModalScreen[bool]):
         Binding("ctrl+s", "save", "Save"),
         Binding("ctrl+v", "verify", "Verify"),
         Binding("ctrl+t", "toggle_copy", "Drop-in/Copy"),
+        Binding("f4", "effective", "Effective"),
         Binding("escape", "cancel", "Cancel"),
     ]
 
@@ -111,19 +124,25 @@ class EditScreen(ModalScreen[bool]):
 
     def compose(self) -> ComposeResult:
         yield Static(id="info")
-        with Horizontal():
-            yield TextArea(id="editor", show_line_numbers=True)
-            yield TextArea(id="effective", read_only=True, show_line_numbers=True)
+        effective = TextArea(id="effective", read_only=True, show_line_numbers=True)
+        yield ServiceEditor(
+            TabPane(
+                tr("Effective configuration"),
+                Label(tr("Effective configuration (unit file and drop-ins):")),
+                effective,
+                id="effective-tab",
+            )
+        )
         yield Static(id="output")
         yield Footer()
 
-    def on_mount(self) -> None:
-        self._load()
+    async def on_mount(self) -> None:
+        await self._load()
         self._show_effective()
         self._backend.unit_updated.connect(self._on_updated)
         self._backend.writer.finished.connect(self._on_written)
         self._backend.fetch_details(self._unit.name)
-        self.query_one("#editor", TextArea).focus()
+        self.query_one(ServiceEditor).focus_first()
 
     def on_unmount(self) -> None:
         self._backend.unit_updated.disconnect(self._on_updated)
@@ -134,7 +153,7 @@ class EditScreen(ModalScreen[bool]):
             return unitfiles.dropin_path(self._unit.name, self._backend.own_dir)
         return unitfiles.unit_path(self._unit.name, self._backend.own_dir)
 
-    def _load(self) -> None:
+    async def _load(self) -> None:
         target = self.target_path()
         if self._mode == "dropin":
             exists = os.path.exists(target)
@@ -154,7 +173,7 @@ class EditScreen(ModalScreen[bool]):
         self.query_one("#info", Static).update(
             escape(info.format(path=self._unit.fragment_path, dropin=target))
         )
-        self.query_one("#editor", TextArea).load_text(text)
+        await self.query_one(ServiceEditor).set_text(text)
 
     def _show_effective(self) -> None:
         unit = self._backend.units.get(self._unit.name, self._unit)
@@ -169,17 +188,20 @@ class EditScreen(ModalScreen[bool]):
             self._show_effective()
 
     def _content(self) -> str:
-        text = self.query_one("#editor", TextArea).text
+        text = self.query_one(ServiceEditor).text
         return text if text.endswith("\n") else text + "\n"
 
     def _message(self, text: str) -> None:
         self.query_one("#output", Static).update(escape(text))
 
-    def action_toggle_copy(self) -> None:
+    def action_effective(self) -> None:
+        self.query_one(ServiceEditor).action_tab("effective-tab")
+
+    async def action_toggle_copy(self) -> None:
         if self._unit.own:
             return
         self._mode = "copy" if self._mode == "dropin" else "dropin"
-        self._load()
+        await self._load()
 
     def action_verify(self) -> None:
         self._run_verify(lambda ok, lines: None)
@@ -235,16 +257,24 @@ class EditScreen(ModalScreen[bool]):
 
 
 class NewServiceScreen(ModalScreen[dict | None]):
-    """One form: name, template, its fields, preview with verify, enable/start options."""
+    """Name, template and its own fields, the service editor, enable/start options."""
 
     DEFAULT_CSS = """
-    NewServiceScreen > VerticalScroll { padding: 0 1; }
-    NewServiceScreen Label { margin-top: 1; }
-    NewServiceScreen #error { color: $error; }
-    NewServiceScreen #preview { height: 14; }
-    NewServiceScreen #output { color: $warning; height: auto; max-height: 5; }
-    NewServiceScreen Horizontal { height: auto; }
-    NewServiceScreen Button { margin: 1 2 0 0; }
+    NewServiceScreen > #top { height: auto; padding: 0 1; }
+    NewServiceScreen #name-row { height: auto; }
+    NewServiceScreen #name-row Label { padding: 0 1 0 0; }
+    NewServiceScreen #name { width: 1fr; }
+    NewServiceScreen #template { width: 1fr; margin-left: 2; }
+    NewServiceScreen #error { color: $error; height: auto; display: none; }
+    NewServiceScreen #fields { height: auto; }
+    NewServiceScreen #fields > Horizontal { height: auto; }
+    NewServiceScreen #fields Label { width: 36; }
+    NewServiceScreen #fields Input, NewServiceScreen #fields Select { width: 1fr; }
+    NewServiceScreen #output { color: $warning; height: auto; max-height: 5; padding: 0 1; }
+    NewServiceScreen #bottom { height: auto; padding: 0 1; }
+    NewServiceScreen #bottom Checkbox { width: auto; margin-right: 2; }
+    NewServiceScreen #bottom Button { width: auto; min-width: 0; margin-left: 1; }
+    NewServiceScreen #spacer { width: 1fr; }
     """
     BINDINGS = [Binding("escape", "cancel", "Cancel"), Binding("ctrl+v", "verify", "Verify")]
 
@@ -255,29 +285,31 @@ class NewServiceScreen(ModalScreen[dict | None]):
         self._template: Template = self._templates[0]
         self._verifier = _Verifier(backend)
         self._saving = False
+        self._rendered = ""  # last text generated from name, template and fields
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll():
-            yield Label(tr("Service name:"))
-            yield Input(placeholder=tr("my-service"), id="name")
+        with Vertical(id="top"):
+            with Horizontal(id="name-row"):
+                yield Label(tr("Service name:"))
+                yield Input(placeholder=tr("my-service"), id="name", compact=True)
+                yield Select(
+                    [(tr(t.name), i) for i, t in enumerate(self._templates)],
+                    value=0,
+                    allow_blank=False,
+                    id="template",
+                    compact=True,
+                )
             yield Static(id="error")
-            yield Label(tr("Template:"))
-            yield Select(
-                [(tr(t.name), i) for i, t in enumerate(self._templates)],
-                value=0,
-                allow_blank=False,
-                id="template",
-            )
             yield Vertical(id="fields")
-            yield Label(tr("Generated unit file, editable by hand:"))
-            yield TextArea(id="preview", show_line_numbers=True)
-            yield Static(id="output")
-            yield Checkbox(tr("Enable at boot"), value=True, id="enable")
-            yield Checkbox(tr("Start now"), value=True, id="start")
-            with Horizontal():
-                yield Button(tr("Verify"), id="verify")
-                yield Button(tr("Create"), id="create", variant="primary")
-                yield Button(tr("Cancel"), id="cancel")
+        yield ServiceEditor()
+        yield Static(id="output")
+        with Horizontal(id="bottom"):
+            yield Checkbox(tr("Enable at boot"), value=True, id="enable", compact=True)
+            yield Checkbox(tr("Start now"), value=True, id="start", compact=True)
+            yield Static(id="spacer")
+            yield Button(tr("Verify"), id="verify", compact=True)
+            yield Button(tr("Create"), id="create", variant="primary", compact=True)
+            yield Button(tr("Cancel"), id="cancel", compact=True)
         yield Footer()
 
     async def on_mount(self) -> None:
@@ -291,33 +323,31 @@ class NewServiceScreen(ModalScreen[dict | None]):
     # ---- form -------------------------------------------------------------------------------
 
     async def _build_fields(self) -> None:
+        """Inputs for the placeholders inside a value (Template.fields); the editor has the rest."""
         box = self.query_one("#fields", Vertical)
         await box.remove_children()  # removal is asynchronous: wait, or the ids would collide
         system = self._backend.scope is Scope.SYSTEM
-        children: list = []
-        for name in self._template.placeholders:
+        rows: list = []
+        for name in self._template.fields:
             if name in ("USER", "GROUP") and not system:
                 continue
-            children.append(Label(placeholder_label(name) + ":"))
             if name == "TYPE":
                 options = [(t, t) for t in TYPES]
-                children.append(Select(options, value="simple", allow_blank=False, id=f"f-{name}"))
+                field = Select(options, value="simple", allow_blank=False, id=f"f-{name}")
             elif name == "RESTART":
                 options = [(r, r) for r in RESTARTS]
-                children.append(Select(options, value="no", allow_blank=False, id=f"f-{name}"))
+                field = Select(options, value="no", allow_blank=False, id=f"f-{name}")
             else:
-                default = ""
-                if name == "WANTED_BY":
-                    default = "multi-user.target" if system else "default.target"
-                children.append(Input(value=default, id=f"f-{name}"))
-        if system and "USER" in self._template.placeholders:
-            children.append(Static(tr("Without User= and Group= the service runs as root.")))
-        await box.mount_all(children)  # wait: a Select reads its own children right after mounting
-        self._render_preview()
+                field = Input(id=f"f-{name}", compact=True)
+            rows.append(Horizontal(Label(placeholder_label(name) + ":"), field))
+        if system:
+            rows.append(Static(tr("Without User= and Group= the service runs as root.")))
+        await box.mount_all(rows)  # wait: a Select reads its own children right after mounting
+        await self._render_editor()
 
     def _values(self) -> dict[str, str]:
         values = {}
-        for name in self._template.placeholders:
+        for name in self._template.fields:
             widgets = self.query(f"#f-{name}")
             if not widgets:
                 continue
@@ -328,23 +358,33 @@ class NewServiceScreen(ModalScreen[dict | None]):
     def unit_name(self) -> str:
         return normalize_name(self.query_one("#name", Input).value)
 
-    def on_input_changed(self, event: Input.Changed) -> None:
+    async def _render_editor(self) -> None:
+        """Regenerate the editor from name, template and fields, unless the user edited it."""
+        editor = self.query_one(ServiceEditor)
+        system = self._backend.scope is Scope.SYSTEM
+        text = editor_text(self._template, self._values(), self.unit_name(), system)
+        if editor.text in ("", self._rendered) and text != editor.text:
+            await editor.set_text(text)
+        self._rendered = text
+
+    async def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "name":
             problem = name_problem(self.unit_name(), self._backend) if event.value else ""
-            self.query_one("#error", Static).update(escape(problem))
-        self._render_preview()
+            error = self.query_one("#error", Static)
+            error.update(escape(problem))
+            error.display = bool(problem)
+        await self._render_editor()
 
     async def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id == "template":
             self._template = self._templates[int(event.value)]
+            self._rendered = self.query_one(ServiceEditor).text  # a new template replaces it
             await self._build_fields()
-        self._render_preview()
-
-    def _render_preview(self) -> None:
-        self.query_one("#preview", TextArea).load_text(render(self._template, self._values()))
+        else:
+            await self._render_editor()
 
     def _content(self) -> str:
-        text = self.query_one("#preview", TextArea).text
+        text = self.query_one(ServiceEditor).text
         return text if text.endswith("\n") else text + "\n"
 
     def _message(self, text: str) -> None:
@@ -359,12 +399,12 @@ class NewServiceScreen(ModalScreen[dict | None]):
             return problem
         values = self._values()
         missing = [
-            n
-            for n in REQUIRED
-            if n in self._template.placeholders and not values.get(n, "").strip()
+            n for n in REQUIRED if n in self._template.fields and not values.get(n, "").strip()
         ]
         if missing:
             return tr("{field} is required.").format(field=placeholder_label(missing[0]))
+        if not has_exec_start(self._content()):
+            return tr("{field} is required.").format(field="ExecStart")
         return ""
 
     # ---- actions ----------------------------------------------------------------------------

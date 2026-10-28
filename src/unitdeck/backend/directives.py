@@ -385,6 +385,18 @@ def parse_bool(value: str) -> bool | None:
     return True if lowered in TRUE else False if lowered in FALSE else None
 
 
+def initial_value(directive: Directive) -> str:
+    """Value of a freshly added row: the example for a choice, empty for free text."""
+    return directive.example if directive.kind in ("enum", "bool") else ""
+
+
+def bool_value(checked: bool, orig: str | None) -> str:
+    """A checkbox state as text, keeping the file's own spelling (true, on, 1...) if unchanged."""
+    if orig is not None and parse_bool(orig) == checked:
+        return orig
+    return "yes" if checked else "no"
+
+
 def fits_widget(directive: Directive, value: str) -> bool:
     """Whether ``value`` can be shown by the directive's typed widget (else: a text field)."""
     if "\n" in value:

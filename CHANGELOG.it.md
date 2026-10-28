@@ -11,11 +11,12 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 ### Aggiunto
 
 - Editor del servizio nell'app desktop, con una scheda *Costruttore*: `[Unit]`, `[Service]` e `[Install]` come gruppi richiudibili, circa 90 direttive da aggiungere con campi tipizzati, una descrizione e un esempio per ciascuna, riordino trascinando, avvisi nella riga per valori sospetti e direttive sconosciute, e anteprima in tempo reale. La scheda *Testo* resta sincronizzata nei due sensi, conservando commenti e direttive che il costruttore non conosce ([#39](https://github.com/n1c0p/UnitDeck/issues/39)).
+- Lo stesso editor del servizio nell'interfaccia da terminale: gruppi richiudibili `[Unit]`, `[Service]` e `[Install]`, campi tipizzati, `F1` per la descrizione di una direttiva, `Ctrl+↑`/`Ctrl+↓` per riordinare e `F8` per rimuovere una riga, avvisi nella riga, schede *Costruttore*, *Testo* e configurazione effettiva (`F2`, `F3`, `F4`); il modulo del nuovo servizio lo apre precompilato dal template ([#58](https://github.com/n1c0p/UnitDeck/issues/58)).
 
 ### Modificato
 
 - *Modifica* nell'app desktop usa l'editor del servizio; la configurazione effettiva è passata in una scheda a sé.
-- *Nuovo servizio* nell'app desktop: i passi dei campi guidati e dell'anteprima sono sostituiti dall'editor del servizio, precompilato dal template; il passo dei campi resta solo per i template con segnaposto dentro un valore (condivisione SMB). L'interfaccia da terminale per ora non cambia ([#58](https://github.com/n1c0p/UnitDeck/issues/58)).
+- *Nuovo servizio* nell'app desktop: i passi dei campi guidati e dell'anteprima sono sostituiti dall'editor del servizio, precompilato dal template; il passo dei campi resta solo per i template con segnaposto dentro un valore (condivisione SMB).
 
 ## [0.3.1] - 2026-10-27
 

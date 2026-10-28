@@ -26,7 +26,7 @@ from PyQt6.QtWidgets import (
     QWizardPage,
 )
 
-from unitdeck.backend import unitfiles, unitparse
+from unitdeck.backend import unitfiles
 from unitdeck.backend.base import Scope, SystemdBackend
 from unitdeck.gui.service_form import ServiceEditor
 from unitdeck.i18n import tr
@@ -34,11 +34,13 @@ from unitdeck.newservice import (
     REQUIRED,
     RESTARTS,
     TYPES,
+    editor_text,
+    has_exec_start,
     name_problem,
     normalize_name,
     placeholder_label,
 )
-from unitdeck.templates import Template, load_templates, render
+from unitdeck.templates import Template, load_templates
 
 
 class NewServiceWizard(QWizard):
@@ -217,30 +219,15 @@ class _EditorPage(QWizardPage):
         fields = wizard.page(1)
         values = fields.values() if fields.template is template else {}
         system = self._backend.scope is Scope.SYSTEM
-        values.setdefault("DESCRIPTION", self.field("name").removesuffix(".service"))
-        values.setdefault("TYPE", "simple")
-        values.setdefault("WANTED_BY", "multi-user.target" if system else "default.target")
-        rendered = render(template, values)
-        if not self._exec_start(rendered):  # an empty row to fill in, rather than none
-            rendered = rendered.replace("[Service]\n", "[Service]\nExecStart=\n", 1)
+        rendered = editor_text(template, values, self.field("name"), system)
         if rendered != self._rendered or not self._editor.document().isModified():
             self._rendered = rendered
             self._editor.setPlainText(rendered)
             self._editor.document().setModified(False)
         self.verify()
 
-    @staticmethod
-    def _exec_start(text: str) -> bool:
-        sections = unitparse.parse(text).sections
-        return any(
-            e.key == "ExecStart" and e.value
-            for s in sections
-            if s.name == "Service"
-            for e in s.entries
-        )
-
     def isComplete(self) -> bool:
-        return self._exec_start(self._editor.toPlainText())
+        return has_exec_start(self._editor.toPlainText())
 
     def content(self) -> str:
         text = self._editor.toPlainText()

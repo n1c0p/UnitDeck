@@ -155,7 +155,6 @@ IT = {
     "Without User= and Group= the service runs as root.": (
         "Senza User= e Group= il servizio gira come root."
     ),
-    "Generated unit file, editable by hand:": "File unit generato, modificabile a mano:",
     "Service": "Servizio",
     "Fill in the directives, or write the unit file in the Text tab.": (
         "Compila le direttive, oppure scrivi il file unit nella scheda Testo."
@@ -242,6 +241,8 @@ IT = {
     "Text": "Testo",
     "Preview of the unit file:": "Anteprima del file unit:",
     "Add": "Aggiungi",
+    "Add directive…": "Aggiungi direttiva…",
+    "Close": "Chiudi",
     "Drag to reorder": "Trascina per riordinare",
     "What is this directive for?": "A cosa serve questa direttiva?",
     "Remove this directive": "Rimuovi questa direttiva",

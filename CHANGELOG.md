@@ -11,11 +11,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Desktop service editor with a *Builder* tab: `[Unit]`, `[Service]` and `[Install]` as collapsible groups, about 90 directives to add with typed fields, a description and an example for each, drag to reorder, inline warnings for suspicious values and unknown directives, and a live preview. The *Text* tab stays in sync both ways, keeping comments and directives the builder does not know ([#39](https://github.com/n1c0p/UnitDeck/issues/39)).
+- The same service editor in the terminal interface: collapsible `[Unit]`, `[Service]` and `[Install]` groups, typed fields, `F1` for the description of a directive, `Ctrl+↑`/`Ctrl+↓` to reorder and `F8` to remove a row, inline warnings, *Builder*, *Text* and effective configuration tabs (`F2`, `F3`, `F4`); the new-service form opens it prefilled from the template ([#58](https://github.com/n1c0p/UnitDeck/issues/58)).
 
 ### Changed
 
 - Desktop *Edit* uses the service editor; the effective configuration moved to its own tab.
-- Desktop *New service*: the guided-fields and preview steps are replaced by the service editor, prefilled from the template; the fields step remains only for templates with placeholders inside a value (SMB share). The terminal interface is unchanged for now ([#58](https://github.com/n1c0p/UnitDeck/issues/58)).
+- Desktop *New service*: the guided-fields and preview steps are replaced by the service editor, prefilled from the template; the fields step remains only for templates with placeholders inside a value (SMB share).
 
 ## [0.3.1] - 2026-10-27
 
