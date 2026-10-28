@@ -8,15 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-### Added
-
-- Service editor with a *Builder* tab: `[Unit]`, `[Service]` and `[Install]` as collapsible groups, about 90 directives to add with typed fields, a description and an example for each, drag to reorder, inline warnings for suspicious values and unknown directives, and a live preview. The *Text* tab stays in sync both ways, keeping comments and directives the builder does not know ([#39](https://github.com/n1c0p/UnitDeck/issues/39)).
-
-### Changed
-
-- *Edit* uses the service editor; the effective configuration moved to its own tab.
-- *New service*: the guided-fields and preview steps are replaced by the service editor, prefilled from the template; the fields step remains only for templates with placeholders inside a value (SMB share).
-
 ## [0.2.0] - 2026-10-25
 
 ### Added
