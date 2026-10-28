@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- The same service editor in the terminal interface: collapsible `[Unit]`, `[Service]` and `[Install]` groups, typed fields, `F1` for the description of a directive, `Ctrl+↑`/`Ctrl+↓` to reorder and `F8` to remove a row, inline warnings, *Builder*, *Text* and effective configuration tabs (`F2`, `F3`, `F4`); the new-service form opens it prefilled from the template ([#58](https://github.com/n1c0p/UnitDeck/issues/58)).
+
 ## [0.4.1] - 2026-10-28
 
 ### Fixed

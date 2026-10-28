@@ -6,7 +6,9 @@ from unitdeck import i18n
 from unitdeck.backend.directives import (
     CATALOG,
     SECTIONS,
+    bool_value,
     fits_widget,
+    initial_value,
     lookup,
     parse_bool,
     problem,
@@ -58,3 +60,11 @@ def test_widgets_and_booleans():
     assert not fits_widget(lookup("Service", "Type"), "weird")
     assert not fits_widget(lookup("Service", "PrivateTmp"), "disconnected")
     assert not fits_widget(lookup("Service", "ExecStart"), "/bin/a \\\n --b")
+
+
+def test_new_row_value_and_checkbox_spelling():
+    assert initial_value(lookup("Service", "Restart")) == "on-failure"
+    assert initial_value(lookup("Service", "PrivateTmp")) == "yes"
+    assert initial_value(lookup("Service", "ExecStart")) == ""
+    assert bool_value(True, "on") == "on" and bool_value(False, "on") == "no"
+    assert bool_value(True, None) == "yes"

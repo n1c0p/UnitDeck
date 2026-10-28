@@ -89,6 +89,15 @@ def serialize(unit: UnitText) -> str:
     return "\n".join(lines) + "\n" if lines else ""
 
 
+def first_entries(unit: UnitText, names: tuple[str, ...]) -> dict[str, list[Entry]]:
+    """The entries of the first section of each name (the ones a form edits; others are kept)."""
+    found: dict[str, list[Entry]] = {}
+    for section in unit.sections:
+        if section.name in names:
+            found.setdefault(section.name, section.entries)
+    return {name: found.get(name, []) for name in names}
+
+
 def merge(unit: UnitText, entries: dict[str, list[Entry]], order: tuple[str, ...]) -> UnitText:
     """``unit`` with the entries of the first section of each name in ``entries`` replaced.
 

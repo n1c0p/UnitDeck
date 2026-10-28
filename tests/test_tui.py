@@ -104,10 +104,11 @@ async def test_app_lists_filters_and_runs_actions():
 
 @pytest.mark.asyncio
 async def test_user_tab_linger_editor_and_new_service(tmp_path, monkeypatch):
-    from textual.widgets import TextArea
+    from textual.widgets import Input, TextArea
 
     from unitdeck.backend import base
     from unitdeck.tui.screens import EditScreen, NewServiceScreen
+    from unitdeck.tui.service_editor import Row, ServiceEditor
 
     monkeypatch.setattr(base, "own_unit_dir", lambda scope: str(tmp_path))
     mine = tmp_path / "mine.service"
@@ -160,8 +161,14 @@ async def test_user_tab_linger_editor_and_new_service(tmp_path, monkeypatch):
         screen = app.screen
         screen.query_one("#name").value = "test-new"
         await pilot.pause()
-        screen.query_one("#f-EXEC_START").value = "/bin/sleep 1"
+        screen._create()  # refused: ExecStart= is still empty
         await pilot.pause()
+        assert "ExecStart" in str(screen.query_one("#output").content)
+        assert not (tmp_path / "test-new.service").exists()
+        exec_start = next(r for r in screen.query(Row) if r.directive.key == "ExecStart")
+        exec_start.query_one(Input).value = "/bin/sleep 1"
+        await pilot.pause()
+        assert "Description=test-new" in screen.query_one(ServiceEditor).text
         screen._create()
         await pilot.pause()
         await pilot.pause()
@@ -170,4 +177,106 @@ async def test_user_tab_linger_editor_and_new_service(tmp_path, monkeypatch):
         assert not isinstance(app.screen, NewServiceScreen)
         members = [c[2] for c in transport.calls[-6:]]
         assert "EnableUnitFiles" in members and "StartUnit" in members
+        await pilot.press("q")
+
+
+@pytest.mark.asyncio
+async def test_service_editor_builder(tmp_path, monkeypatch):
+    from textual.widgets import Input, TextArea
+
+    from unitdeck.backend import base
+    from unitdeck.tui.screens import EditScreen
+    from unitdeck.tui.service_editor import InfoScreen, Section, ServiceEditor
+
+    monkeypatch.setattr(base, "own_unit_dir", lambda scope: str(tmp_path))
+    mine = tmp_path / "mine.service"
+    mine.write_text(
+        "# my note\n[Unit]\nDescription=Mine\n\n[Service]\nType=simple\n"
+        "ExecStart=/bin/true\nRestrat=always\n\n[Install]\nWantedBy=default.target\n"
+    )
+    units = UNITS + [
+        ("mine.service", "Mine", "loaded", "inactive", "dead", "", "/u/mine", 0, "", "/")
+    ]
+    runtime = make_runtime(str(tmp_path))
+    runtime._transport.replies["ListUnits"] = [units]
+    runtime._transport.replies["ListUnitFiles"] = [FILES + [(str(mine), "disabled")]]
+    app = make_app(runtime)
+    async with app.run_test(size=(120, 45)) as pilot:
+        await pilot.pause()
+        app.query_one("#scopes").active = "user"
+        await pilot.pause()
+        await pilot.press("slash", *"mine", "enter")
+        await pilot.pause()
+        await pilot.press("ctrl+e")
+        await pilot.pause()
+        assert isinstance(app.screen, EditScreen)
+        editor = app.screen.query_one(ServiceEditor)
+        service = next(s for s in editor.query(Section) if s.section == "Service")
+
+        def keys():
+            return [row.directive.key for row in service.row_list()]
+
+        assert keys() == ["Type", "ExecStart", "Restrat"]
+        assert service.row_list()[2].problem.endswith("Did you mean Restart?")
+
+        # pick, then Add: a row with a typed field, written to the text at once
+        service._picker.value = "RestartSec"
+        await pilot.pause()
+        assert keys()[-1] == "Restrat"  # picking alone adds nothing
+        service._add.press()
+        await pilot.pause()
+        row = service.row_list()[-1]
+        assert row.directive.key == "RestartSec" and row.has_focus_within
+        row.query_one(Input).value = "5s"
+        await pilot.pause()
+        assert "Restrat=always\nRestartSec=5s\n" in editor.text
+        assert editor.text.startswith("# my note\n[Unit]")  # untouched lines and comments stay
+
+        # keyboard: move up, info, remove
+        await pilot.press("ctrl+up")
+        await pilot.pause()
+        assert keys() == ["Type", "ExecStart", "RestartSec", "Restrat"]
+        assert "ExecStart=/bin/true\nRestartSec=5s\nRestrat" in editor.text
+        await pilot.press("f1")
+        await pilot.pause()
+        assert isinstance(app.screen, InfoScreen)
+        await pilot.press("escape")
+        await pilot.pause()
+        service.row_list()[3].focus_field()
+        await pilot.press("f8")
+        await pilot.pause()
+        assert "Restrat" not in keys() and "Restrat" not in editor.text
+
+        # Text tab -> form when going back to Builder
+        await pilot.press("f3")
+        await pilot.pause()
+        text_area = editor.query_one("#editor", TextArea)
+        text_area.load_text(text_area.text.replace("Type=simple", "Type=oneshot\nUser=nobody"))
+        await pilot.press("f2")
+        await pilot.pause()
+        assert keys()[:3] == ["Type", "User", "ExecStart"]
+        assert service.row_list()[0].value() == "oneshot"
+
+        # save writes the text
+        await pilot.press("ctrl+s")
+        await pilot.pause()
+        await pilot.pause()
+        assert "User=nobody" in mine.read_text() and "# my note" in mine.read_text()
+
+        # package unit: drop-in; a directive of a missing section creates the section
+        await pilot.press("slash", *(["backspace"] * 4), *"web", "enter")
+        await pilot.pause()
+        await pilot.press("ctrl+e")
+        await pilot.pause()
+        editor = app.screen.query_one(ServiceEditor)
+        assert editor.text.endswith("[Service]\n")
+        unit_section = next(s for s in editor.query(Section) if s.section == "Unit")
+        unit_section._picker.value = "Description"
+        unit_section._add.press()
+        await pilot.pause()
+        unit_section.row_list()[0].query_one(Input).value = "Web"
+        await pilot.pause()
+        assert editor.text.endswith("\n[Unit]\nDescription=Web\n\n[Service]\n")
+        assert editor.text.startswith("# Drop-in for web.service")
+        await pilot.press("escape")
         await pilot.press("q")
