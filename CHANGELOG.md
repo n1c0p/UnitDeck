@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-28
+
+### Added
+
+- Service editor in the desktop application, shared by *Edit* and *New service* (#39). Two tabs over the same file: **Builder**, with `[Unit]`, `[Service]` and `[Install]` as groups where directives are picked from a catalogue of 95 entries (description, example and man page for each), set with a field matching their type, reordered by drag and removed in place; and **Text**, the raw file. Changes in one tab reach the other. Suspicious values are flagged inline (bad time span, relative path, value outside the allowed set, missing user or group, unknown or misspelled directive with a suggestion) without blocking the save: `systemd-analyze verify` stays the final check. Comments, blank lines, unknown directives and line continuations survive the round trip. The wizard opens the editor prefilled from the template; the drop-in and full-copy modes of *Edit* are unchanged. The terminal interface keeps its text editor.
+- Project page at https://n1c0p.github.io/UnitDeck/, published from `site/` on every change on main.
+
+### Changed
+
+- README: why the helper and the polkit policy ship in a separate `unitdeck-common` package.
+
 ## [0.3.1] - 2026-10-27
 
 ### Fixed

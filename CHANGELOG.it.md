@@ -8,6 +8,17 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-28
+
+### Aggiunto
+
+- Editor dei servizi nell'applicazione desktop, condiviso da *Modifica* e *Nuovo servizio* (#39). Due schede sullo stesso file: **Builder**, con `[Unit]`, `[Service]` e `[Install]` come gruppi in cui le direttive si scelgono da un catalogo di 95 voci (descrizione, esempio e pagina man per ciascuna), si impostano con un campo adatto al tipo, si riordinano trascinando e si rimuovono sul posto; e **Testo**, il file grezzo. Le modifiche in una scheda arrivano all'altra. I valori sospetti sono segnalati in linea (durata non valida, percorso relativo, valore fuori dall'insieme ammesso, utente o gruppo inesistente, direttiva sconosciuta o scritta male con un suggerimento) senza bloccare il salvataggio: `systemd-analyze verify` resta il controllo finale. Commenti, righe vuote, direttive sconosciute e continuazioni di riga sopravvivono al giro completo. La procedura guidata apre l'editor precompilato dal template; le modalità drop-in e copia completa di *Modifica* sono invariate. L'interfaccia da terminale mantiene il suo editor di testo.
+- Pagina del progetto su https://n1c0p.github.io/UnitDeck/, pubblicata da `site/` a ogni modifica su main.
+
+### Modificato
+
+- README: perché helper e policy polkit stanno in un pacchetto `unitdeck-common` separato.
+
 ## [0.3.1] - 2026-10-27
 
 ### Corretto
