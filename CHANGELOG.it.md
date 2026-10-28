@@ -8,6 +8,12 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-28
+
+### Corretto
+
+- L'interfaccia da terminale impacchettata non partiva (`No module named 'textual.widgets._tab_pane'`): Textual risolve i widget in modo lazy e PyInstaller li lasciava fuori dal bundle. Ora sono inclusi e il test di installazione esegue `unitdeck-tui --check`, che importa l'applicazione.
+
 ## [0.4.0] - 2026-10-28
 
 ### Aggiunto

@@ -6,7 +6,7 @@
 import re
 import runpy
 
-from PyInstaller.utils.hooks import collect_data_files, copy_metadata
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules, copy_metadata
 
 SYSTEM_LIB = runpy.run_path("unitdeck.spec.libs")["SYSTEM_LIB"]
 
@@ -14,7 +14,8 @@ a = Analysis(
     ["src/unitdeck/tui/__main__.py"],
     pathex=["src"],
     datas=collect_data_files("unitdeck", includes=["templates/*.service"]) + copy_metadata("unitdeck"),
-    hiddenimports=["pkgutil"],
+    # textual.widgets resolves its widgets lazily (__getattr__), invisible to the analysis.
+    hiddenimports=["pkgutil"] + collect_submodules("textual.widgets"),
     excludes=["tkinter", "PyQt6", "unitdeck.gui", "unitdeck.model", "unitdeck.updater"],
     noarchive=False,
 )
