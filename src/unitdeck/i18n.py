@@ -131,6 +131,7 @@ IT = {
     "Without User= and Group= the service runs as root.": (
         "Senza User= e Group= il servizio gira come root."
     ),
+    "Generated unit file, editable by hand:": "File unit generato, modificabile a mano:",
     "Service": "Servizio",
     "Fill in the directives, or write the unit file in the Text tab.": (
         "Compila le direttive, oppure scrivi il file unit nella scheda Testo."
