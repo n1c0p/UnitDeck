@@ -4,7 +4,7 @@
 #
 # Install the given packages (the three of one format, same directory) in a clean container
 # (Docker) and run the smoke checks as a normal user: --version and --check (Qt loads offscreen)
-# of the desktop application, --version of the terminal one, the helper refuses a bad name,
+# of the desktop application, --version and --check of the terminal one, the helper refuses a bad name,
 # every bundled library resolves. .deb files are tested on ubuntu:24.04, .rpm on fedora:41.
 set -eu
 DIR="$(realpath "$(dirname "$1")")"
@@ -28,6 +28,7 @@ set -e
 runuser -u ubuntu -- unitdeck --version
 QT_QPA_PLATFORM=offscreen runuser -u ubuntu -- unitdeck --check
 runuser -u ubuntu -- unitdeck-tui --version
+runuser -u ubuntu -- unitdeck-tui --check
 test -x /usr/libexec/unitdeck/unitdeck-helper
 if /usr/libexec/unitdeck/unitdeck-helper write-unit ../x.service </dev/null 2>/dev/null; then
     echo "helper accepted a bad unit name"; exit 1

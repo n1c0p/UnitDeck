@@ -19,6 +19,11 @@ def main() -> None:
     set_language("system")
     from unitdeck.tui.app import UnitDeckApp
 
+    if "--check" in sys.argv[1:]:  # packaging smoke test: the application and its widgets import
+        from unitdeck.tui import logs, polkit, screens  # noqa: F401
+
+        print(f"UnitDeck {__version__}: TUI ok")
+        return
     UnitDeckApp().run()
 
 
