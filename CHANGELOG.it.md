@@ -8,9 +8,11 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-10
+
 ### Aggiunto
 
-- Lo stesso editor del servizio nell'interfaccia da terminale: gruppi richiudibili `[Unit]`, `[Service]` e `[Install]`, campi tipizzati, `F1` per la descrizione di una direttiva, `Ctrl+↑`/`Ctrl+↓` per riordinare e `F8` per rimuovere una riga, avvisi nella riga, schede *Costruttore*, *Testo* e configurazione effettiva (`F2`, `F3`, `F4`); il modulo del nuovo servizio lo apre precompilato dal template ([#58](https://github.com/n1c0p/UnitDeck/issues/58)).
+- Editor del servizio nell'interfaccia da terminale, lo stesso dell'app desktop: gruppi richiudibili `[Unit]`, `[Service]` e `[Install]`, campi tipizzati, `F1` per la descrizione di una direttiva, `Ctrl+↑`/`Ctrl+↓` per riordinare e `F8` per rimuovere una riga, avvisi nella riga, schede *Costruttore*, *Testo* e configurazione effettiva (`F2`, `F3`, `F4`); il modulo del nuovo servizio lo apre precompilato dal template ([#58](https://github.com/n1c0p/UnitDeck/issues/58)).
 
 ### Modificato
 
@@ -117,7 +119,12 @@ L'aggiornamento dalla 0.2.0 fallisce con questa release: usa la 0.3.1.
 - Licenza GPL-3.0-or-later.
 - Questo changelog, in inglese e in italiano.
 
-[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.2.0...develop
+[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.5.0...develop
+[0.5.0]: https://github.com/n1c0p/UnitDeck/compare/v0.4.1...v0.5.0
+[0.4.1]: https://github.com/n1c0p/UnitDeck/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/n1c0p/UnitDeck/compare/v0.3.1...v0.4.0
+[0.3.1]: https://github.com/n1c0p/UnitDeck/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/n1c0p/UnitDeck/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/n1c0p/UnitDeck/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/n1c0p/UnitDeck/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/n1c0p/UnitDeck/compare/v0.1.1...v0.1.2
