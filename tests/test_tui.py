@@ -280,3 +280,47 @@ async def test_service_editor_builder(tmp_path, monkeypatch):
         assert editor.text.startswith("# Drop-in for web.service")
         await pilot.press("escape")
         await pilot.press("q")
+
+
+@pytest.mark.asyncio
+async def test_service_editor_fits_80x24(tmp_path, monkeypatch):
+    from unitdeck.backend import base
+    from unitdeck.tui.screens import EditScreen
+    from unitdeck.tui.service_editor import Row, Section, ServiceEditor
+
+    monkeypatch.setattr(base, "own_unit_dir", lambda scope: str(tmp_path))
+    mine = tmp_path / "mine.service"
+    mine.write_text(
+        "[Unit]\nDescription=Mine\n\n[Service]\n# why it waits\nRestartSec=5s\n"
+        "ExecStart=/bin/true\n"
+    )
+    units = UNITS + [
+        ("mine.service", "Mine", "loaded", "inactive", "dead", "", "/u/mine", 0, "", "/")
+    ]
+    runtime = make_runtime(str(tmp_path))
+    runtime._transport.replies["ListUnits"] = [units]
+    runtime._transport.replies["ListUnitFiles"] = [FILES + [(str(mine), "disabled")]]
+    app = make_app(runtime)
+    async with app.run_test(size=(80, 24)) as pilot:
+        await pilot.pause()
+        app.query_one("#scopes").active = "user"
+        await pilot.pause()
+        await pilot.press("slash", *"mine", "enter")
+        await pilot.pause()
+        await pilot.press("ctrl+e")
+        await pilot.pause()
+        assert isinstance(app.screen, EditScreen)
+        editor = app.screen.query_one(ServiceEditor)
+        # narrow terminal: form only, every row's field and buttons inside the screen
+        assert not editor.query_one("#preview-box").display
+        for row in editor.query(Row):
+            assert row.region.right <= 80 and row.query_one(".field").size.width > 0
+        # removing a row drops the comment lines right above it
+        service = next(s for s in editor.query(Section) if s.section == "Service")
+        service.row_list()[0].focus_field()
+        await pilot.press("f8")
+        await pilot.pause()
+        assert "why it waits" not in editor.text and "RestartSec" not in editor.text
+        assert "ExecStart=/bin/true" in editor.text
+        await pilot.press("escape")
+        await pilot.press("q")
