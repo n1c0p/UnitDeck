@@ -8,7 +8,6 @@ value), the service editor, final options.
 
 from __future__ import annotations
 
-from PyQt6.QtCore import QProcess
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -26,19 +25,22 @@ from PyQt6.QtWidgets import (
     QWizardPage,
 )
 
-from unitdeck.backend import unitfiles, unitparse
+from unitdeck.backend import unitfiles
 from unitdeck.backend.base import Scope, SystemdBackend
 from unitdeck.gui.service_form import ServiceEditor
+from unitdeck.gui.verify import verify as run_verify
 from unitdeck.i18n import tr
 from unitdeck.newservice import (
     REQUIRED,
     RESTARTS,
     TYPES,
+    editor_text,
+    has_exec_start,
     name_problem,
     normalize_name,
     placeholder_label,
 )
-from unitdeck.templates import Template, load_templates, render
+from unitdeck.templates import Template, load_templates
 
 
 class NewServiceWizard(QWizard):
@@ -191,7 +193,6 @@ class _EditorPage(QWizardPage):
         super().__init__()
         self._backend = backend
         self._rendered = ""
-        self._staged = ""
         self.setTitle(tr("Service"))
         self.setSubTitle(tr("Fill in the directives, or write the unit file in the Text tab."))
         self._editor = ServiceEditor()
@@ -217,48 +218,26 @@ class _EditorPage(QWizardPage):
         fields = wizard.page(1)
         values = fields.values() if fields.template is template else {}
         system = self._backend.scope is Scope.SYSTEM
-        values.setdefault("DESCRIPTION", self.field("name").removesuffix(".service"))
-        values.setdefault("TYPE", "simple")
-        values.setdefault("WANTED_BY", "multi-user.target" if system else "default.target")
-        rendered = render(template, values)
-        if not self._exec_start(rendered):  # an empty row to fill in, rather than none
-            rendered = rendered.replace("[Service]\n", "[Service]\nExecStart=\n", 1)
+        rendered = editor_text(template, values, self.field("name"), system)
         if rendered != self._rendered or not self._editor.document().isModified():
             self._rendered = rendered
             self._editor.setPlainText(rendered)
             self._editor.document().setModified(False)
         self.verify()
 
-    @staticmethod
-    def _exec_start(text: str) -> bool:
-        sections = unitparse.parse(text).sections
-        return any(
-            e.key == "ExecStart" and e.value
-            for s in sections
-            if s.name == "Service"
-            for e in s.entries
-        )
-
     def isComplete(self) -> bool:
-        return self._exec_start(self._editor.toPlainText())
+        return has_exec_start(self._editor.toPlainText())
 
     def content(self) -> str:
         text = self._editor.toPlainText()
         return text if text.endswith("\n") else text + "\n"
 
     def verify(self) -> None:
-        self._staged = unitfiles.stage_for_verify(self.field("name"), self.content())
+        staged = unitfiles.stage_for_verify(self.field("name"), self.content())
         self._output.setPlainText(tr("Verifying…"))
-        proc = QProcess(self)
-        proc.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
-        proc.finished.connect(lambda code, _status: self._verified(proc, code))
-        proc.start("systemd-analyze", unitfiles.verify_args(self._backend.scope, self._staged))
+        run_verify(self, self._backend, staged, self._verified)
 
-    def _verified(self, proc: QProcess, code: int) -> None:
-        output = bytes(proc.readAllStandardOutput()).decode("utf-8", "replace")
-        proc.deleteLater()
-        lines = unitfiles.relevant_lines(output, self._staged)
-        unitfiles.cleanup_staging(self._staged)
+    def _verified(self, code: int, lines: str) -> None:
         if code == 0 and not lines:
             self._output.setPlainText(tr("systemd-analyze verify: no problems found."))
         elif code == 0:

@@ -7,9 +7,10 @@ from __future__ import annotations
 import os
 import re
 
-from unitdeck.backend import unitfiles
+from unitdeck.backend import unitfiles, unitparse
 from unitdeck.backend.base import SystemdBackend
 from unitdeck.i18n import tr
+from unitdeck.templates import Template, render
 
 NAME_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.:-]{0,245}$")
 TYPES = ("simple", "exec", "forking", "oneshot", "dbus", "notify", "idle")
@@ -52,3 +53,26 @@ def name_problem(name: str, backend: SystemdBackend) -> str:
         if os.path.lexists(os.path.join(directory, name)):
             return tr("A unit with this name already exists.")
     return ""
+
+
+def _exec_starts(text: str) -> list[str]:
+    entries = unitparse.first_entries(unitparse.parse(text), ("Service",))["Service"]
+    return [e.value for e in entries if e.key == "ExecStart"]
+
+
+def editor_text(template: Template, values: dict[str, str], name: str, system: bool) -> str:
+    """Starting text of the service editor: the template with ``values`` (its ``fields``),
+    defaults for the whole-line placeholders, and an empty ExecStart= to fill in if none."""
+    values = dict(values)
+    values.setdefault("DESCRIPTION", name.removesuffix(".service"))
+    values.setdefault("TYPE", "simple")
+    values.setdefault("WANTED_BY", "multi-user.target" if system else "default.target")
+    text = render(template, values)
+    if not _exec_starts(text):
+        text = text.replace("[Service]\n", "[Service]\nExecStart=\n", 1)
+    return text
+
+
+def has_exec_start(text: str) -> bool:
+    """Whether [Service] has a non-empty ExecStart=: the minimum for a new service."""
+    return any(_exec_starts(text))

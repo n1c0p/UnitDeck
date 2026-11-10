@@ -8,6 +8,20 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-10
+
+### Aggiunto
+
+- Editor del servizio nell'interfaccia da terminale, lo stesso dell'app desktop: gruppi richiudibili `[Unit]`, `[Service]` e `[Install]`, campi tipizzati, `F1` per la descrizione di una direttiva, `Ctrl+↑`/`Ctrl+↓` per riordinare e `F8` per rimuovere una riga, avvisi nella riga, schede *Costruttore*, *Testo* e configurazione effettiva (`F2`, `F3`, `F4`); il modulo del nuovo servizio lo apre precompilato dal template ([#58](https://github.com/n1c0p/UnitDeck/issues/58)).
+
+### Modificato
+
+- README e pagina del progetto: nuovi screenshot dell'app desktop (finestra principale, editor del servizio, drop-in, nuovo servizio, journal) al posto di quello della 0.1.0, e i primi dell'interfaccia da terminale (elenco dei servizi, editor del servizio, informazioni su una direttiva, journal, nuovo servizio), tutti generati da `docs/screenshots.py`.
+
+### Corretto
+
+- Desktop: chiudere la procedura del nuovo servizio o l'editor mentre `systemd-analyze verify` era ancora in corso faceva terminare l'applicazione (`wrapped C/C++ object of type QProcess has been deleted`) e lasciava la copia temporanea. Ora la verifica gira nel runtime dell'applicazione e il suo risultato viene scartato se il dialogo non c'è più; la copia temporanea viene sempre rimossa ([#63](https://github.com/n1c0p/UnitDeck/issues/63)).
+
 ## [0.4.1] - 2026-10-28
 
 ### Corretto
@@ -105,7 +119,12 @@ L'aggiornamento dalla 0.2.0 fallisce con questa release: usa la 0.3.1.
 - Licenza GPL-3.0-or-later.
 - Questo changelog, in inglese e in italiano.
 
-[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.2.0...develop
+[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.5.0...develop
+[0.5.0]: https://github.com/n1c0p/UnitDeck/compare/v0.4.1...v0.5.0
+[0.4.1]: https://github.com/n1c0p/UnitDeck/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/n1c0p/UnitDeck/compare/v0.3.1...v0.4.0
+[0.3.1]: https://github.com/n1c0p/UnitDeck/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/n1c0p/UnitDeck/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/n1c0p/UnitDeck/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/n1c0p/UnitDeck/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/n1c0p/UnitDeck/compare/v0.1.1...v0.1.2

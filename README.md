@@ -13,7 +13,7 @@
 
 **UnitDeck** is a desktop application for Linux to manage **systemd services**, both **system-wide** and **per-user**, from a clean graphical interface.
 
-![UnitDeck main window: the system services tab](https://raw.githubusercontent.com/n1c0p/UnitDeck/main/docs/screenshot.png)
+![UnitDeck main window: the system services tab](docs/screenshot.png)
 
 > **Status: early releases (0.x).** The first version is out and usable; expect rough edges and report them in the [issues](https://github.com/n1c0p/UnitDeck/issues).
 
@@ -110,13 +110,21 @@ The **System services** and **User services** tabs list every `.service` unit of
 | `Ctrl+R` | Restart |
 | `Ctrl+L` | Show logs (also double-click) |
 
+![Journal of a failed unit, errors in red](docs/screenshots/gui-logs.png)
+
 ### Editing a service
 
 *Edit* (`Ctrl+E`) opens the service editor, with three tabs. *Builder* shows the `[Unit]`, `[Service]` and `[Install]` sections as collapsible groups next to a live preview of the file: pick a directive from the list (*Info* explains it with an example) and *Add* it, then set its value with a field that matches its type, reorder rows by dragging the `≡` grip, read what a row is for with `ⓘ` and remove it with `✕`. Values that do not look right (a wrong time span, a relative path, a misspelled directive) are flagged in the row. *Text* is the raw file with syntax highlighting and line numbers; changes made there reach the builder when you switch back, and comments and directives the builder does not know are kept. *Effective configuration* shows the unit file plus every drop-in, with their paths. For a unit shipped by a package the editor writes a drop-in `override.conf` under `/etc/systemd/system/<unit>.d/` (or `~/.config/systemd/user/<unit>.d/` for user services): only the directives you change go there, and package upgrades keep working. A checkbox switches to a full copy of the unit instead, which shadows the package file. Units created by you are edited in place. Before saving, the file is checked with `systemd-analyze verify` and warnings are shown; the previous file is kept as `.bak`; after saving UnitDeck runs `daemon-reload` and offers to restart the service. *Restore original* removes drop-ins and local copies of a package unit (like `systemctl revert`), *Delete* stops, disables and removes a unit you created.
 
+![Service editor on a unit of your own: Builder tab with a misspelled directive flagged and the preview of the file](docs/screenshots/gui-editor.png)
+
+![Drop-in for a package unit: only the changed directives, saved as override.conf](docs/screenshots/gui-dropin.png)
+
 ### Creating a service
 
 *New service* opens a wizard: name and template, the template's own fields when it has some (server and share for the SMB template), the service editor prefilled from the template and checked with `systemd-analyze verify` (for system services, without `User=`/`Group=` the service runs as root), and the final "enable at boot" / "start now" options. The unit is written to `~/.config/systemd/user/` from the user tab or to `/etc/systemd/system/` from the system tab (through the helper, so polkit asks for your password). Names already used by any unit in systemd's search paths are refused.
+
+![New service wizard: the editor prefilled from the template, verified with systemd-analyze](docs/screenshots/gui-new-service.png)
 
 Templates are plain files in `src/unitdeck/templates/`: an empty service, a one-shot task with `RemainAfterExit`, a long-running service with `Restart=on-failure`, and, for user services only, an SMB share mounted with `gio` (it needs a user session with D-Bus). Adding one is a small pull request, see CONTRIBUTING.
 
@@ -136,7 +144,7 @@ At startup UnitDeck asks the GitHub Releases API (`api.github.com`) whether a ne
 
 ## Terminal interface
 
-`unitdeck-tui` is the same tool for a terminal, SSH session or TTY, in the spirit of `htop`: two tabs (system and user services), search with `/`, state filter with `f`, and single keys for the actions shown in the footer (`s` start, `x` stop, `r` restart, `e` enable/disable, `m` mask/unmask, `l` logs with `f` to follow, `Ctrl+E` edit, `n` new service, `v` restore original, `Del` delete, `z` reset failed state, `g` linger on the user tab, `d` daemon-reload, `F5` refresh, `q` quit). The editor works like the desktop one: drop-in for package units (`Ctrl+T` switches to a full copy), direct edit for your own units, `Ctrl+V` verifies, `Ctrl+S` verifies and saves; the new-service form takes the same templates. It never runs as root either: in a graphical session polkit shows the usual dialog; on a TTY or over SSH the screen is handed to `pkttyagent`, which asks for the password in the terminal like `systemctl` does. From a source checkout:
+`unitdeck-tui` is the same tool for a terminal, SSH session or TTY, in the spirit of `htop`: two tabs (system and user services), search with `/`, state filter with `f`, and single keys for the actions shown in the footer (`s` start, `x` stop, `r` restart, `e` enable/disable, `m` mask/unmask, `l` logs with `f` to follow, `Ctrl+E` edit, `n` new service, `v` restore original, `Del` delete, `z` reset failed state, `g` linger on the user tab, `d` daemon-reload, `F5` refresh, `q` quit). The editor works like the desktop one: a *Builder* tab with `[Unit]`, `[Service]` and `[Install]` as collapsible groups (pick a directive and *Add* it, `Ctrl+↑`/`Ctrl+↓` move a row, `F1` explains it, `F8` removes it, warnings appear on the row), a *Text* tab kept in sync with it, and the effective configuration (`F2`, `F3`, `F4` switch tab); drop-in for package units (`Ctrl+T` switches to a full copy), direct edit for your own units, `Ctrl+V` verifies, `Ctrl+S` verifies and saves. The new-service form takes the same templates and opens the same editor, prefilled. It never runs as root either: in a graphical session polkit shows the usual dialog; on a TTY or over SSH the screen is handed to `pkttyagent`, which asks for the password in the terminal like `systemctl` does. From a source checkout:
 
 ```bash
 .venv/bin/pip install ".[tui]"
@@ -144,6 +152,21 @@ At startup UnitDeck asks the GitHub Releases API (`api.github.com`) whether a ne
 ```
 
 Packaged, it is `unitdeck-tui` next to `unitdeck-common` on the Releases page, with no Qt inside.
+
+![unitdeck-tui: the system services tab, a failed unit selected](docs/screenshots/tui-units.svg)
+
+![The service editor in the terminal: Builder tab with a misspelled directive flagged, preview of the unit file on the right](docs/screenshots/tui-editor.svg)
+
+![Journal of the failed unit, errors in red](docs/screenshots/tui-logs.svg)
+
+<details>
+<summary>More screenshots</summary>
+
+![F1 on a directive: description, example, allowed values and man page](docs/screenshots/tui-info.svg)
+
+![New service from a template, opened in the service editor](docs/screenshots/tui-new-service.svg)
+
+</details>
 
 
 All dependencies are compatible with the GPL-3.0-or-later license of the project.
