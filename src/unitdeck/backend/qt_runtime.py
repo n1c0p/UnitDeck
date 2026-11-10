@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from PyQt6 import sip
 from PyQt6.QtCore import QMetaType, QObject, QProcess, QTimer, pyqtSlot
 from PyQt6.QtDBus import (
     QDBusArgument,
@@ -119,6 +120,8 @@ class QtRuntime(QObject):
         proc = QProcess(self)
 
         def finished(code: int, _status: object) -> None:
+            if sip.isdeleted(proc):  # emitted by the destructor, the application is closing
+                return
             out = bytes(proc.readAllStandardOutput()).decode("utf-8", "replace")
             err = bytes(proc.readAllStandardError()).decode("utf-8", "replace")
             proc.deleteLater()
@@ -147,6 +150,8 @@ class QtRuntime(QObject):
                 on_line(line)
 
         def finished(code: int, _status: object) -> None:
+            if sip.isdeleted(proc):  # emitted by the destructor, the application is closing
+                return
             read()
             err = bytes(proc.readAllStandardError()).decode("utf-8", "replace").strip()
             proc.deleteLater()

@@ -4,8 +4,7 @@
 
 Runs the real applications without a screen (Qt offscreen, Textual headless) on the test
 suite's fake D-Bus runtime with made-up units: no real service or setting is read or changed,
-and nothing is written outside a temporary directory (the wizard's systemd-analyze verify
-only reads a staged copy):
+and nothing is written outside a temporary directory:
 
     .venv/bin/python docs/screenshots.py
 """

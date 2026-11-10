@@ -8,7 +8,6 @@ value), the service editor, final options.
 
 from __future__ import annotations
 
-from PyQt6.QtCore import QProcess
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -29,6 +28,7 @@ from PyQt6.QtWidgets import (
 from unitdeck.backend import unitfiles
 from unitdeck.backend.base import Scope, SystemdBackend
 from unitdeck.gui.service_form import ServiceEditor
+from unitdeck.gui.verify import verify as run_verify
 from unitdeck.i18n import tr
 from unitdeck.newservice import (
     REQUIRED,
@@ -193,7 +193,6 @@ class _EditorPage(QWizardPage):
         super().__init__()
         self._backend = backend
         self._rendered = ""
-        self._staged = ""
         self.setTitle(tr("Service"))
         self.setSubTitle(tr("Fill in the directives, or write the unit file in the Text tab."))
         self._editor = ServiceEditor()
@@ -234,18 +233,11 @@ class _EditorPage(QWizardPage):
         return text if text.endswith("\n") else text + "\n"
 
     def verify(self) -> None:
-        self._staged = unitfiles.stage_for_verify(self.field("name"), self.content())
+        staged = unitfiles.stage_for_verify(self.field("name"), self.content())
         self._output.setPlainText(tr("Verifying…"))
-        proc = QProcess(self)
-        proc.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
-        proc.finished.connect(lambda code, _status: self._verified(proc, code))
-        proc.start("systemd-analyze", unitfiles.verify_args(self._backend.scope, self._staged))
+        run_verify(self, self._backend, staged, self._verified)
 
-    def _verified(self, proc: QProcess, code: int) -> None:
-        output = bytes(proc.readAllStandardOutput()).decode("utf-8", "replace")
-        proc.deleteLater()
-        lines = unitfiles.relevant_lines(output, self._staged)
-        unitfiles.cleanup_staging(self._staged)
+    def _verified(self, code: int, lines: str) -> None:
         if code == 0 and not lines:
             self._output.setPlainText(tr("systemd-analyze verify: no problems found."))
         elif code == 0:

@@ -5,8 +5,9 @@
 from __future__ import annotations
 
 import os
+from functools import partial
 
-from PyQt6.QtCore import QProcess, Qt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -23,6 +24,7 @@ from unitdeck.backend import unitfiles
 from unitdeck.backend.base import SystemdBackend, Unit
 from unitdeck.gui.code_editor import CodeEditor
 from unitdeck.gui.service_form import ServiceEditor
+from unitdeck.gui.verify import verify as run_verify
 from unitdeck.i18n import tr
 from unitdeck.messages import dropin_template
 
@@ -37,7 +39,6 @@ class EditDialog(QDialog):
         self._own = backend.own_dir
         self._package = not unit.own  # shipped by a package (or generated): edit through a drop-in
         self._mode = "dropin" if self._package else "unit"
-        self._staged = ""
         self.saved_content = ""
         self.setWindowTitle(tr("Edit – {unit}").format(unit=unit.name))
         self.resize(1150, 720)
@@ -159,22 +160,15 @@ class EditDialog(QDialog):
         """Run systemd-analyze verify on a staged copy; ``then(ok)`` continues after the result."""
         content = self._editor.toPlainText()
         if self._mode == "dropin":
-            self._staged = unitfiles.stage_for_verify(
+            staged = unitfiles.stage_for_verify(
                 self._unit.name, unitfiles.read_text(self._unit.fragment_path), content
             )
         else:
-            self._staged = unitfiles.stage_for_verify(self._unit.name, content)
+            staged = unitfiles.stage_for_verify(self._unit.name, content)
         self._set_busy(True, tr("Verifying…"))
-        proc = QProcess(self)
-        proc.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
-        proc.finished.connect(lambda code, _status: self._verified(proc, code, then))
-        proc.start("systemd-analyze", unitfiles.verify_args(self._backend.scope, self._staged))
+        run_verify(self, self._backend, staged, partial(self._verified, then=then))
 
-    def _verified(self, proc: QProcess, code: int, then) -> None:
-        output = bytes(proc.readAllStandardOutput()).decode("utf-8", "replace")
-        proc.deleteLater()
-        lines = unitfiles.relevant_lines(output, self._staged)
-        unitfiles.cleanup_staging(self._staged)
+    def _verified(self, code: int, lines: str, then) -> None:
         ok = code == 0
         if ok and not lines:
             self._set_busy(False, tr("systemd-analyze verify: no problems found."))
