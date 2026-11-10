@@ -53,6 +53,9 @@ pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 
 code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 p code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-size: 90%; }
 .note { color: var(--muted); font-size: 15px; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 16px; }
+.gallery figure { margin: 0; }
+.gallery figcaption { padding: 8px 12px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); }
 footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
 a { color: var(--accent); }
 [lang-block] { display: none; }
@@ -122,6 +125,16 @@ sudo dnf install ./unitdeck-common-*.rpm ./unitdeck-*.rpm</code></pre>
 <pre><code>sudo apt install ./unitdeck-common_*.deb ./unitdeck_*.deb
 sudo dnf install ./unitdeck-common-*.rpm ./unitdeck-*.rpm</code></pre>
   <p class="note">L'applicazione desktop controlla gli aggiornamenti su GitHub Releases e li installa su richiesta; si può disattivare nelle impostazioni.</p>
+</div>
+
+<h2><span lang-block="en">Terminal interface</span><span lang-block="it">Interfaccia da terminale</span></h2>
+<p class="note"><span lang-block="en">unitdeck-tui, the same actions in a terminal, a TTY or over SSH.</span><span lang-block="it">unitdeck-tui, le stesse azioni in un terminale, su TTY o via SSH.</span></p>
+<div class="gallery">
+  <figure class="shot"><img src="screenshots/tui-units.svg" width="1482" height="880" loading="lazy" alt="The system services tab, a failed unit selected"><figcaption><span lang-block="en">The system services tab, a failed unit selected</span><span lang-block="it">La tab dei servizi di sistema, con un'unità fallita selezionata</span></figcaption></figure>
+  <figure class="shot"><img src="screenshots/tui-editor.svg" width="1482" height="880" loading="lazy" alt="Service editor: a misspelled directive flagged, live preview"><figcaption><span lang-block="en">Service editor: a misspelled directive flagged, live preview</span><span lang-block="it">Editor del servizio: direttiva scritta male segnalata, anteprima in tempo reale</span></figcaption></figure>
+  <figure class="shot"><img src="screenshots/tui-info.svg" width="1482" height="880" loading="lazy" alt="F1 explains a directive: example, values, man page"><figcaption><span lang-block="en">F1 explains a directive: example, values, man page</span><span lang-block="it">F1 spiega una direttiva: esempio, valori, pagina man</span></figcaption></figure>
+  <figure class="shot"><img src="screenshots/tui-logs.svg" width="1482" height="880" loading="lazy" alt="Journal of the selected unit"><figcaption><span lang-block="en">Journal of the selected unit</span><span lang-block="it">Journal dell'unità selezionata</span></figcaption></figure>
+  <figure class="shot"><img src="screenshots/tui-new-service.svg" width="1482" height="880" loading="lazy" alt="New service from a template"><figcaption><span lang-block="en">New service from a template</span><span lang-block="it">Nuovo servizio da un template</span></figcaption></figure>
 </div>
 
 <footer>

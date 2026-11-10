@@ -145,6 +145,21 @@ At startup UnitDeck asks the GitHub Releases API (`api.github.com`) whether a ne
 
 Packaged, it is `unitdeck-tui` next to `unitdeck-common` on the Releases page, with no Qt inside.
 
+![unitdeck-tui: the system services tab, a failed unit selected](docs/screenshots/tui-units.svg)
+
+![The service editor in the terminal: Builder tab with a misspelled directive flagged, preview of the unit file on the right](docs/screenshots/tui-editor.svg)
+
+![Journal of the failed unit, errors in red](docs/screenshots/tui-logs.svg)
+
+<details>
+<summary>More screenshots</summary>
+
+![F1 on a directive: description, example, allowed values and man page](docs/screenshots/tui-info.svg)
+
+![New service from a template, opened in the service editor](docs/screenshots/tui-new-service.svg)
+
+</details>
+
 
 All dependencies are compatible with the GPL-3.0-or-later license of the project.
 

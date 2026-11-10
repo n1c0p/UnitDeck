@@ -145,6 +145,21 @@ All'avvio UnitDeck chiede all'API delle GitHub Releases (`api.github.com`) se es
 
 Impacchettata, è `unitdeck-tui` accanto a `unitdeck-common` nella pagina Releases, senza Qt dentro.
 
+![unitdeck-tui: la tab dei servizi di sistema, con un'unità fallita selezionata](docs/screenshots/tui-units.svg)
+
+![L'editor del servizio nel terminale: scheda Costruttore con una direttiva scritta male segnalata, anteprima del file unit a destra](docs/screenshots/tui-editor.svg)
+
+![Journal dell'unità fallita, errori in rosso](docs/screenshots/tui-logs.svg)
+
+<details>
+<summary>Altri screenshot</summary>
+
+![F1 su una direttiva: descrizione, esempio, valori ammessi e pagina man](docs/screenshots/tui-info.svg)
+
+![Nuovo servizio da un template, aperto nell'editor del servizio](docs/screenshots/tui-new-service.svg)
+
+</details>
+
 
 Tutte le dipendenze sono compatibili con la licenza GPL-3.0-or-later del progetto.
 

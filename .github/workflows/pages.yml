@@ -10,7 +10,7 @@ name: Pages
 on:
   push:
     branches: [main]
-    paths: [site/**, docs/screenshot.png, .github/workflows/pages.yml]
+    paths: [site/**, docs/screenshot.png, docs/screenshots/**, .github/workflows/pages.yml]
   workflow_dispatch:
 
 permissions:
@@ -36,6 +36,7 @@ jobs:
           mkdir -p _site
           cp site/index.html _site/
           cp docs/screenshot.png _site/
+          cp -r docs/screenshots _site/
           cp packaging/icons/eu.nicop.unitdeck.svg _site/icon.svg
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
