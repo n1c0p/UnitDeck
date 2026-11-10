@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
-"""Regenerate the terminal-interface screenshots in docs/screenshots/ (SVG).
+"""Regenerate the screenshots: docs/screenshot.png and docs/screenshots/ (gui-*.png, tui-*.svg).
 
-Runs the real unitdeck-tui headless on the test suite's fake D-Bus runtime with made-up
-units, so no real service is read or touched:
+Runs the real applications without a screen (Qt offscreen, Textual headless) on the test
+suite's fake D-Bus runtime with made-up units: no real service or setting is read or changed,
+and nothing is written outside a temporary directory (the wizard's systemd-analyze verify
+only reads a staged copy):
 
     .venv/bin/python docs/screenshots.py
 """
@@ -12,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -25,7 +28,8 @@ from fake_transport import FakeRuntime, FakeTransport  # noqa: E402
 from unitdeck.backend import base  # noqa: E402
 from unitdeck.tui.app import UnitDeckApp  # noqa: E402
 
-SIZE = (120, 34)
+SIZE = (120, 34)  # terminal, columns x rows
+WINDOW = (1280, 560)  # desktop window, logical pixels (saved at 1.5x)
 
 
 def unit(name, description, active, sub, load="loaded"):
@@ -92,8 +96,10 @@ class DemoRuntime(FakeRuntime):
         return self._transport if bus == "system" else self._user
 
     def stream(self, argv, on_line, on_exit):
-        # after the screen has its size, or the log wraps at Textual's default 80 columns
-        asyncio.get_running_loop().call_later(0.2, self._journal, on_line)
+        try:  # Textual: after the screen has its size, or the log wraps at 80 columns
+            asyncio.get_running_loop().call_later(0.2, self._journal, on_line)
+        except RuntimeError:  # Qt: no asyncio loop, the viewer takes the lines at once
+            self._journal(on_line)
         return lambda: None
 
     @staticmethod
@@ -109,7 +115,7 @@ class DemoRuntime(FakeRuntime):
             on_line(json.dumps(entry).encode())
 
 
-def make_app(own_dir: str) -> UnitDeckApp:
+def make_runtime(own_dir: str) -> DemoRuntime:
     backup = Path(own_dir) / "backup.service"
     backup.write_text(BACKUP)
     system = FakeTransport(
@@ -130,65 +136,162 @@ def make_app(own_dir: str) -> UnitDeckApp:
     )
     runtime = DemoRuntime(system, user)
     runtime.own_dir = own_dir
-    app = UnitDeckApp(runtime_factory=lambda: runtime)
-    app._tty_agent = False
-    return app
+    return runtime
 
 
-async def shoot() -> None:
+async def shoot_tui(own_dir: str) -> None:
     from textual.widgets import DataTable, Static
 
     from unitdeck.tui.screens import EditScreen
     from unitdeck.tui.service_editor import Section, ServiceEditor
 
-    OUT.mkdir(exist_ok=True)
-    with tempfile.TemporaryDirectory() as own_dir:
-        base.own_unit_dir = lambda scope: own_dir
-        app = make_app(own_dir)
-        async with app.run_test(size=SIZE) as pilot:
-            app.console.width = SIZE[0]  # headless Rich measures text at 80 columns
+    runtime = make_runtime(own_dir)
+    app = UnitDeckApp(runtime_factory=lambda: runtime)
+    app._tty_agent = False
+    async with app.run_test(size=SIZE) as pilot:
+        app.console.width = SIZE[0]  # headless Rich measures text at 80 columns
 
-            async def save(name: str) -> None:
-                await pilot.pause()
-                app.save_screenshot(f"tui-{name}.svg", str(OUT))
+        async def save(name: str) -> None:
+            await pilot.pause()
+            app.save_screenshot(f"tui-{name}.svg", str(OUT))
 
-            # system services, the failed nginx selected
-            await pilot.pause()
-            app.sub_title = ""  # no version number: it would go stale
-            app.pane.query_one(DataTable).focus()
-            while app.pane.selected_name() != "nginx.service":
-                await pilot.press("down")
-            await save("units")
-            # its journal
-            await pilot.press("l")
-            await pilot.pause(0.5)
-            await save("logs")
-            await pilot.press("escape")
-            # user tab: the service editor on a unit of one's own, a typo flagged
-            app.query_one("#scopes").active = "user"
-            await pilot.pause()
-            await pilot.press("slash", *"backup", "enter")
-            await pilot.press("ctrl+e")
-            await pilot.pause()
-            assert isinstance(app.screen, EditScreen)
-            info = app.screen.query_one("#info", Static)
-            info.update(str(info.content).replace(own_dir, "~/.config/systemd/user"))
-            editor = app.screen.query_one(ServiceEditor)
-            service = next(s for s in editor.query(Section) if s.section == "Service")
-            next(r for r in service.row_list() if r.directive.key == "Restrat").focus_field()
-            await save("editor")
-            # what a directive is for
-            next(r for r in service.row_list() if r.directive.key == "Type").focus_field()
-            await pilot.press("f1")
-            await save("info")
-            await pilot.press("escape", "escape")
-            # new service from a template
-            await pilot.press("n")
-            await pilot.pause()
-            app.screen.query_one("#name").value = "sync-photos"
-            await save("new-service")
+        # system services, the failed nginx selected
+        await pilot.pause()
+        app.sub_title = ""  # no version number: it would go stale
+        app.pane.query_one(DataTable).focus()
+        while app.pane.selected_name() != "nginx.service":
+            await pilot.press("down")
+        await save("units")
+        # its journal
+        await pilot.press("l")
+        await pilot.pause(0.5)
+        await save("logs")
+        await pilot.press("escape")
+        # user tab: the service editor on a unit of one's own, a typo flagged
+        app.query_one("#scopes").active = "user"
+        await pilot.pause()
+        await pilot.press("slash", *"backup", "enter")
+        await pilot.press("ctrl+e")
+        await pilot.pause()
+        assert isinstance(app.screen, EditScreen)
+        info = app.screen.query_one("#info", Static)
+        info.update(str(info.content).replace(own_dir, "~/.config/systemd/user"))
+        editor = app.screen.query_one(ServiceEditor)
+        service = next(s for s in editor.query(Section) if s.section == "Service")
+        next(r for r in service.row_list() if r.directive.key == "Restrat").focus_field()
+        await save("editor")
+        # what a directive is for
+        next(r for r in service.row_list() if r.directive.key == "Type").focus_field()
+        await pilot.press("f1")
+        await save("info")
+        await pilot.press("escape", "escape")
+        # new service from a template
+        await pilot.press("n")
+        await pilot.pause()
+        app.screen.query_one("#name").value = "sync-photos"
+        await save("new-service")
+
+
+def shoot_gui(own_dir: str) -> None:
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    os.environ["QT_SCALE_FACTOR"] = "1.5"
+    from PyQt6.QtCore import QSettings
+    from PyQt6.QtGui import QIcon
+    from PyQt6.QtTest import QTest
+    from PyQt6.QtWidgets import QApplication
+
+    from unitdeck.model import UnitRole
+
+    # settings in the temporary directory, never the user's own ~/.config/UnitDeck
+    QSettings.setDefaultFormat(QSettings.Format.IniFormat)
+    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, own_dir)
+    app = QApplication(["unitdeck"])
+    app.setOrganizationName("UnitDeck")
+    app.setApplicationName("UnitDeck")
+    app.setStyle("Fusion")  # same look on any machine; offscreen has no platform theme
+    QIcon.setThemeName("Adwaita")
+    settings = QSettings()
+    settings.setValue("language", "en")
+    settings.setValue("check_updates", False)
+
+    from unitdeck.gui import main_window
+    from unitdeck.gui.edit_dialog import EditDialog
+    from unitdeck.gui.log_viewer import LogViewer
+    from unitdeck.gui.new_service_wizard import NewServiceWizard
+
+    runtime = make_runtime(own_dir)
+    main_window.QtRuntime = lambda parent: runtime
+
+    def save(widget, path: Path) -> None:
+        widget.show()
+        QTest.qWait(300)
+        widget.grab().save(str(path))
+
+    def unit_of(tab, name: str):
+        table = tab._table
+        for row in range(table.model().rowCount()):
+            index = table.model().index(row, 0)
+            if index.data(UnitRole).name == name:
+                table.selectRow(row)
+                return index.data(UnitRole)
+        raise LookupError(name)
+
+    def edit(tab, unit, where: str) -> EditDialog:
+        dialog = EditDialog(tab._backend, unit, window)
+        dialog.resize(1150, 600)
+        dialog._info.setText(dialog._info.text().replace(own_dir, where))
+        return dialog
+
+    window = main_window.MainWindow()
+    window.resize(*WINDOW)
+    tabs = window.centralWidget()
+    system_tab, user_tab = tabs.widget(0), tabs.widget(1)
+    window.show()
+    QTest.qWait(300)
+    nginx = unit_of(system_tab, "nginx.service")
+    save(window, ROOT / "docs" / "screenshot.png")
+
+    # the failed nginx: its journal, then a drop-in for it
+    logs = LogViewer(nginx.name, system_tab._backend.scope, runtime, window)
+    logs.resize(1000, 330)
+    save(logs, OUT / "gui-logs.png")
+    logs.close()
+    dropin = edit(system_tab, nginx, "/etc/systemd/system")
+    text = dropin._editor.toPlainText()
+    dropin._editor.setPlainText(text + "Restart=on-failure\nRestartSec=5s\n")
+    save(dropin, OUT / "gui-dropin.png")
+    dropin.reject()
+
+    # a unit of one's own: edited directly, a typo flagged
+    tabs.setCurrentIndex(1)
+    backup = unit_of(user_tab, "backup.service")
+    editor = edit(user_tab, backup, "~/.config/systemd/user")
+    save(editor, OUT / "gui-editor.png")
+    editor.reject()
+
+    # new service from a template, ExecStart= filled in and verified
+    wizard = NewServiceWizard(user_tab._backend, window)
+    wizard.setField("name", "sync-photos")
+    wizard.show()
+    while wizard.currentId() < 2:
+        wizard.next()
+    page = wizard.currentPage()
+    text = page._editor.toPlainText()
+    page._editor.setPlainText(
+        text.replace("ExecStart=\n", "ExecStart=/usr/bin/rsync -a %h/Pictures/ /mnt/nas/photos/\n")
+    )
+    page.verify()
+    QTest.qWait(1500)
+    save(wizard, OUT / "gui-new-service.png")
+    wizard.reject()
+    window.close()
 
 
 if __name__ == "__main__":
-    asyncio.run(shoot())
-    print("\n".join(sorted(str(p.relative_to(ROOT)) for p in OUT.glob("tui-*.svg"))))
+    OUT.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory() as own_dir:
+        base.own_unit_dir = lambda scope: own_dir
+        asyncio.run(shoot_tui(own_dir))
+        shoot_gui(own_dir)
+    shots = [ROOT / "docs" / "screenshot.png", *sorted(OUT.iterdir())]
+    print("\n".join(str(p.relative_to(ROOT)) for p in shots))
