@@ -8,9 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-10
+
 ### Added
 
-- The same service editor in the terminal interface: collapsible `[Unit]`, `[Service]` and `[Install]` groups, typed fields, `F1` for the description of a directive, `Ctrl+↑`/`Ctrl+↓` to reorder and `F8` to remove a row, inline warnings, *Builder*, *Text* and effective configuration tabs (`F2`, `F3`, `F4`); the new-service form opens it prefilled from the template ([#58](https://github.com/n1c0p/UnitDeck/issues/58)).
+- Service editor in the terminal interface, the same as in the desktop application: collapsible `[Unit]`, `[Service]` and `[Install]` groups, typed fields, `F1` for the description of a directive, `Ctrl+↑`/`Ctrl+↓` to reorder and `F8` to remove a row, inline warnings, *Builder*, *Text* and effective configuration tabs (`F2`, `F3`, `F4`); the new-service form opens it prefilled from the template ([#58](https://github.com/n1c0p/UnitDeck/issues/58)).
 
 ### Changed
 
@@ -117,7 +119,12 @@ Upgrading from 0.2.0 fails with this release: use 0.3.1.
 - GPL-3.0-or-later license.
 - This changelog, in English and Italian.
 
-[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.2.0...develop
+[Unreleased]: https://github.com/n1c0p/UnitDeck/compare/v0.5.0...develop
+[0.5.0]: https://github.com/n1c0p/UnitDeck/compare/v0.4.1...v0.5.0
+[0.4.1]: https://github.com/n1c0p/UnitDeck/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/n1c0p/UnitDeck/compare/v0.3.1...v0.4.0
+[0.3.1]: https://github.com/n1c0p/UnitDeck/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/n1c0p/UnitDeck/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/n1c0p/UnitDeck/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/n1c0p/UnitDeck/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/n1c0p/UnitDeck/compare/v0.1.1...v0.1.2
