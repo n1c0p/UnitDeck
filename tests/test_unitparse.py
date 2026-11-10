@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 Nicola Palmieri (n1c0p)
-from unitdeck.backend.unitparse import Entry, merge, parse, serialize
+from unitdeck.backend.unitparse import Entry, first_entries, merge, parse, serialize
 from unitdeck.templates import load_templates
 
 ORDER = ("Unit", "Service", "Install")
@@ -78,3 +78,10 @@ def test_merge_replaces_first_section_and_adds_missing_ones_in_order():
     moved = merge(parse(UNIT), {"Unit": list(reversed(parse(UNIT).sections[0].entries))}, ORDER)
     assert serialize(moved).index("other.target") < serialize(moved).index("Description")
     assert serialize(dropin) == "# drop-in note\n[Service]\nExecStart=\nExecStart=/bin/new\n"
+
+
+def test_first_entries_takes_the_first_section_of_each_name():
+    unit = parse("[Service]\nA=1\n[Unit]\nB=2\n[Service]\nC=3\n")
+    first = first_entries(unit, ORDER)
+    assert [e.key for e in first["Service"]] == ["A"]
+    assert [e.key for e in first["Unit"]] == ["B"] and first["Install"] == []

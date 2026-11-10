@@ -8,6 +8,14 @@ Il formato segue [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/) e i
 
 ## [Unreleased]
 
+### Aggiunto
+
+- Lo stesso editor del servizio nell'interfaccia da terminale: gruppi richiudibili `[Unit]`, `[Service]` e `[Install]`, campi tipizzati, `F1` per la descrizione di una direttiva, `Ctrl+↑`/`Ctrl+↓` per riordinare e `F8` per rimuovere una riga, avvisi nella riga, schede *Costruttore*, *Testo* e configurazione effettiva (`F2`, `F3`, `F4`); il modulo del nuovo servizio lo apre precompilato dal template ([#58](https://github.com/n1c0p/UnitDeck/issues/58)).
+
+### Modificato
+
+- README e pagina del progetto: nuovi screenshot dell'app desktop (finestra principale, editor del servizio, drop-in, nuovo servizio, journal) al posto di quello della 0.1.0, e i primi dell'interfaccia da terminale (elenco dei servizi, editor del servizio, informazioni su una direttiva, journal, nuovo servizio), tutti generati da `docs/screenshots.py`.
+
 ## [0.4.1] - 2026-10-28
 
 ### Corretto

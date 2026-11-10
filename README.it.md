@@ -13,7 +13,7 @@
 
 **UnitDeck** è un'applicazione desktop per Linux che permette di gestire i **servizi systemd**, sia **di sistema** sia **utente**, da un'interfaccia grafica semplice e ordinata.
 
-![Finestra principale di UnitDeck: la tab dei servizi di sistema](https://raw.githubusercontent.com/n1c0p/UnitDeck/main/docs/screenshot.png)
+![Finestra principale di UnitDeck: la tab dei servizi di sistema](docs/screenshot.png)
 
 > **Stato: prime release (0.x).** La prima versione è pubblicata e utilizzabile; aspettati qualche spigolo e segnalalo nelle [issue](https://github.com/n1c0p/UnitDeck/issues).
 
@@ -110,13 +110,21 @@ Le tab **Servizi di sistema** e **Servizi utente** elencano tutte le unit `.serv
 | `Ctrl+R` | Riavvia |
 | `Ctrl+L` | Mostra log (anche doppio clic) |
 
+![Journal di un'unità fallita, errori in rosso](docs/screenshots/gui-logs.png)
+
 ### Modificare un servizio
 
 *Modifica* (`Ctrl+E`) apre l'editor del servizio, con tre schede. *Costruttore* mostra le sezioni `[Unit]`, `[Service]` e `[Install]` come gruppi richiudibili accanto a un'anteprima del file aggiornata in tempo reale: scegli una direttiva dall'elenco (*Informazioni* la spiega con un esempio) e premi *Aggiungi*, poi imposta il valore con un campo adatto al suo tipo, riordina le righe trascinando la maniglia `≡`, leggi a cosa serve una riga con `ⓘ` e rimuovila con `✕`. I valori sospetti (una durata sbagliata, un percorso relativo, una direttiva scritta male) vengono segnalati nella riga. *Testo* è il file grezzo con evidenziazione sintattica e numeri di riga; le modifiche fatte lì arrivano al costruttore quando torni alla prima scheda, e commenti e direttive che il costruttore non conosce vengono conservati. *Configurazione effettiva* mostra il file unit più tutti i drop-in, con i rispettivi percorsi. Per una unit fornita da un pacchetto l'editor scrive un drop-in `override.conf` in `/etc/systemd/system/<unit>.d/` (o `~/.config/systemd/user/<unit>.d/` per i servizi utente): lì vanno solo le direttive che cambi, e gli aggiornamenti del pacchetto continuano a funzionare. Una casella permette invece di creare una copia completa della unit, che nasconde il file del pacchetto. Le unit create da te si modificano direttamente. Prima del salvataggio il file viene controllato con `systemd-analyze verify` e gli avvisi vengono mostrati; il file precedente resta come `.bak`; dopo il salvataggio UnitDeck esegue `daemon-reload` e propone di riavviare il servizio. *Ripristina originale* rimuove drop-in e copie locali di una unit di pacchetto (come `systemctl revert`), *Elimina* ferma, disabilita e rimuove una unit creata da te.
 
+![Editor del servizio su un'unità tua: scheda Costruttore con una direttiva scritta male segnalata e l'anteprima del file](docs/screenshots/gui-editor.png)
+
+![Drop-in per un'unità di pacchetto: solo le direttive cambiate, salvate come override.conf](docs/screenshots/gui-dropin.png)
+
 ### Creare un servizio
 
 *Nuovo servizio* apre un wizard: nome e template, i campi propri del template quando ne ha (server e condivisione per il template SMB), l'editor del servizio precompilato dal template e controllato con `systemd-analyze verify` (per i servizi di sistema, senza `User=`/`Group=` il servizio gira come root), e le opzioni finali "abilita all'avvio" / "avvia subito". La unit viene scritta in `~/.config/systemd/user/` dalla tab utente o in `/etc/systemd/system/` dalla tab di sistema (tramite l'helper, quindi polkit chiede la password). I nomi già usati da una unit in qualunque percorso di ricerca di systemd vengono rifiutati.
+
+![Procedura del nuovo servizio: l'editor precompilato dal template, verificato con systemd-analyze](docs/screenshots/gui-new-service.png)
 
 I template sono semplici file in `src/unitdeck/templates/`: un servizio vuoto, un'attività oneshot con `RemainAfterExit`, un servizio long-running con `Restart=on-failure` e, solo per i servizi utente, una condivisione SMB montata con `gio` (richiede una sessione utente con D-Bus). Aggiungerne uno è una piccola pull request, vedi CONTRIBUTING.
 
@@ -136,7 +144,7 @@ All'avvio UnitDeck chiede all'API delle GitHub Releases (`api.github.com`) se es
 
 ## Interfaccia da terminale
 
-`unitdeck-tui` è lo stesso strumento per terminale, sessione SSH o TTY, nello spirito di `htop`: due tab (servizi di sistema e utente), ricerca con `/`, filtro per stato con `f`, e tasti singoli per le azioni mostrate nel piè di pagina (`s` avvia, `x` ferma, `r` riavvia, `e` abilita/disabilita, `m` maschera/smaschera, `l` log con `f` per seguire, `Ctrl+E` modifica, `n` nuovo servizio, `v` ripristina originale, `Canc` elimina, `z` azzera lo stato fallito, `g` linger nella tab utente, `d` daemon-reload, `F5` aggiorna, `q` esci). L'editor funziona come quello desktop: drop-in per le unit di pacchetto (`Ctrl+T` passa alla copia completa), modifica diretta per le unit tue, `Ctrl+V` verifica, `Ctrl+S` verifica e salva; il modulo del nuovo servizio usa gli stessi template. Anche questo non gira mai come root: in una sessione grafica polkit mostra il solito dialogo; su TTY o via SSH lo schermo passa a `pkttyagent`, che chiede la password nel terminale come fa `systemctl`. Da un checkout dei sorgenti:
+`unitdeck-tui` è lo stesso strumento per terminale, sessione SSH o TTY, nello spirito di `htop`: due tab (servizi di sistema e utente), ricerca con `/`, filtro per stato con `f`, e tasti singoli per le azioni mostrate nel piè di pagina (`s` avvia, `x` ferma, `r` riavvia, `e` abilita/disabilita, `m` maschera/smaschera, `l` log con `f` per seguire, `Ctrl+E` modifica, `n` nuovo servizio, `v` ripristina originale, `Canc` elimina, `z` azzera lo stato fallito, `g` linger nella tab utente, `d` daemon-reload, `F5` aggiorna, `q` esci). L'editor funziona come quello desktop: una scheda *Costruttore* con `[Unit]`, `[Service]` e `[Install]` come gruppi richiudibili (scegli una direttiva e premi *Aggiungi*, `Ctrl+↑`/`Ctrl+↓` spostano una riga, `F1` la spiega, `F8` la rimuove, gli avvisi compaiono nella riga), una scheda *Testo* sincronizzata con il costruttore, e la configurazione effettiva (`F2`, `F3`, `F4` cambiano scheda); drop-in per le unit di pacchetto (`Ctrl+T` passa alla copia completa), modifica diretta per le unit tue, `Ctrl+V` verifica, `Ctrl+S` verifica e salva. Il modulo del nuovo servizio usa gli stessi template e apre lo stesso editor, precompilato. Anche questo non gira mai come root: in una sessione grafica polkit mostra il solito dialogo; su TTY o via SSH lo schermo passa a `pkttyagent`, che chiede la password nel terminale come fa `systemctl`. Da un checkout dei sorgenti:
 
 ```bash
 .venv/bin/pip install ".[tui]"
@@ -144,6 +152,21 @@ All'avvio UnitDeck chiede all'API delle GitHub Releases (`api.github.com`) se es
 ```
 
 Impacchettata, è `unitdeck-tui` accanto a `unitdeck-common` nella pagina Releases, senza Qt dentro.
+
+![unitdeck-tui: la tab dei servizi di sistema, con un'unità fallita selezionata](docs/screenshots/tui-units.svg)
+
+![L'editor del servizio nel terminale: scheda Costruttore con una direttiva scritta male segnalata, anteprima del file unit a destra](docs/screenshots/tui-editor.svg)
+
+![Journal dell'unità fallita, errori in rosso](docs/screenshots/tui-logs.svg)
+
+<details>
+<summary>Altri screenshot</summary>
+
+![F1 su una direttiva: descrizione, esempio, valori ammessi e pagina man](docs/screenshots/tui-info.svg)
+
+![Nuovo servizio da un template, aperto nell'editor del servizio](docs/screenshots/tui-new-service.svg)
+
+</details>
 
 
 Tutte le dipendenze sono compatibili con la licenza GPL-3.0-or-later del progetto.
