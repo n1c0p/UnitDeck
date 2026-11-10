@@ -223,3 +223,6 @@ src/unitdeck/_version.py
 
 # IDE
 .idea/
+graphify-out/
+CLAUDE.local.md
+.claude/settings.local.json
